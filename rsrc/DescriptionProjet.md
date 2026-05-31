@@ -178,7 +178,7 @@ L'utilisateur peut :
 
 ### 6.1. Reproduction manuelle
 
-L'utilisateur sélectionne **1, 2 ou plus** d'individus (peu importe leur genre ou leur espèce ; par défaut 2) et déclenche la reproduction. Le nombre d'enfants suit l'un des modes paramétrables :
+En Sandbox, l'utilisateur sélectionne **1, 2 ou plus** d'individus (peu importe leur genre ou leur espèce ; par défaut 2) et déclenche la reproduction entre ces individus. Le nombre d'enfants suit l'un des modes paramétrables :
 - **fixe** : toujours N enfants par accouplement ;
 - **aléatoire** : nombre tiré dans une plage `[min, max]`.
 
