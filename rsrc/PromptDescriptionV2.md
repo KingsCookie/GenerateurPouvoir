@@ -209,7 +209,7 @@ if a :
 				if aj :
 					if et :
 						pouvoir = "{a} {e} avec {aj} {et} sur {p}"
-					else
+					else :
 						pouvoir = "{a} {e} avec {aj} sur {p}"
 				else :
 					if et :

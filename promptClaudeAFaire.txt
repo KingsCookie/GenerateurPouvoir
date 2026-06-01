@@ -1,3 +1,0 @@
-Lis rsrc/PromptDescriptionV2 et adapte rsrc/DescriptionProjet.md en fonction.
-Pour se faire, pose moi toutes les question que tu veux sans aucune limite.
-Ignore rsrc/NotesVersionFutures.md et promptClaudeAFaire.txt
