@@ -69,8 +69,10 @@ Projet unique, deux couches : cœur pur `src/core/`, UI Svelte `src/ui/`, tests 
 ### Implementation
 
 - [x] T016 [P] [US1] Générateur de prénoms déterministe dans `src/core/genesis/names.ts` : tirage aléatoire (via `Rng`) dans deux listes embarquées **`rsrc/ExemplesPrenoms/prenoms_feminins.csv`** et **`rsrc/ExemplesPrenoms/prenoms_masculins.csv`** (genre féminin/masculin → liste correspondante ; genre « tout » ou autre → tirage de l'une des deux listes). Listes intégrées au bundle comme les catalogues (D9). *(Générateur plus poussé prévu pour une version future.)*
-- [x] T017 [P] [US1] Helpers dérivés dans `src/core/genesis/derived.ts` : `computeGeneration(birthYear)`, `computeAge(birthYear, currentYear)`, `powerLabel(power, catalog)`.
-- [x] T018 [P] [US1] Gabarit de mutation forte dans `src/core/powers/strongMutation.ts` : tirage pondéré du gabarit {AE,PE,PA,PR}, tirage pondéré des traits, `puissance`/`maitrise`=`nextInt(10)+1`, `null` si type requis vide.
+- [ ] T017 ⚠️ Reopened [P] [US1] Helpers dérivés dans `src/core/genesis/derived.ts` : `computeGeneration(birthYear)`, `computeAge(birthYear, currentYear)`, `powerLabel(power, catalog)`. *(reopened — BUG-001 : `powerLabel` doit formater **par gabarit** via le formateur partagé T035, cf. FR-024.)*
+- [ ] T018 ⚠️ Reopened [P] [US1] Gabarit de mutation forte dans `src/core/powers/strongMutation.ts` : tirage pondéré du gabarit {AE,PE,PA,PR}, tirage pondéré des traits, `puissance`/`maitrise`=`nextInt(10)+1`, `null` si type requis vide. *(reopened — BUG-001 : le `label` stocké doit utiliser le formateur partagé T035 — FR-024.)*
+- [ ] T035 [P] [US1] **Formateur de libellé par gabarit** dans `src/core/genesis/derived.ts` : `formatPowerLabel(template, { action, element, partie, etat, ajout, remplacement })` → AE `{action} {élément}`, PE `{partie} en {état}`, PA `{ajout} sur {partie}`, PR `{remplacement} à la place de {partie}` (FR-024). Réutilisé par `powerLabel` (T017) **et** `generateStrongMutationPower` (T018). *(BUG-001)*
+- [ ] T036 [P] [US1] Tests du formateur dans `tests/unit/power-label.test.ts` : vérifier les **4 formats** AE/PE/PA/PR (ordre des traits + connecteurs « en / sur / à la place de ») et la cohérence `powerLabel` ↔ `label` stocké. *(BUG-001)*
 - [x] T019 [US1] `generateInitialPopulation(params, catalog, rng)` dans `src/core/genesis/genesis.ts` (effectif, ids séquentiels, dates, ADN actif à `initialResilience`, au plus un pouvoir) — dépend de T009, T010, T012, T013, T016, T017, T018.
 - [x] T020 [US1] Store d'état réactif dans `src/ui/stores/appState.ts` : enveloppe le cœur (paramètres, population), action **générer**, action **régénérer la seed** (`createSeed`).
 - [x] T021 [US1] Écran paramètres `src/ui/views/ParametresView.svelte` : seed **affichée + éditable** + **bouton de régénération**, champs effectif/année/% pouvoir, bouton **Générer**.
@@ -172,3 +174,5 @@ Tâche T019 : genesis.ts (dépend de T016/T017/T018)
 - Tout l'aléatoire passe par le `Rng` injecté ; `createSeed()` est le seul point d'entropie (Principe I).
 - Aucune donnée personnelle dans le code/commits/`package.json` (Principe X).
 - Commit après chaque tâche ou groupe logique ; `main` reste déployable.
+
+**Bugfix**: 2026-06-09 — BUG-001 — T017 & T018 rouvertes ; ajout de T035 (formateur de libellé par gabarit) et T036 (tests des 4 formats) pour FR-024.

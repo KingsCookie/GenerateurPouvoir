@@ -123,3 +123,6 @@ features suivantes (hérédité, simulation…).
 ## Complexity Tracking
 
 > Aucune violation de la Constitution Check → section vide.
+
+**Bugfix**: 2026-06-09 — BUG-001 — le rendu du libellé de pouvoir devient **dépendant du gabarit**
+(formateur pur partagé dans `src/core/genesis`) ; aucun changement d'architecture (frontière cœur/UI inchangée).

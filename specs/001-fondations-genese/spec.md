@@ -17,6 +17,8 @@
 - Q: Effectif par défaut du batch initial ? → A: **100** individus.
 - Q: Pourcentage par défaut de chance qu'un individu du batch possède un pouvoir ? → A: **0 %**.
 
+**Bugfix**: 2026-06-09 — BUG-001 — ajout de **FR-024** (format de libellé des pouvoirs de genèse par gabarit AE/PE/PA/PR) ; précise FR-014/FR-018/FR-019.
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Générer une population initiale déterministe et la consulter (Priority: P1)
@@ -109,6 +111,7 @@ Comme l'application ne sauvegarde **rien automatiquement**, l'utilisateur peut *
 - **FR-015** : Les traits constitutifs d'un pouvoir de genèse DOIVENT être **actifs** avec une **résilience initiale** paramétrable, et inscrits dans l'ADN de l'individu.
 - **FR-016** : Pour un pouvoir de genèse, la **puissance** et la **maîtrise** DOIVENT être deux entiers aléatoires entre **1 et 10** inclus.
 - **FR-017** : Un individu généré **sans** pouvoir DOIT naître sans pouvoir et avec un ADN vide.
+- **FR-024** : Le **libellé** d'un pouvoir de genèse DOIT être formaté selon son gabarit : **AE** → « {action} {élément} » ; **PE** → « {partie du corps} en {état} » ; **PA** → « {ajout} sur {partie du corps} » ; **PR** → « {remplacement} à la place de {partie du corps} ». Ce libellé formaté DOIT être affiché tel quel dans la liste (FR-018) et la fiche (FR-019). *(Bugfix BUG-001)*
 
 **Visualisation**
 - **FR-018** : Le système DOIT afficher la **liste** de tous les individus, chaque entrée montrant au minimum **nom**, **date de naissance**, **âge** et **pouvoir(s)**.

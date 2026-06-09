@@ -172,6 +172,12 @@ Gabarit de génération du pouvoir de mutation forte (c'est le **seul** endroit 
 > - **PR** (`i = 5`) : une **Partie du corps** + un **Remplacement**.
 >
 > Chaque trait est tiré aléatoirement dans la liste des traits de son type, **avec les pondérations** (§9.1).
+>
+> Le **libellé lisible** du pouvoir dépend du gabarit tiré :
+> - **AE** → « {action} {élément} »
+> - **PE** → « {partie du corps} en {état} »
+> - **PA** → « {ajout} sur {partie du corps} »
+> - **PR** → « {remplacement} à la place de {partie du corps} »
 
 > Le type **AEP** (Action + Élément + Partie du corps) de la V1 **disparaît** du gabarit. Il pourra toutefois **émerger** de façon dérivée via l'algorithme traits → pouvoirs (§6.4).
 

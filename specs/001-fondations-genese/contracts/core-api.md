@@ -58,13 +58,16 @@ function generateStrongMutationPower(catalog: Catalog, params: Parameters, rng: 
 - Tire un gabarit pondéré ∈ {AE, PE, PA, PR} (AE majoritaire), puis les traits requis (pondérés).
 - Renvoie `null` si un type requis est **vide** dans le catalogue (cf. spec Edge Cases) → individu sans pouvoir.
 - `puissance` et `maitrise` = `rng.nextInt(10)+1`.
+- Le `label` produit DOIT suivre le **format par gabarit** (FR-024), identique à celui de `powerLabel`
+  (formateur partagé) : AE `{action} {élément}` · PE `{partie} en {état}` · PA `{ajout} sur {partie}` ·
+  PR `{remplacement} à la place de {partie}`.
 
 ## Dérivés
 
 ```ts
 function computeGeneration(birthYear: number): number; // floor(birthYear / 20)
 function computeAge(birthYear: number, currentYear: number): number;
-function powerLabel(power: Pouvoir, catalog: Catalog): string; // libellé lisible du gabarit
+function powerLabel(power: Pouvoir, catalog: Catalog): string; // libellé formaté PAR GABARIT (FR-024)
 ```
 
 ## État & persistance
