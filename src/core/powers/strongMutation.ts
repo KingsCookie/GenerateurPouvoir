@@ -4,6 +4,7 @@ import type { TraitType } from '../model/traitType.js';
 import type { Parameters } from '../params/parameters.js';
 import type { Pouvoir, PowerTemplate } from '../model/pouvoir.js';
 import { POWER_TEMPLATES } from '../model/pouvoir.js';
+import { formatPowerLabel } from '../genesis/derived.js';
 
 // Types de traits requis par gabarit (§6.1). L'ordre est significatif (déterminisme +
 // libellé lisible). AE = Action + Élément ; PE/PA/PR = Partie du corps + (État/Ajout/Remplacement).
@@ -44,7 +45,7 @@ export function generateStrongMutationPower(
   const traitIds = [traitA.id, traitB.id];
   return {
     id: `pw:${template}:${traitIds.join('+')}`,
-    label: `${traitA.label} ${traitB.label}`,
+    label: formatPowerLabel(template, traitA.label, traitB.label),
     template,
     traitIds,
     puissance,

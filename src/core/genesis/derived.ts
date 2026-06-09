@@ -1,4 +1,4 @@
-import type { Pouvoir } from '../model/pouvoir.js';
+import type { Pouvoir, PowerTemplate } from '../model/pouvoir.js';
 import type { Catalog } from '../model/trait.js';
 
 /** Génération d'affichage = tranche de 20 ans de l'année de naissance (FR-020). */
@@ -11,12 +11,39 @@ export function computeAge(birthYear: number, currentYear: number): number {
   return currentYear - birthYear;
 }
 
-/** Libellé lisible d'un pouvoir à partir des libellés de ses traits constitutifs. */
+/**
+ * Formate le libellé d'un pouvoir **selon son gabarit** (FR-024). `labelA`/`labelB` sont les
+ * libellés des deux traits dans l'ordre des types du gabarit (cf. `TEMPLATE_TYPES`) :
+ * AE = [Action, Élément], PE/PA/PR = [Partie du corps, État/Ajout/Remplacement].
+ *
+ * - AE → « {action} {élément} »
+ * - PE → « {partie du corps} en {état} »
+ * - PA → « {ajout} sur {partie du corps} »
+ * - PR → « {remplacement} à la place de {partie du corps} »
+ */
+export function formatPowerLabel(template: PowerTemplate, labelA: string, labelB: string): string {
+  switch (template) {
+    case 'AE':
+      return `${labelA} ${labelB}`;
+    case 'PE':
+      return `${labelA} en ${labelB}`;
+    case 'PA':
+      return `${labelB} sur ${labelA}`;
+    case 'PR':
+      return `${labelB} à la place de ${labelA}`;
+  }
+}
+
+/** Libellé lisible d'un pouvoir, formaté **par gabarit** (FR-024). */
 export function powerLabel(power: Pouvoir, catalog: Catalog): string {
   const labelById = new Map<string, string>();
   for (const list of Object.values(catalog.byType)) {
     for (const t of list) labelById.set(t.id, t.label);
   }
-  const parts = power.traitIds.map((id) => labelById.get(id) ?? id);
-  return parts.join(' · ');
+  const labels = power.traitIds.map((id) => labelById.get(id) ?? id);
+  if (labels.length === 2) {
+    return formatPowerLabel(power.template, labels[0], labels[1]);
+  }
+  // Repli défensif (un pouvoir de genèse a toujours 2 traits).
+  return labels.join(' · ');
 }

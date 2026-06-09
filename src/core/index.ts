@@ -7,7 +7,7 @@ export { defaultParameters } from './params/parameters.js';
 export type { Parameters } from './params/parameters.js';
 export { generateInitialPopulation } from './genesis/genesis.js';
 export { generateName, NAME_LIST_SIZES } from './genesis/names.js';
-export { computeAge, computeGeneration, powerLabel } from './genesis/derived.js';
+export { computeAge, computeGeneration, powerLabel, formatPowerLabel } from './genesis/derived.js';
 export { generateStrongMutationPower } from './powers/strongMutation.js';
 export {
   serializeState,
