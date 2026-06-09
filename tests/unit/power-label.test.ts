@@ -10,7 +10,7 @@ describe('Libellé des pouvoirs par gabarit (FR-024 / BUG-001)', () => {
   it('formatPowerLabel applique les 4 formats avec le bon ordre et les bons connecteurs', () => {
     // labelA = trait du 1er type du gabarit, labelB = 2e type (cf. TEMPLATE_TYPES).
     expect(formatPowerLabel('AE', 'contrôle', 'feu')).toBe('contrôle feu');
-    expect(formatPowerLabel('PE', 'Yeux', 'Lumineux')).toBe('Yeux en Lumineux');
+    expect(formatPowerLabel('PE', 'Yeux', 'Lumineux')).toBe('Yeux Lumineux');
     expect(formatPowerLabel('PA', 'Yeux', 'Fourrure')).toBe('Fourrure sur Yeux');
     expect(formatPowerLabel('PR', 'Yeux', 'Pinces de crabe')).toBe(
       'Pinces de crabe à la place de Yeux',
@@ -44,7 +44,7 @@ describe('Libellé des pouvoirs par gabarit (FR-024 / BUG-001)', () => {
       // Le libellé stocké doit être identique à celui recalculé par la vue.
       expect(powerLabel(power, catalog)).toBe(power.label);
       // Vérifie le connecteur attendu par gabarit.
-      if (template === 'PE') expect(power.label).toContain(' en ');
+      if (template === 'PE') expect(power.label).not.toContain(' en '); // juxtaposition simple (BUG-002)
       if (template === 'PA') expect(power.label).toContain(' sur ');
       if (template === 'PR') expect(power.label).toContain(' à la place de ');
     }

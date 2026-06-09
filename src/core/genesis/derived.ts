@@ -17,7 +17,7 @@ export function computeAge(birthYear: number, currentYear: number): number {
  * AE = [Action, Élément], PE/PA/PR = [Partie du corps, État/Ajout/Remplacement].
  *
  * - AE → « {action} {élément} »
- * - PE → « {partie du corps} en {état} »
+ * - PE → « {partie du corps} {état} »
  * - PA → « {ajout} sur {partie du corps} »
  * - PR → « {remplacement} à la place de {partie du corps} »
  */
@@ -26,7 +26,7 @@ export function formatPowerLabel(template: PowerTemplate, labelA: string, labelB
     case 'AE':
       return `${labelA} ${labelB}`;
     case 'PE':
-      return `${labelA} en ${labelB}`;
+      return `${labelA} ${labelB}`;
     case 'PA':
       return `${labelB} sur ${labelA}`;
     case 'PR':

@@ -126,3 +126,5 @@ features suivantes (hérédité, simulation…).
 
 **Bugfix**: 2026-06-09 — BUG-001 — le rendu du libellé de pouvoir devient **dépendant du gabarit**
 (formateur pur partagé dans `src/core/genesis`) ; aucun changement d'architecture (frontière cœur/UI inchangée).
+
+**Bugfix**: 2026-06-09 — BUG-002 — correction de la clause PE du formateur (« {partie} {état} ») ; aucun changement d'architecture.

@@ -59,7 +59,7 @@ function generateStrongMutationPower(catalog: Catalog, params: Parameters, rng: 
 - Renvoie `null` si un type requis est **vide** dans le catalogue (cf. spec Edge Cases) → individu sans pouvoir.
 - `puissance` et `maitrise` = `rng.nextInt(10)+1`.
 - Le `label` produit DOIT suivre le **format par gabarit** (FR-024), identique à celui de `powerLabel`
-  (formateur partagé) : AE `{action} {élément}` · PE `{partie} en {état}` · PA `{ajout} sur {partie}` ·
+  (formateur partagé) : AE `{action} {élément}` · PE `{partie} {état}` · PA `{ajout} sur {partie}` ·
   PR `{remplacement} à la place de {partie}`.
 
 ## Dérivés

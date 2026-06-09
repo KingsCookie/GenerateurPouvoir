@@ -59,7 +59,7 @@ Triplet `(trait, état, résilience)`.
 | Champ | Type | Règles |
 |---|---|---|
 | `id` | string | Identifiant stable au sein de l'individu. |
-| `label` | string | Libellé lisible **formaté selon le gabarit** (FR-024) : AE `{action} {élément}` ; PE `{partie} en {état}` ; PA `{ajout} sur {partie}` ; PR `{remplacement} à la place de {partie}`. |
+| `label` | string | Libellé lisible **formaté selon le gabarit** (FR-024) : AE `{action} {élément}` ; PE `{partie} {état}` ; PA `{ajout} sur {partie}` ; PR `{remplacement} à la place de {partie}`. |
 | `template` | `"AE" \| "PE" \| "PA" \| "PR"` | Type de gabarit (genèse uniquement). |
 | `traitIds` | string[] | Traits constitutifs (référencent l'ADN). |
 | `puissance` | integer | **1..10** inclus (genèse : aléatoire). |
