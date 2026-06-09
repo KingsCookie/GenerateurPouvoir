@@ -92,7 +92,7 @@ taux sans pouvoir 100 % ⇒ enfant sans pouvoir ; mutation faible activée ⇒ g
 
 - [x] T019 [P] [US2] Tests des cas spéciaux dans `tests/unit/birth-cases.test.ts` : tirage du cas selon les taux (0 %/100 % et proportion ±5 pts sur ≥ 1000 — SC-005) ; mutation forte (traits inactifs + 1 pouvoir gabarit + P/M ∈ [1,10] — INV-3/INV-4) ; sans pouvoir (0 pouvoir, ADN inactif) ; mutation faible gain (mise active + bonus si présent, sinon ajout actif à la résilience initiale) et perte (retrait d'un trait).
 - [x] T020 [US2] Étendre `src/core/birth/reproduce.ts` : tirage `BirthCase` (`strongMutationRatePct`/`noPowerRatePct`, sinon normale) ; cas spéciaux → tous traits parentaux **inactifs** (option `genomeMalusEnabled`) ; **mutation forte** → `generateStrongMutationPower` (Feature 1) + P/M aléatoire 1-10 ; **sans pouvoir** → aucun pouvoir ; **mutation faible** (normale uniquement) gain puis perte. **Ordre du pipeline (§5)** : la mutation faible (gain puis perte) DOIT être appliquée à l'ADN **avant** `derivePowersFromTraits` (étape 3 avant étape 4), de sorte que les pouvoirs dérivent de l'ADN post-mutation. Dépend de T014.
-- [x] T021 [US2] Édition **complète** des paramètres du moteur dans `src/ui/views/ParametresView.svelte` (FR-027/FR-030) : champs éditables pour `D`, `K`, résilience initiale, résilience maximale, bonus (points), malus (points), seuil de disparition, taux (mutation forte / sans pouvoir / mutation faible gain / perte), option « malus génome », `B`, `C` ; **`A = 100 − 2·B − C` affichée en lecture seule**. *(L'organisation avancée 3 niveaux + courbes reste en Feature 5.)*
+- [x] T021 [US2] (BUG-001 corrigé) Édition **complète** des paramètres du moteur dans `src/ui/views/ParametresView.svelte` (FR-027/FR-030/**FR-031**) : champs éditables pour `D`, `K`, résilience initiale, résilience maximale, bonus (points), malus (points), seuil de disparition, taux (mutation forte / sans pouvoir / mutation faible gain / perte), option « malus génome », `B`, `C` ; **`A = 100 − 2·B − C` affichée en lecture seule**. **FR-031** : **regrouper** en sections thématiques (Génération de pouvoir §9.1 / Hérédité & naissance §9.2 / Population §9.3) et afficher une **description fonctionnelle** sous **chaque** champ (pas seulement `A`). *(L'organisation avancée 3 niveaux + courbes reste en Feature 5.)*
 
 **Checkpoint**: US1 + US2 — pipeline complet de naissance exerçable.
 
@@ -169,4 +169,6 @@ T016 store → T017 ReproduceBar / T018 ListeView
 - Tout l'aléatoire passe par le `Rng` injecté ; `D` (duplication) et `K` (génération) sont **distincts** (Principe VII).
 - Bornage P/M **uniquement** cas A & mutation forte ; les moyennes ne sont pas bornées (§7).
 - Aucune donnée personnelle dans le code/commits (Principe X) ; `main` reste déployable.
+
+**Bugfix**: 2026-06-09 — BUG-001 Updated from bugfix patch (T021 rouverte : regroupement en sections + descriptions, FR-031).
 - Commit après chaque tâche ou groupe logique.

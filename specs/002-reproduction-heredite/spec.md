@@ -129,6 +129,9 @@ L'utilisateur ouvre la **fiche** d'un individu et inspecte son **détail génét
 **Paramétrage (§9.1/§9.2)**
 - **FR-027** : Le système DOIT exposer en **paramètres** (avec valeurs par défaut modifiables) : `D`, `K`, résilience initiale, résilience maximale, **bonus (points)**, **malus (points)**, seuil de disparition (défaut 2 %), taux de mutation forte, taux de naissance sans pouvoir, taux de mutation faible (gain), taux de mutation faible (perte), option « malus génome » (défaut off), probabilités `B` et `C`.
 - **FR-030** : **Tous** ces paramètres (FR-027) DOIVENT être **éditables dans l'écran des paramètres**, à la **seule exception de `A`** qui est **calculée** (`A = 100 − 2·B − C`) et **affichée en lecture seule**. *(L'organisation avancée à 3 niveaux global/type/trait et les courbes relèvent de la Feature 5 ; la Feature 2 fournit l'édition à plat de ces paramètres.)*
+- **FR-031** : L'écran des paramètres DOIT **regrouper** les paramètres en **sections thématiques** reflétant leur rôle (au minimum : **Génération de pouvoir** [§9.1], **Hérédité & naissance** [§9.2], **Population** [§9.3]) et DOIT afficher, pour **chaque** paramètre, une **brève description fonctionnelle** (ce à quoi il sert, son effet concret) à proximité immédiate de son champ — pas uniquement pour `A`. *(L'organisation **à 3 niveaux** global/type/trait et les courbes restent en Feature 5 ; ici, regroupement **à plat en sections** + descriptions.)*
+
+**Bugfix**: 2026-06-09 — BUG-001 Ajout de FR-031 (regroupement en sections thématiques + description par paramètre dans l'écran des paramètres).
 
 **Inspection (US3)**
 - **FR-028** : La **fiche** d'un individu DOIT pouvoir afficher l'**ADN complet** : traits **actifs** et **inactifs** avec leur **résilience**, en plus des pouvoirs (puissance/maîtrise).

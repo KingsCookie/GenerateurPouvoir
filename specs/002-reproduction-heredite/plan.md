@@ -70,6 +70,13 @@ Valeurs par défaut **modifiables** (Principe VII), choisies pour un comportemen
 | `B` (P/M) | **10 %** | `A = 100 − 2·B − C`. |
 | `C` (P/M) | **30 %** | ⇒ `A = 50 %` : équilibre entre nouveauté (A) et héritage (B/C). |
 
+> **Organisation de l'écran des paramètres (FR-031)** : `ParametresView.svelte` regroupe les paramètres
+> en **sections thématiques** (Génération de pouvoir §9.1 ; Hérédité & naissance §9.2 ; Population §9.3)
+> et affiche une **description fonctionnelle** sous chaque libellé. Présentation **à plat** (l'arborescence
+> 3 niveaux global/type/trait + courbes restent en Feature 5). Le tableau ci-dessus alimente ces aides.
+
+**Bugfix**: 2026-06-09 — BUG-001 Updated from bugfix patch (regroupement + descriptions de l'écran des paramètres).
+
 ## Constitution Check
 
 *GATE : doit passer avant la Phase 0, re-vérifié après la Phase 1.*
