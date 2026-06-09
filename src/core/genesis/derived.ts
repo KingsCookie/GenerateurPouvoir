@@ -40,10 +40,14 @@ export function powerLabel(power: Pouvoir, catalog: Catalog): string {
   for (const list of Object.values(catalog.byType)) {
     for (const t of list) labelById.set(t.id, t.label);
   }
+  // Pouvoir dérivé (§6.4) : le libellé a été pré-calculé via l'arbre §6.4.2.
+  if (power.template === 'DERIVE') {
+    return power.label;
+  }
   const labels = power.traitIds.map((id) => labelById.get(id) ?? id);
   if (labels.length === 2) {
     return formatPowerLabel(power.template, labels[0], labels[1]);
   }
-  // Repli défensif (un pouvoir de genèse a toujours 2 traits).
+  // Repli défensif (un pouvoir de gabarit a toujours 2 traits).
   return labels.join(' · ');
 }

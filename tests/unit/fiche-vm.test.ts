@@ -63,6 +63,35 @@ describe('Modèle de vue fiche (US2)', () => {
     expect(view.traitsActifs).toEqual([]);
   });
 
+  it('expose l’ADN complet : traits actifs ET inactifs avec résilience (US3)', () => {
+    const actionId = catalog.byType.Action[0].id;
+    const elementId = catalog.byType.Element[0].id;
+    const person = {
+      id: 'p-1',
+      nom: 'Test',
+      especeId: 'esp',
+      genreId: 'masculin',
+      dateNaissance: '0000-01-01',
+      vivant: true,
+      raisonDeces: null,
+      parents: [],
+      enfants: [],
+      conjoints: [],
+      adn: {
+        traits: [
+          { traitId: actionId, active: true, resilience: 55 },
+          { traitId: elementId, active: false, resilience: 40 },
+        ],
+      },
+      pouvoirs: [],
+      notes: null,
+    };
+    const view = buildFicheView(person, catalog, 0);
+    expect(view.traitsActifs.map((t) => t.traitId)).toEqual([actionId]);
+    expect(view.traitsInactifs.map((t) => t.traitId)).toEqual([elementId]);
+    expect(view.traitsInactifs[0].resilience).toBe(40);
+  });
+
   it('buildListRow renvoie nom, date, âge et libellés de pouvoir', () => {
     const pop = popWithPowers(0x444n);
     const row = buildListRow(pop[0], catalog, 0);

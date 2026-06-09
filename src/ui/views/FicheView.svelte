@@ -66,12 +66,23 @@
       {/each}
     {/if}
 
-    <h3>Traits actifs</h3>
+    <h3>ADN — traits actifs</h3>
     {#if fiche.traitsActifs.length === 0}
       <p class="muted">Aucun trait actif.</p>
     {:else}
       <ul class="traits">
         {#each fiche.traitsActifs as t (t.traitId)}
+          <li>{t.label} <span class="muted">— résilience {t.resilience} %</span></li>
+        {/each}
+      </ul>
+    {/if}
+
+    <h3>ADN — traits inactifs</h3>
+    {#if fiche.traitsInactifs.length === 0}
+      <p class="muted">Aucun trait inactif.</p>
+    {:else}
+      <ul class="traits inactifs">
+        {#each fiche.traitsInactifs as t (t.traitId)}
           <li>{t.label} <span class="muted">— résilience {t.resilience} %</span></li>
         {/each}
       </ul>
@@ -130,6 +141,9 @@
   .traits {
     margin: 0;
     padding-left: 1.2rem;
+  }
+  .traits.inactifs {
+    opacity: 0.7;
   }
   .mono {
     font-family: ui-monospace, monospace;

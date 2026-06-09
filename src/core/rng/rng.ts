@@ -17,6 +17,8 @@ export interface Rng {
   pick<T>(items: readonly T[]): T;
   /** Tirage pondéré (poids > 0) dans une liste non vide. */
   pickWeighted<T>(items: readonly T[], weightOf: (t: T) => number): T;
+  /** Permutation déterministe (Fisher–Yates) ; renvoie une **nouvelle** copie, ne mute pas l'entrée. */
+  shuffle<T>(items: readonly T[]): T[];
 }
 
 function splitmix64(state: bigint): { state: bigint; value: bigint } {
@@ -108,5 +110,17 @@ export function createRng(seed: bigint): Rng {
     throw new Error('pickWeighted: aucun élément de poids positif.');
   }
 
-  return { nextU64, nextFloat, nextInt, chance, pick, pickWeighted };
+  function shuffle<T>(items: readonly T[]): T[] {
+    // Fisher–Yates : du dernier au premier, échange avec un indice tiré sans biais.
+    const out = items.slice();
+    for (let i = out.length - 1; i > 0; i--) {
+      const j = nextInt(i + 1);
+      const tmp = out[i];
+      out[i] = out[j];
+      out[j] = tmp;
+    }
+    return out;
+  }
+
+  return { nextU64, nextFloat, nextInt, chance, pick, pickWeighted, shuffle };
 }

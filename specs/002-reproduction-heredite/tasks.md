@@ -30,7 +30,7 @@ Projet unique, deux couches : cœur pur `src/core/`, UI Svelte `src/ui/`, tests 
 **Purpose**: la stack et le projet existent déjà (Feature 1) ; rien à initialiser. Cette feature **étend**
 le cœur et l'UI sans nouvelle dépendance (Principe VIII).
 
-- [ ] T001 Vérifier l'état de départ : `npm install`, `npm run test` (Feature 1 verte) avant d'étendre le moteur.
+- [x] T001 Vérifier l'état de départ : `npm install`, `npm run test` (Feature 1 verte) avant d'étendre le moteur.
 
 ---
 
@@ -40,9 +40,9 @@ le cœur et l'UI sans nouvelle dépendance (Principe VIII).
 
 **⚠️ Aucune user story ne peut démarrer avant la fin de cette phase.**
 
-- [ ] T002 [P] Étendre `Parameters` + défauts dans `src/core/params/parameters.ts` : `duplicationD=20`, `generationK=10`, `resilienceMax=95`, `bonusPoints=5`, `malusPoints=5`, `disappearThreshold=2`, `strongMutationRatePct=0`, `noPowerRatePct=0`, `weakMutationGainPct=0`, `weakMutationLossPct=0`, `genomeMalusEnabled=false`, `statB=10`, `statC=30` (cf. data-model). Vérifier que `serializeState` les inclut (sérialisation générique).
-- [ ] T003 Ajouter `shuffle<T>(items)` (Fisher–Yates déterministe via `nextInt`) à l'interface `Rng` et à `createRng` dans `src/core/rng/rng.ts` ; l'exposer via `src/core/rng/index.ts` et la façade `src/core/index.ts`.
-- [ ] T004 [P] Test déterminisme du mélange dans `tests/unit/rng-shuffle.test.ts` : même seed ⇒ même permutation ; `shuffle` est une permutation (mêmes éléments) ; ne mute pas l'entrée.
+- [x] T002 [P] Étendre `Parameters` + défauts dans `src/core/params/parameters.ts` : `duplicationD=20`, `generationK=10`, `resilienceMax=95`, `bonusPoints=5`, `malusPoints=5`, `disappearThreshold=2`, `strongMutationRatePct=0`, `noPowerRatePct=0`, `weakMutationGainPct=0`, `weakMutationLossPct=0`, `genomeMalusEnabled=false`, `statB=10`, `statC=30` (cf. data-model). Vérifier que `serializeState` les inclut (sérialisation générique).
+- [x] T003 Ajouter `shuffle<T>(items)` (Fisher–Yates déterministe via `nextInt`) à l'interface `Rng` et à `createRng` dans `src/core/rng/rng.ts` ; l'exposer via `src/core/rng/index.ts` et la façade `src/core/index.ts`.
+- [x] T004 [P] Test déterminisme du mélange dans `tests/unit/rng-shuffle.test.ts` : même seed ⇒ même permutation ; `shuffle` est une permutation (mêmes éléments) ; ne mute pas l'entrée.
 
 **Checkpoint**: paramètres + shuffle prêts — les user stories peuvent commencer.
 
@@ -58,26 +58,26 @@ pouvoirs + P/M) ; relancer (même seed) ⇒ identique ; les exemples §6.4.1 et 
 
 ### Tests (écrits AVANT l'implémentation — Principe V)
 
-- [ ] T005 [P] [US1] Tests hérédité dans `tests/unit/heredity.test.ts` : §4.2 Cas 1 (un porteur) et Cas 2 (0/1/≥2 tirages actifs), **bonus/malus additif** (±points), plafond `resilienceMax`, **disparition** sous `disappearThreshold` (INV-2), transmission des inactifs, déterminisme à seed fixe.
-- [ ] T006 [P] [US1] Tests traits→pouvoirs dans `tests/unit/traits-to-powers.test.ts` : **exemple 1** (§6.4.1, sans duplication) et **exemple 2** (avec duplication) reproduits **à l'identique** (INV-7) ; duplication ≤ 1/sous-liste (INV-5) ; génération `K` inscrite à l'ADN (INV-6) ; `null` si `K` requis échoue ; aucun trait actif ⇒ aucun pouvoir.
-- [ ] T007 [P] [US1] Tests de l'arbre §6.4.2 dans `tests/unit/power-label-tree.test.ts` : pour des combinaisons de présence `a/e/p/aj/r/et`, le libellé correspond **exactement** aux feuilles de l'arbre (y compris les cas `{Ka}`, `{Ke}`, `{Kp}`, `{Kaj}` et `null`).
-- [ ] T008 [P] [US1] Tests héritage P/M dans `tests/unit/inherit-stats.test.ts` : **exemples 1 & 2** (§7.2, mapping `i mod n`), arrondi (`x≥n+0,5⇒n+1`), tirage A/B/C, **bornage cas A uniquement** (INV-4), cas « aucun parent source » ⇒ aléatoire 1-10.
-- [ ] T009 [P] [US1] Tests reproduction (chemin normal) dans `tests/unit/reproduce.test.ts` : déterminisme (INV-1), héritage total des traits (INV-2/SC-002), parenté symétrique (INV-9), enfant âge 0 / année courante.
+- [x] T005 [P] [US1] Tests hérédité dans `tests/unit/heredity.test.ts` : §4.2 Cas 1 (un porteur) et Cas 2 (0/1/≥2 tirages actifs), **bonus/malus additif** (±points), plafond `resilienceMax`, **disparition** sous `disappearThreshold` (INV-2), transmission des inactifs, déterminisme à seed fixe.
+- [x] T006 [P] [US1] Tests traits→pouvoirs dans `tests/unit/traits-to-powers.test.ts` : **exemple 1** (§6.4.1, sans duplication) et **exemple 2** (avec duplication) reproduits **à l'identique** (INV-7) ; duplication ≤ 1/sous-liste (INV-5) ; génération `K` inscrite à l'ADN (INV-6) ; `null` si `K` requis échoue ; aucun trait actif ⇒ aucun pouvoir.
+- [x] T007 [P] [US1] Tests de l'arbre §6.4.2 dans `tests/unit/power-label-tree.test.ts` : pour des combinaisons de présence `a/e/p/aj/r/et`, le libellé correspond **exactement** aux feuilles de l'arbre (y compris les cas `{Ka}`, `{Ke}`, `{Kp}`, `{Kaj}` et `null`).
+- [x] T008 [P] [US1] Tests héritage P/M dans `tests/unit/inherit-stats.test.ts` : **exemples 1 & 2** (§7.2, mapping `i mod n`), arrondi (`x≥n+0,5⇒n+1`), tirage A/B/C, **bornage cas A uniquement** (INV-4), cas « aucun parent source » ⇒ aléatoire 1-10.
+- [x] T009 [P] [US1] Tests reproduction (chemin normal) dans `tests/unit/reproduce.test.ts` : déterminisme (INV-1), héritage total des traits (INV-2/SC-002), parenté symétrique (INV-9), enfant âge 0 / année courante.
 
 ### Implementation (cœur)
 
-- [ ] T010 [P] [US1] Hérédité de résilience dans `src/core/heredity/inherit.ts` : `inheritADN(parents, params, rng)` — union des traits, tirages par parent (résilience), agrégation §4.2, bonus/malus **additif**, clamp `[0, resilienceMax]`, suppression sous le seuil ; ordre de tirage **stable** (traits triés, parents dans l'ordre fourni).
-- [ ] T011 [P] [US1] Arbre de libellé §6.4.2 **verbatim** dans `src/core/powers/powerLabelTree.ts` : `powerLabelFromSublist({a,e,p,aj,r,et})` reproduisant la structure `if/else` exacte (faisant foi, Principe IX) ; renvoie le libellé ou `null`.
-- [ ] T012 [US1] Algorithme traits→pouvoirs dans `src/core/powers/traitsToPowers.ts` : `derivePowersFromTraits(adn, catalog, params, rng)` — sous-listes (principaux Action sinon PartieCorps sinon liste unique), mélange déterministe, assignation cyclique, **duplication** (`résilience/duplicationD` %, ≤ 1/sous-liste, sans toucher l'ADN), regroupement par type (« , … et » / « ou » états), libellé via T011, **génération `K`** (proba `generationK` %, trait inscrit actif dans l'ADN), `null` si `K` requis échoue — dépend de T003, T010, T011.
-- [ ] T013 [P] [US1] Héritage puissance/maîtrise dans `src/core/powers/inheritStats.ts` : `inheritStats(i, parents, params, rng)` — moyenne des i-ᵉ pouvoirs des parents pourvus (mélange déterministe, `i mod n`), arrondi, tirage A/B/C/B (`A=100−2·B−C`), **seul A borné [1,10]** ; aucun parent source ⇒ cas A — dépend de T003.
-- [ ] T014 [US1] Pipeline de reproduction (chemin **normal**) dans `src/core/birth/reproduce.ts` : `reproduce(parents, params, catalog, rng, {childId, birthYear})` — pour le cas normal : `inheritADN` → `derivePowersFromTraits` → `inheritStats` par pouvoir ; construit la `Personne` enfant (id, date dans l'année, âge 0, `parents`) — dépend de T010, T012, T013. *(Les cas spéciaux sont ajoutés en US2.)*
-- [ ] T015 [US1] Exposer le moteur via la façade `src/core/index.ts` (`inheritADN`, `derivePowersFromTraits`, `inheritStats`, `reproduce`, `powerLabelFromSublist`).
+- [x] T010 [P] [US1] Hérédité de résilience dans `src/core/heredity/inherit.ts` : `inheritADN(parents, params, rng)` — union des traits, tirages par parent (résilience), agrégation §4.2, bonus/malus **additif**, clamp `[0, resilienceMax]`, suppression sous le seuil ; ordre de tirage **stable** (traits triés, parents dans l'ordre fourni).
+- [x] T011 [P] [US1] Arbre de libellé §6.4.2 **verbatim** dans `src/core/powers/powerLabelTree.ts` : `powerLabelFromSublist({a,e,p,aj,r,et})` reproduisant la structure `if/else` exacte (faisant foi, Principe IX) ; renvoie le libellé ou `null`.
+- [x] T012 [US1] Algorithme traits→pouvoirs dans `src/core/powers/traitsToPowers.ts` : `derivePowersFromTraits(adn, catalog, params, rng)` — sous-listes (principaux Action sinon PartieCorps sinon liste unique), mélange déterministe, assignation cyclique, **duplication** (`résilience/duplicationD` %, ≤ 1/sous-liste, sans toucher l'ADN), regroupement par type (« , … et » / « ou » états), libellé via T011, **génération `K`** (proba `generationK` %, trait inscrit actif dans l'ADN), `null` si `K` requis échoue — dépend de T003, T010, T011.
+- [x] T013 [P] [US1] Héritage puissance/maîtrise dans `src/core/powers/inheritStats.ts` : `inheritStats(i, parents, params, rng)` — moyenne des i-ᵉ pouvoirs des parents pourvus (mélange déterministe, `i mod n`), arrondi, tirage A/B/C/B (`A=100−2·B−C`), **seul A borné [1,10]** ; aucun parent source ⇒ cas A — dépend de T003.
+- [x] T014 [US1] Pipeline de reproduction (chemin **normal**) dans `src/core/birth/reproduce.ts` : `reproduce(parents, params, catalog, rng, {childId, birthYear})` — pour le cas normal : `inheritADN` → `derivePowersFromTraits` → `inheritStats` par pouvoir ; construit la `Personne` enfant (id, date dans l'année, âge 0, `parents`) — dépend de T010, T012, T013. *(Les cas spéciaux sont ajoutés en US2.)*
+- [x] T015 [US1] Exposer le moteur via la façade `src/core/index.ts` (`inheritADN`, `derivePowersFromTraits`, `inheritStats`, `reproduce`, `powerLabelFromSublist`).
 
 ### Implementation (UI)
 
-- [ ] T016 [US1] Store : sélection + reproduction dans `src/ui/stores/appState.ts` — état `selectedIds`, `toggleSelect(id)`, action `reproduceSelected()` (construit le `Rng` depuis la seed, appelle `reproduce`, ajoute l'enfant à la population, met à jour `parents`/`enfants` des deux côtés — INV-9).
-- [ ] T017 [US1] Composant `src/ui/components/ReproduceBar.svelte` : affiche le nombre de sélectionnés + bouton **« Reproduire »** (désactivé si 0 sélectionné).
-- [ ] T018 [US1] Sélection dans `src/ui/views/ListeView.svelte` : case/clic de sélection multiple par ligne (sans casser l'ouverture de fiche), branché au store ; insérer `ReproduceBar`.
+- [x] T016 [US1] Store : sélection + reproduction dans `src/ui/stores/appState.ts` — état `selectedIds`, `toggleSelect(id)`, action `reproduceSelected()` (construit le `Rng` depuis la seed, appelle `reproduce`, ajoute l'enfant à la population, met à jour `parents`/`enfants` des deux côtés — INV-9).
+- [x] T017 [US1] Composant `src/ui/components/ReproduceBar.svelte` : affiche le nombre de sélectionnés + bouton **« Reproduire »** (désactivé si 0 sélectionné).
+- [x] T018 [US1] Sélection dans `src/ui/views/ListeView.svelte` : case/clic de sélection multiple par ligne (sans casser l'ouverture de fiche), branché au store ; insérer `ReproduceBar`.
 
 **Checkpoint**: US1 fonctionnelle et testable seule (MVP du moteur génétique).
 
@@ -90,9 +90,9 @@ pouvoirs + P/M) ; relancer (même seed) ⇒ identique ; les exemples §6.4.1 et 
 **Independent Test**: taux mutation forte 100 % ⇒ enfant à 1 pouvoir gabarit (P/M 1-10), ADN parental inactif ;
 taux sans pouvoir 100 % ⇒ enfant sans pouvoir ; mutation faible activée ⇒ gain/perte observables.
 
-- [ ] T019 [P] [US2] Tests des cas spéciaux dans `tests/unit/birth-cases.test.ts` : tirage du cas selon les taux (0 %/100 % et proportion ±5 pts sur ≥ 1000 — SC-005) ; mutation forte (traits inactifs + 1 pouvoir gabarit + P/M ∈ [1,10] — INV-3/INV-4) ; sans pouvoir (0 pouvoir, ADN inactif) ; mutation faible gain (mise active + bonus si présent, sinon ajout actif à la résilience initiale) et perte (retrait d'un trait).
-- [ ] T020 [US2] Étendre `src/core/birth/reproduce.ts` : tirage `BirthCase` (`strongMutationRatePct`/`noPowerRatePct`, sinon normale) ; cas spéciaux → tous traits parentaux **inactifs** (option `genomeMalusEnabled`) ; **mutation forte** → `generateStrongMutationPower` (Feature 1) + P/M aléatoire 1-10 ; **sans pouvoir** → aucun pouvoir ; **mutation faible** (normale uniquement) gain puis perte. **Ordre du pipeline (§5)** : la mutation faible (gain puis perte) DOIT être appliquée à l'ADN **avant** `derivePowersFromTraits` (étape 3 avant étape 4), de sorte que les pouvoirs dérivent de l'ADN post-mutation. Dépend de T014.
-- [ ] T021 [US2] Édition **complète** des paramètres du moteur dans `src/ui/views/ParametresView.svelte` (FR-027/FR-030) : champs éditables pour `D`, `K`, résilience initiale, résilience maximale, bonus (points), malus (points), seuil de disparition, taux (mutation forte / sans pouvoir / mutation faible gain / perte), option « malus génome », `B`, `C` ; **`A = 100 − 2·B − C` affichée en lecture seule**. *(L'organisation avancée 3 niveaux + courbes reste en Feature 5.)*
+- [x] T019 [P] [US2] Tests des cas spéciaux dans `tests/unit/birth-cases.test.ts` : tirage du cas selon les taux (0 %/100 % et proportion ±5 pts sur ≥ 1000 — SC-005) ; mutation forte (traits inactifs + 1 pouvoir gabarit + P/M ∈ [1,10] — INV-3/INV-4) ; sans pouvoir (0 pouvoir, ADN inactif) ; mutation faible gain (mise active + bonus si présent, sinon ajout actif à la résilience initiale) et perte (retrait d'un trait).
+- [x] T020 [US2] Étendre `src/core/birth/reproduce.ts` : tirage `BirthCase` (`strongMutationRatePct`/`noPowerRatePct`, sinon normale) ; cas spéciaux → tous traits parentaux **inactifs** (option `genomeMalusEnabled`) ; **mutation forte** → `generateStrongMutationPower` (Feature 1) + P/M aléatoire 1-10 ; **sans pouvoir** → aucun pouvoir ; **mutation faible** (normale uniquement) gain puis perte. **Ordre du pipeline (§5)** : la mutation faible (gain puis perte) DOIT être appliquée à l'ADN **avant** `derivePowersFromTraits` (étape 3 avant étape 4), de sorte que les pouvoirs dérivent de l'ADN post-mutation. Dépend de T014.
+- [x] T021 [US2] Édition **complète** des paramètres du moteur dans `src/ui/views/ParametresView.svelte` (FR-027/FR-030) : champs éditables pour `D`, `K`, résilience initiale, résilience maximale, bonus (points), malus (points), seuil de disparition, taux (mutation forte / sans pouvoir / mutation faible gain / perte), option « malus génome », `B`, `C` ; **`A = 100 − 2·B − C` affichée en lecture seule**. *(L'organisation avancée 3 niveaux + courbes reste en Feature 5.)*
 
 **Checkpoint**: US1 + US2 — pipeline complet de naissance exerçable.
 
@@ -104,9 +104,9 @@ taux sans pouvoir 100 % ⇒ enfant sans pouvoir ; mutation faible activée ⇒ g
 
 **Independent Test**: après une reproduction, ouvrir la fiche de l'enfant et vérifier ADN complet + pouvoirs.
 
-- [ ] T022 [P] [US3] Étendre `tests/unit/fiche-vm.test.ts` : la vue expose **traits actifs et inactifs** avec leur **résilience** (en plus des pouvoirs).
-- [ ] T023 [US3] Étendre `src/ui/lib/ficheViewModel.ts` : ajouter `traitsInactifs` (libellé + résilience) et conserver `traitsActifs` ; à partir de l'ADN complet.
-- [ ] T024 [US3] Étendre `src/ui/views/FicheView.svelte` : section **ADN** affichant traits actifs et inactifs avec résilience, en plus des pouvoirs (puissance/maîtrise).
+- [x] T022 [P] [US3] Étendre `tests/unit/fiche-vm.test.ts` : la vue expose **traits actifs et inactifs** avec leur **résilience** (en plus des pouvoirs).
+- [x] T023 [US3] Étendre `src/ui/lib/ficheViewModel.ts` : ajouter `traitsInactifs` (libellé + résilience) et conserver `traitsActifs` ; à partir de l'ADN complet.
+- [x] T024 [US3] Étendre `src/ui/views/FicheView.svelte` : section **ADN** affichant traits actifs et inactifs avec résilience, en plus des pouvoirs (puissance/maîtrise).
 
 **Checkpoint**: les 3 user stories fonctionnent indépendamment.
 
@@ -116,10 +116,10 @@ taux sans pouvoir 100 % ⇒ enfant sans pouvoir ; mutation faible activée ⇒ g
 
 **Purpose**: round-trip, performance, garde-fous, vérification déployable.
 
-- [ ] T025 [P] Test round-trip dans `tests/unit/reproduce.test.ts` (ou `state.test.ts`) : export → import après reproductions ⇒ état **égal**, parenté incluse (INV-10/SC-007).
-- [ ] T026 [P] Test/bench de performance dans `tests/unit/perf.test.ts` : une reproduction (un enfant) **< 50 ms** ; pas de régression sur la génération.
-- [ ] T027 [P] Styles responsive pour la sélection + `ReproduceBar` + section ADN (mobile → desktop) dans `src/app.css` et composants.
-- [ ] T028 Vérifier les portes de la constitution : pureté du cœur (la garde `core-purity.test.ts` couvre `heredity/`, `powers/`, `birth/` ; aucun `Math.random`/`Date`/`crypto`) ; dérouler le smoke test de `quickstart.md` ; `npm run lint` + `npm run build` verts.
+- [x] T025 [P] Test round-trip dans `tests/unit/reproduce.test.ts` (ou `state.test.ts`) : export → import après reproductions ⇒ état **égal**, parenté incluse (INV-10/SC-007).
+- [x] T026 [P] Test/bench de performance dans `tests/unit/perf.test.ts` : une reproduction (un enfant) **< 50 ms** ; pas de régression sur la génération.
+- [x] T027 [P] Styles responsive pour la sélection + `ReproduceBar` + section ADN (mobile → desktop) dans `src/app.css` et composants.
+- [x] T028 Vérifier les portes de la constitution : pureté du cœur (la garde `core-purity.test.ts` couvre `heredity/`, `powers/`, `birth/` ; aucun `Math.random`/`Date`/`crypto`) ; dérouler le smoke test de `quickstart.md` ; `npm run lint` + `npm run build` verts.
 
 ---
 

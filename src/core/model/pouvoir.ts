@@ -4,11 +4,15 @@
 export const POWER_TEMPLATES = ['AE', 'PE', 'PA', 'PR'] as const;
 export type PowerTemplate = (typeof POWER_TEMPLATES)[number];
 
+// Origine d'un pouvoir : l'un des 4 gabarits de mutation forte (§6.1), ou « DERIVE » pour un
+// pouvoir issu de l'algorithme traits → pouvoirs (§6.4), dont le libellé est pré-calculé.
+export type PowerKind = PowerTemplate | 'DERIVE';
+
 export interface Pouvoir {
   id: string;
   label: string;
-  template: PowerTemplate;
+  template: PowerKind;
   traitIds: string[];
-  puissance: number; // entier 1..10 (genèse)
-  maitrise: number; // entier 1..10 (genèse)
+  puissance: number; // entier (borné 1..10 seulement en mutation forte / cas A, §7)
+  maitrise: number; // entier (idem)
 }

@@ -6,7 +6,7 @@ import {
   powerLabel,
   type Catalog,
   type Personne,
-  type PowerTemplate,
+  type PowerKind,
 } from '../../core/index.js';
 
 export interface TraitView {
@@ -17,7 +17,7 @@ export interface TraitView {
 
 export interface PouvoirView {
   label: string;
-  template: PowerTemplate;
+  template: PowerKind;
   puissance: number;
   maitrise: number;
   traits: TraitView[];
@@ -35,6 +35,7 @@ export interface FicheView {
   raisonDeces: string | null;
   pouvoirs: PouvoirView[];
   traitsActifs: TraitView[];
+  traitsInactifs: TraitView[];
 }
 
 /** Extrait l'année (entier, éventuellement négatif) d'une date ISO YYYY-MM-DD. */
@@ -67,13 +68,15 @@ export function buildFicheView(person: Personne, catalog: Catalog, currentYear: 
   const idx = labelIndex(catalog);
   const resilById = new Map(person.adn.traits.map((t) => [t.traitId, t.resilience]));
 
-  const traitsActifs: TraitView[] = person.adn.traits
-    .filter((t) => t.active)
-    .map((t) => ({
-      traitId: t.traitId,
-      label: idx.get(t.traitId) ?? t.traitId,
-      resilience: t.resilience,
-    }));
+  const toView = (t: { traitId: string; resilience: number }): TraitView => ({
+    traitId: t.traitId,
+    label: idx.get(t.traitId) ?? t.traitId,
+    resilience: t.resilience,
+  });
+
+  // ADN complet (US3) : traits actifs et inactifs, chacun avec sa résilience.
+  const traitsActifs: TraitView[] = person.adn.traits.filter((t) => t.active).map(toView);
+  const traitsInactifs: TraitView[] = person.adn.traits.filter((t) => !t.active).map(toView);
 
   const pouvoirs: PouvoirView[] = person.pouvoirs.map((p) => ({
     label: powerLabel(p, catalog),
@@ -99,5 +102,6 @@ export function buildFicheView(person: Personne, catalog: Catalog, currentYear: 
     raisonDeces: person.raisonDeces,
     pouvoirs,
     traitsActifs,
+    traitsInactifs,
   };
 }

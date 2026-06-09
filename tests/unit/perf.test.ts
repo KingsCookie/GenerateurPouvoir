@@ -3,6 +3,7 @@ import { createRng } from '../../src/core/rng/rng.js';
 import { defaultCatalog } from '../../src/core/catalog/defaultCatalog.js';
 import { defaultParameters } from '../../src/core/params/parameters.js';
 import { generateInitialPopulation } from '../../src/core/genesis/genesis.js';
+import { reproduce } from '../../src/core/birth/reproduce.js';
 
 describe('Performance de la genèse (SC-005)', () => {
   it('génère 1 000 individus en moins de 2 s', () => {
@@ -20,5 +21,20 @@ describe('Performance de la genèse (SC-005)', () => {
 
     expect(pop).toHaveLength(1000);
     expect(elapsed).toBeLessThan(2000);
+  });
+});
+
+describe('Performance de la reproduction (T026)', () => {
+  it('une reproduction (un enfant) en moins de 50 ms', () => {
+    const params = { ...defaultParameters(), powerChancePct: 100, batchSize: 4, birthYear: 0 };
+    const catalog = defaultCatalog();
+    const rng = createRng(0xbeefn);
+    const parents = generateInitialPopulation(params, catalog, rng).slice(0, 2);
+
+    const start = performance.now();
+    reproduce(parents, params, catalog, rng, { childId: 'p-000999', birthYear: 0 });
+    const elapsed = performance.now() - start;
+
+    expect(elapsed).toBeLessThan(50);
   });
 });
