@@ -74,7 +74,7 @@ Une **personne** est décrite par les champs suivants :
 
 Un individu peut avoir **un nombre variable de pouvoirs**, qui émerge des combinaisons de traits actifs de son ADN.
 
-> La notion de **génération** comme champ de la personne **disparaît** (cf. §6.2). Elle ne subsiste que comme **regroupement d'affichage** (tranches de 20 ans), utilisé en filtre (cf. §8.1).
+> La notion de **génération** comme champ de la personne **disparaît** (cf. §6.2). Elle ne subsiste que comme **regroupement d'affichage** (tranches de 20 ans), **affiché sur la fiche de l'individu** (cf. §8.2) et utilisé pour les **tris et filtres** (cf. §8.1).
 
 ### 3.4. Espèces et genres
 
@@ -188,7 +188,7 @@ Gabarit de génération du pouvoir de mutation forte (c'est le **seul** endroit 
 
 La notion de **génération** (champ de personne, numérotation, `max(parents)+1`) **disparaît**. Le temps est désormais géré par des **dates** et l'**avancement par années** (§6.5).
 
-Subsiste uniquement une **génération d'affichage** = tranche de **20 ans** de l'année de naissance (utilisée comme filtre, cf. §8.1).
+Subsiste uniquement une **génération d'affichage** = tranche de **20 ans** de l'année de naissance (par ex. génération 0 = années [0, 19], génération 1 = [20, 39], etc.). Elle est **calculée à partir de l'année de naissance**, **affichée sur la fiche de l'individu** (cf. §8.2) et sert aux **tris et filtres** (cf. §8.1).
 
 ### 6.3. Mutation faible
 
@@ -202,7 +202,9 @@ Les mutations faibles **ne concernent que les naissances normales** (ni *sans po
 
 ### 6.4. Algorithme traits → pouvoirs
 
-Cet algorithme construit les pouvoirs à partir de la liste des **traits actifs** d'une personne. La constante **`K`** est **réglable en paramètre** et identique partout dans l'algorithme.
+Cet algorithme construit les pouvoirs à partir de la liste des **traits actifs** d'une personne. Il fait intervenir **deux paramètres distincts**, tous deux **réglables en paramètre** :
+- la **constante de duplication `D`** (cf. §6.4.1), qui pilote la probabilité de duplication des traits secondaires ;
+- la **constante de génération `K`** (cf. §6.4.2), qui pilote la probabilité de génération de nouveaux traits (`Ka`, `Ke`, …).
 
 > Si la personne n'a **aucun trait actif**, elle est **sans pouvoir**.
 
@@ -222,7 +224,7 @@ On crée **autant de sous-listes que de traits principaux**, chacune initialisé
    - S'il y a **plus de principaux que de secondaires**, certains principaux restent sans secondaire.
    - S'il y a **plus de secondaires que de principaux**, on **recommence le parcours des principaux** depuis le début, dans le même ordre.
 
-**Duplication** : au moment où l'on assigne un trait secondaire, il y a `(résilience du trait secondaire / K) %` de chance que ce trait **se duplique**, c'est-à-dire qu'une **copie** soit aussi placée dans **une autre** sous-liste.
+**Duplication** : au moment où l'on assigne un trait secondaire, il y a `(résilience du trait secondaire / D) %` de chance que ce trait **se duplique**, c'est-à-dire qu'une **copie** soit aussi placée dans **une autre** sous-liste. (`D` = constante de duplication, distincte de la constante de génération `K` du §6.4.2.)
 - Un trait dupliqué ne peut **pas apparaître deux fois dans une même sous-liste** ; il peut donc être dupliqué au maximum autant de fois qu'il y a de sous-listes.
 - La duplication **ne modifie pas l'ADN** : elle n'existe que pour la construction des pouvoirs.
 
@@ -308,7 +310,7 @@ Si une sous-liste contient **plusieurs traits du même type**, on les considère
 Notations :
 - `a` = trait/groupe de type **Action** ; `e` = **Élément** ; `p` = **Partie du corps** ; `aj` = **Ajout** ; `r` = **Remplacement** ; `et` = **État**.
 - `if a:` signifie « s'il y a au moins une action dans la sous-liste ».
-- `Ka` / `Ke` / `Kp` / `Kaj` / `Kr` / `Ket` : **`K` % de chance** de générer **UN SEUL** nouveau trait du type indiqué.
+- `Ka` / `Ke` / `Kp` / `Kaj` / `Kr` / `Ket` : **`K` % de chance** de générer **UN SEUL** nouveau trait du type indiqué (`K` = constante de génération, distincte de la constante de duplication `D` du §6.4.1).
   - On tente une génération via `K` autant de fois que la notation `K…` apparaît dans le pouvoir choisi.
   - Les traits ainsi générés sont **inscrits dans l'ADN** (en actif). S'il existe déjà dans l'ADN, on le met **actif** + **bonus** de résilience.
   - **Si le tirage `K` échoue** : c'est comme `pouvoir = null` → **aucun pouvoir** n'est produit par cette sous-liste (mais le trait reste présent et actif dans l'ADN, sauf s'il s'agissait d'une duplication).
@@ -500,7 +502,7 @@ else:
 			else:
 				if r:
 					if et:
-						pouvoir = "{Ka} {r} {et}"
+						pouvoir = "{r} {et} à la place de {Kp}"
 					else:
 						pouvoir = "{r} à la place de {Kp}"
 				else:
@@ -529,7 +531,7 @@ Chaque année avancée applique, dans l'ordre :
 - On constitue la **liste des candidats** et on tire **aléatoirement des groupes** de la **taille requise par l'espèce**, en respectant les **règles de consanguinité** (§6.6.1) et **sans inter-espèces**.
   - Les candidats n'ayant **pas trouvé assez de partenaires** sont **notés** et **re-candidatent l'année suivante**.
   - Un groupe ainsi formé devient un **couple** : ses membres deviennent **conjoints actuels** les uns des autres et ne peuvent se reproduire **qu'au sein de ce groupe** tant qu'il n'y a pas divorce.
-- Les **couples déjà formés** ont chaque année un **% de chance de se reproduire** : ce pourcentage dépend de l'espèce (paramétrable), mais est **éditable couple par couple** par l'utilisateur.
+- Les **couples déjà formés** ont chaque année un **% de chance de se reproduire** **issu de la même gaussienne de reproduction** (§9.4) que celle des candidats célibataires (évaluée selon l'âge des membres du couple) ; ce pourcentage reste **éditable couple par couple** par l'utilisateur.
 - Toute reproduction produit une **portée** (§6.6.2).
 
 > Le genre `"tout"` peut être groupé avec n'importe quel genre, mais **jamais en inter-espèces** et **sans briser** de couple existant (§3.4).
@@ -563,7 +565,7 @@ L'utilisateur peut :
 
 ## 7. Puissance et maîtrise
 
-Chaque pouvoir possède une **puissance** et une **maîtrise** (entiers, bornés **[1, 10]**).
+Chaque pouvoir possède une **puissance** et une **maîtrise** (valeurs entières). Elles ne sont **bornées à [1, 10] que lorsqu'une nouvelle valeur aléatoire est tirée** (mutation forte, ou cas *A* d'une naissance — cf. §7.2). Dans tous les autres cas (valeurs dérivées de la moyenne des parents), **il n'y a aucune borne**, ni inférieure ni supérieure : par exemple, des parents de puissance moyenne 10 peuvent donner un enfant de puissance 11.
 
 ### 7.1. Mutation forte
 
@@ -583,7 +585,7 @@ Les pouvoirs de l'enfant ont été calculés (§6.4). Pour leur attribuer puissa
   - **C %** → `moyenne` ;
   - **B %** → `moyenne + 1`.
 - **B** et **C** sont **réglables en paramètre** ; **A = 100 − 2·B − C** est **affichée** à côté.
-- Le résultat est **borné à [1, 10]**.
+- **Bornage** : seul le cas **A** (nouvelle valeur aléatoire) est borné à **[1, 10]**. Les cas `moyenne − 1`, `moyenne` et `moyenne + 1` **ne sont pas bornés** — la valeur peut donc dépasser 10 (ou être inférieure à 1).
 
 #### Exemple 1
 Enfant à 3 pouvoirs (`pe1`, `pe2`, `pe3`). Parents : l'un avec 2 pouvoirs (`pa1`, `pa2`), l'autre avec 3 (`pb1`, `pb2`, `pb3`).
@@ -613,7 +615,7 @@ Un clic sur un individu ouvre sa **fiche individu** (§8.2).
 ### 8.2. Fiche d'un individu
 
 Page dédiée à un individu, qui contient :
-- ses **informations globales** (nom, date de naissance, âge, espèce, genre, statut vivant/décédé, notes, parents, conjoints…) ;
+- ses **informations globales** (nom, date de naissance, âge, **génération** [tranche de 20 ans, cf. §6.2], espèce, genre, statut vivant/décédé, notes, parents, conjoints…) ;
 - son **ADN / ses traits**, affichés selon le mode d'affichage actif (cf. §8.5) ;
 - ses **pouvoirs**, avec **puissance** et **maîtrise** ;
 - un **arbre généalogique** centré sur lui, avec une **profondeur N sélectionnable** (par défaut **2**) : N niveaux d'ancêtres au-dessus et N niveaux de descendants au-dessous, dans la mesure du possible.
@@ -647,7 +649,8 @@ Trois modes au choix :
 - Poids de chaque **type de trait** dans les tirages.
 - Poids de chaque **trait individuel** dans les tirages.
 - Résilience initiale attribuée aux traits d'un pouvoir nouvellement tiré (mutation forte).
-- Constante **`K`** (duplication de traits et génération de traits `K…` dans l'algorithme §6.4).
+- Constante de **duplication `D`** : pilote la duplication des traits secondaires (§6.4.1).
+- Constante de **génération `K`** : pilote la génération de nouveaux traits `K…` (§6.4.2). **Distincte de `D`.**
 
 ### 9.2. Paramètres d'hérédité
 
@@ -682,7 +685,7 @@ Pour chaque espèce :
   - **probabilité au pic**,
   - **pente** : slider d'écart-type avec effet direct sur la courbe affichée.
 - **% de divorce** par an.
-- **% de reproduction d'un couple** déjà formé par an (éditable couple par couple).
+- **% de reproduction d'un couple** déjà formé par an : **issu de la même gaussienne de reproduction** ci-dessus (pas de paramètre séparé), mais **éditable couple par couple**.
 
 > Plus de durée de vie, plus d'âge de mort, plus d'âge à la naissance (toujours 0), plus d'immortalité : ces paramètres V1 **disparaissent**.
 

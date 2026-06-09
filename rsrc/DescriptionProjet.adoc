@@ -91,7 +91,7 @@ Une *personne* est décrite par les champs suivants :
 
 Un individu peut avoir *un nombre variable de pouvoirs*, qui émerge des combinaisons de traits actifs de son ADN.
 
-NOTE: La notion de *génération* comme champ de la personne *disparaît* (cf. <<no-gen>>). Elle ne subsiste que comme *regroupement d'affichage* (tranches de 20 ans), utilisé en filtre (cf. <<ui-liste>>).
+NOTE: La notion de *génération* comme champ de la personne *disparaît* (cf. <<no-gen>>). Elle ne subsiste que comme *regroupement d'affichage* (tranches de 20 ans), *affiché sur la fiche de l'individu* (cf. <<ui-fiche>>) et utilisé pour les *tris et filtres* (cf. <<ui-liste>>).
 
 [[especes]]
 === 3.4. Espèces et genres
@@ -121,6 +121,7 @@ L'*ADN* est l'objet central qui décrit la génétique d'une personne. C'est une
 * La *résilience* est le pourcentage de chance que le trait soit transmis *actif* à la descendance.
 * Un trait peut être présent en ADN tout en étant *inactif* : il est quand même transmissible (cf. <<transmission-inactifs>>).
 
+[[heredite]]
 == 4. Hérédité — Modèle de résilience
 
 NOTE: Ce modèle est *inchangé par rapport à la V1* ; seule la terminologie « mutation » devient « *mutation forte* » (cf. <<cas-speciaux>>), et la représentation des traits d'un individu est désormais l'objet *ADN* (<<adn>>).
@@ -176,7 +177,6 @@ Un trait *inactif* chez un individu *est quand même transmis* à ses enfants. L
 ** _Sans pouvoir_ : aucun pouvoir.
 . *Calcul de la puissance et de la maîtrise* de chaque pouvoir (<<puissance>>).
 
-[[heredite]]
 == 6. Génération des pouvoirs & cas spéciaux
 
 [[cas-speciaux]]
@@ -222,7 +222,7 @@ NOTE: Le type *AEP* (Action + Élément + Partie du corps) de la V1 *disparaît*
 
 La notion de *génération* (champ de personne, numérotation, `max(parents)+1`) *disparaît*. Le temps est désormais géré par des *dates* et l'*avancement par années* (<<temps>>).
 
-Subsiste uniquement une *génération d'affichage* = tranche de *20 ans* de l'année de naissance (utilisée comme filtre, cf. <<ui-liste>>).
+Subsiste uniquement une *génération d'affichage* = tranche de *20 ans* de l'année de naissance (par ex. génération 0 = années [0, 19], génération 1 = [20, 39], etc.). Elle est *calculée à partir de l'année de naissance*, *affichée sur la fiche de l'individu* (cf. <<ui-fiche>>) et sert aux *tris et filtres* (cf. <<ui-liste>>).
 
 [[mutation-faible]]
 === 6.3. Mutation faible
@@ -239,10 +239,14 @@ Les mutations faibles *ne concernent que les naissances normales* (ni _sans pouv
 [[algo-pouvoirs]]
 === 6.4. Algorithme traits -> pouvoirs
 
-Cet algorithme construit les pouvoirs à partir de la liste des *traits actifs* d'une personne. La constante *`K`* est *réglable en paramètre* et identique partout dans l'algorithme.
+Cet algorithme construit les pouvoirs à partir de la liste des *traits actifs* d'une personne. Il fait intervenir *deux paramètres distincts*, tous deux *réglables en paramètre* :
+
+* la *constante de duplication `D`* (cf. <<sous-listes>>), qui pilote la probabilité de duplication des traits secondaires ;
+* la *constante de génération `K`* (cf. <<sous-listes-pouvoir>>), qui pilote la probabilité de génération de nouveaux traits (`Ka`, `Ke`, …).
 
 TIP: Si la personne n'a *aucun trait actif*, elle est *sans pouvoir*.
 
+[[sous-listes]]
 ==== 6.4.1. Constitution des sous-listes de traits
 
 On part de la liste de tous les traits *actifs*.
@@ -259,7 +263,7 @@ On crée *autant de sous-listes que de traits principaux*, chacune initialisée 
 ** S'il y a *plus de principaux que de secondaires*, certains principaux restent sans secondaire.
 ** S'il y a *plus de secondaires que de principaux*, on *recommence le parcours des principaux* depuis le début, dans le même ordre.
 
-*Duplication* : au moment où l'on assigne un trait secondaire, il y a `(résilience du trait secondaire / K) %` de chance que ce trait *se duplique*, c'est-à-dire qu'une *copie* soit aussi placée dans *une autre* sous-liste.
+*Duplication* : au moment où l'on assigne un trait secondaire, il y a `(résilience du trait secondaire / D) %` de chance que ce trait *se duplique*, c'est-à-dire qu'une *copie* soit aussi placée dans *une autre* sous-liste. (`D` = constante de duplication, distincte de la constante de génération `K` du <<sous-listes-pouvoir>>.)
 
 * Un trait dupliqué ne peut *pas apparaître deux fois dans une même sous-liste* ; il peut donc être dupliqué au maximum autant de fois qu'il y a de sous-listes.
 * La duplication *ne modifie pas l'ADN* : elle n'existe que pour la construction des pouvoirs.
@@ -338,6 +342,7 @@ Une personne a 3 actions (`a1`, `a2`, `a3`), 4 états (`e1`…`e4`) et 3 remplac
 [ a3, e2, r1, r2 ]
 ----
 
+[[sous-listes-pouvoir]]
 ==== 6.4.2. Transformation d'une sous-liste en pouvoir
 
 Si une sous-liste contient *plusieurs traits du même type*, on les considère comme *un seul* trait en les séparant par des virgules + « et » (ou « ou » pour les états). Cela ne change *rien à l'ADN*, c'est purement pour l'affichage du pouvoir.
@@ -349,7 +354,7 @@ Notations :
 
 * `a` = trait/groupe de type *Action* ; `e` = *Élément* ; `p` = *Partie du corps* ; `aj` = *Ajout* ; `r` = *Remplacement* ; `et` = *État*.
 * `if a:` signifie « s'il y a au moins une action dans la sous-liste ».
-* `Ka` / `Ke` / `Kp` / `Kaj` / `Kr` / `Ket` : *`K` % de chance* de générer *UN SEUL* nouveau trait du type indiqué.
+* `Ka` / `Ke` / `Kp` / `Kaj` / `Kr` / `Ket` : *`K` % de chance* de générer *UN SEUL* nouveau trait du type indiqué (`K` = constante de génération, distincte de la constante de duplication `D` du <<sous-listes>>).
 ** On tente une génération via `K` autant de fois que la notation `K…` apparaît dans le pouvoir choisi.
 ** Les traits ainsi générés sont *inscrits dans l'ADN* (en actif). S'il existe déjà dans l'ADN, on le met *actif* + *bonus* de résilience.
 ** *Si le tirage `K` échoue* : c'est comme `pouvoir = null` -> *aucun pouvoir* n'est produit par cette sous-liste (mais le trait reste présent et actif dans l'ADN, sauf s'il s'agissait d'une duplication).
@@ -542,7 +547,7 @@ else:
 			else:
 				if r:
 					if et:
-						pouvoir = "{Ka} {r} {et}"
+						pouvoir = "{r} {et} à la place de {Kp}"
 					else:
 						pouvoir = "{r} à la place de {Kp}"
 				else:
@@ -574,7 +579,7 @@ Chaque année avancée applique, dans l'ordre :
 * On constitue la *liste des candidats* et on tire *aléatoirement des groupes* de la *taille requise par l'espèce*, en respectant les *règles de consanguinité* (<<consanguinite>>) et *sans inter-espèces*.
 ** Les candidats n'ayant *pas trouvé assez de partenaires* sont *notés* et *re-candidatent l'année suivante*.
 ** Un groupe ainsi formé devient un *couple* : ses membres deviennent *conjoints actuels* les uns des autres et ne peuvent se reproduire *qu'au sein de ce groupe* tant qu'il n'y a pas divorce.
-* Les *couples déjà formés* ont chaque année un *% de chance de se reproduire* : ce pourcentage dépend de l'espèce (paramétrable), mais est *éditable couple par couple* par l'utilisateur.
+* Les *couples déjà formés* ont chaque année un *% de chance de se reproduire* *issu de la même gaussienne de reproduction* (<<params-espece>>) que celle des candidats célibataires (évaluée selon l'âge des membres du couple) ; ce pourcentage reste *éditable couple par couple* par l'utilisateur.
 * Toute reproduction produit une *portée* (<<portee>>).
 
 NOTE: Le genre `"tout"` peut être groupé avec n'importe quel genre, mais *jamais en inter-espèces* et *sans briser* de couple existant (<<especes>>).
@@ -614,12 +619,13 @@ L'utilisateur peut :
 [[puissance]]
 == 7. Puissance et maîtrise
 
-Chaque pouvoir possède une *puissance* et une *maîtrise* (entiers, bornés *[1, 10]*).
+Chaque pouvoir possède une *puissance* et une *maîtrise* (valeurs entières). Elles ne sont *bornées à [1, 10] que lorsqu'une nouvelle valeur aléatoire est tirée* (mutation forte, ou cas _A_ d'une naissance — cf. <<puissance-naissance>>). Dans tous les autres cas (valeurs dérivées de la moyenne des parents), *il n'y a aucune borne*, ni inférieure ni supérieure : par exemple, des parents de puissance moyenne 10 peuvent donner un enfant de puissance 11.
 
 === 7.1. Mutation forte
 
 En cas de mutation forte, *puissance* et *maîtrise* sont deux nombres *aléatoires entre 1 et 10* (bornes incluses).
 
+[[puissance-naissance]]
 === 7.2. Naissance normale
 
 Les pouvoirs de l'enfant ont été calculés (<<algo-pouvoirs>>). Pour leur attribuer puissance/maîtrise :
@@ -634,7 +640,7 @@ Les pouvoirs de l'enfant ont été calculés (<<algo-pouvoirs>>). Pour leur attr
 ** *C %* -> `moyenne` ;
 ** *B %* -> `moyenne + 1`.
 * *B* et *C* sont *réglables en paramètre* ; *A = 100 − 2·B − C* est *affichée* à côté.
-* Le résultat est *borné à [1, 10]*.
+* *Bornage* : seul le cas *A* (nouvelle valeur aléatoire) est borné à *[1, 10]*. Les cas `moyenne − 1`, `moyenne` et `moyenne + 1` *ne sont pas bornés* — la valeur peut donc dépasser 10 (ou être inférieure à 1).
 
 ==== Exemple 1
 
@@ -672,7 +678,7 @@ Un clic sur un individu ouvre sa *fiche individu* (<<ui-fiche>>).
 
 Page dédiée à un individu, qui contient :
 
-* ses *informations globales* (nom, date de naissance, âge, espèce, genre, statut vivant/décédé, notes, parents, conjoints…) ;
+* ses *informations globales* (nom, date de naissance, âge, *génération* [tranche de 20 ans, cf. <<no-gen>>], espèce, genre, statut vivant/décédé, notes, parents, conjoints…) ;
 * son *ADN / ses traits*, affichés selon le mode d'affichage actif (cf. <<ui-modes>>) ;
 * ses *pouvoirs*, avec *puissance* et *maîtrise* ;
 * un *arbre généalogique* centré sur lui, avec une *profondeur N sélectionnable* (par défaut *2*) : N niveaux d'ancêtres au-dessus et N niveaux de descendants au-dessous, dans la mesure du possible.
@@ -710,7 +716,8 @@ Trois modes au choix :
 * Poids de chaque *type de trait* dans les tirages.
 * Poids de chaque *trait individuel* dans les tirages.
 * Résilience initiale attribuée aux traits d'un pouvoir nouvellement tiré (mutation forte).
-* Constante *`K`* (duplication de traits et génération de traits `K…` dans l'algorithme <<algo-pouvoirs>>).
+* Constante de *duplication `D`* : pilote la duplication des traits secondaires (<<sous-listes>>).
+* Constante de *génération `K`* : pilote la génération de nouveaux traits `K…` (<<sous-listes-pouvoir>>). *Distincte de `D`.*
 
 === 9.2. Paramètres d'hérédité
 
@@ -747,7 +754,7 @@ Pour chaque espèce :
 ** *probabilité au pic*,
 ** *pente* : slider d'écart-type avec effet direct sur la courbe affichée.
 * *% de divorce* par an.
-* *% de reproduction d'un couple* déjà formé par an (éditable couple par couple).
+* *% de reproduction d'un couple* déjà formé par an : *issu de la même gaussienne de reproduction* ci-dessus (pas de paramètre séparé), mais *éditable couple par couple*.
 
 NOTE: Plus de durée de vie, plus d'âge de mort, plus d'âge à la naissance (toujours 0), plus d'immortalité : ces paramètres V1 *disparaissent*.
 
