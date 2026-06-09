@@ -1,2 +1,18 @@
 # Documents de travail locaux (hors versionnement)
 rsrc/plangénéral.md
+
+# Dépendances et sorties de build
+node_modules/
+dist/
+dev-dist/
+coverage/
+
+# Logs et divers
+*.log
+.DS_Store
+Thumbs.db
+*.tmp
+*.swp
+.vscode/
+.idea/
+.env*

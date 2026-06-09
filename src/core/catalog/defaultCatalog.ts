@@ -1,0 +1,211 @@
+import type { Catalog, Trait } from '../model/trait.js';
+import type { TraitType } from '../model/traitType.js';
+import { TRAIT_TYPES } from '../model/traitType.js';
+import type { Espece } from '../model/espece.js';
+import { GENRE_TOUT } from '../model/espece.js';
+
+// Listes de traits par défaut, embarquées comme données du cœur (D9). Source de référence :
+// rsrc/ExempleTraits/*.txt (copie intégrée au bundle ; aucune I/O réseau au runtime).
+const RAW: Record<TraitType, string[]> = {
+  Remplacement: [
+    'Pinces de crabe',
+    'Mandibule',
+    'Tentacules',
+    'Main',
+    'Structure osseuse',
+    'Halo divin',
+    'Moteur',
+    'Ronce',
+    'Fleur',
+    'Miroir',
+    'Aiguillon',
+    'Ombre démoniaque',
+  ],
+  PartieCorps: [
+    'Indexs',
+    'Doigts',
+    'Mains',
+    'Pieds',
+    'Bras',
+    'Jambes',
+    'Bas du dos',
+    'Colonne vertébrale',
+    'Omoplates',
+    'Cou',
+    'Épaule',
+    'Yeux',
+    'Nez',
+    'Langue',
+    'Bouche',
+    'Front',
+    'Corps entier',
+    'Peau',
+    'Canine',
+    'Dent',
+    'Cheveux',
+    'Coté gauche',
+    'Coté droit',
+  ],
+  Etat: [
+    'Lumineux',
+    'Visqueux',
+    'Rocailleux',
+    'Invisible',
+    'Gazeux',
+    'Froid',
+    'Chaud',
+    'Mous',
+    'Vibrant',
+    'Musical',
+    'Plus grand',
+    'Plus petit',
+    'Plasmique',
+    'gelatineux',
+    'détachable',
+  ],
+  Element: [
+    'sois-même',
+    'tissu',
+    'mana',
+    'pouvoir',
+    'chat',
+    'cuir',
+    'esprit',
+    'or',
+    'metaux',
+    'oiseaux',
+    'eau',
+    'feu',
+    'caillou',
+    'air',
+    'papier',
+    'lumière',
+    'diamant',
+    'verre',
+    'Lézard',
+    'Serpent',
+    'encre',
+    'fleur',
+    'sang',
+    'nuage',
+    'bois',
+    'lait',
+    'électricité',
+    'plume',
+    'ombre',
+    'livres',
+    'céramique',
+    'uranium',
+    'cochon',
+    'os',
+    'chaire',
+    'humain',
+    'plastique',
+    'rongeur',
+    'insecte',
+  ],
+  Ajout: [
+    'Fourrure',
+    'Plume',
+    'Tentacules',
+    'Pic osseux',
+    'Carapace',
+    'Cristaux',
+    'Bras',
+    'Jambes',
+    'Cerveau',
+    'Oeil',
+    'Yeux',
+    'Mâchoire',
+    'Paillettes',
+    'Tache sombre',
+    'Tache de couleur',
+    'Branchies',
+    'Nageoires',
+    'Écailles',
+    'Muscle supplémentaire',
+    'Halo divin',
+    'Écorce',
+    'Ronce',
+    'Liane',
+    'Fleur',
+    'Aiguillon',
+    'Ombre démoniaque',
+  ],
+  Action: [
+    'soigne avec',
+    'contrôle',
+    'créé',
+    'fait exploser',
+    'Invulnérable au',
+    'Communique avec',
+    'attire/repousse',
+    'traverse',
+    'se transforme en',
+    'Restaure',
+    'Absorbe/se nourrit de',
+    'liquéfie',
+    'pétrifie',
+    'anime',
+    'brule',
+    'efface',
+    'rends invisible',
+    'alourdis / allège',
+    'anticipe',
+    'plante',
+    'possède',
+    'gélifie',
+    'électrifie',
+    'Vaporise',
+    'Créer des lames en',
+    'Créer des boucliers en',
+    'Créer des masses en',
+    'Créer des armures en',
+    'Agrandi/rétréci',
+    'Teleporte',
+    'Ameliore/renforce',
+  ],
+};
+
+// Slug stable et déterministe pour l'id de trait (sans dépendre de la casse/accents
+// pour l'unicité fonctionnelle, mais en conservant un identifiant lisible).
+function slug(label: string): string {
+  return label
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+/** Catalogue par défaut : 6 types, poids 1, ids stables `type:slug`. */
+export function defaultCatalog(): Catalog {
+  const byType = {} as Record<TraitType, Trait[]>;
+  for (const type of TRAIT_TYPES) {
+    byType[type] = RAW[type].map((label, i) => ({
+      id: `${type}:${slug(label)}-${i}`,
+      type,
+      label,
+      weight: 1,
+    }));
+  }
+  return { byType };
+}
+
+/** Espèce par défaut « humain » avec le genre spécial « tout » (FR-007, FR-011). */
+export function defaultEspece(): Espece {
+  return {
+    id: 'humain',
+    label: 'Humain',
+    genres: [
+      { id: GENRE_TOUT, label: 'Tout' },
+      { id: 'feminin', label: 'Féminin' },
+      { id: 'masculin', label: 'Masculin' },
+    ],
+  };
+}
+
+/** Toutes les espèces par défaut (Feature 1 : uniquement « humain »). */
+export function defaultEspeces(): Espece[] {
+  return [defaultEspece()];
+}

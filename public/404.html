@@ -1,0 +1,20 @@
+<!doctype html>
+<html lang="fr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Générateur de Pouvoir</title>
+    <script>
+      // Repli de routing GitHub Pages : l'app est une SPA sans routage d'URL profond.
+      // On redirige toute URL inconnue vers la racine du site (préserve le base path /<repo>/).
+      (function () {
+        var path = location.pathname;
+        var repoBase = path.split('/').slice(0, 2).join('/') + '/';
+        location.replace(location.origin + repoBase);
+      })();
+    </script>
+  </head>
+  <body>
+    <p>Redirection…</p>
+  </body>
+</html>

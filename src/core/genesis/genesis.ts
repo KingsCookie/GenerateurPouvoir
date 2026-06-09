@@ -1,0 +1,91 @@
+import type { Rng } from '../rng/rng.js';
+import type { Catalog } from '../model/trait.js';
+import type { Parameters } from '../params/parameters.js';
+import type { Personne } from '../model/personne.js';
+import { GENRE_TOUT } from '../model/espece.js';
+import { defaultEspece } from '../catalog/defaultCatalog.js';
+import { generateStrongMutationPower } from '../powers/strongMutation.js';
+import { generateName } from './names.js';
+
+const CUMUL_DAYS = [31, 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31]; // calendrier fixe (déterminisme)
+
+function pad4(year: number): string {
+  const sign = year < 0 ? '-' : '';
+  return sign + String(Math.abs(year)).padStart(4, '0');
+}
+
+/** Convertit un jour de l'année [0..364] en date ISO YYYY-MM-DD (calendrier fixe 365 j). */
+function isoDate(year: number, dayOfYear: number): string {
+  let d = dayOfYear;
+  let month = 0;
+  while (d >= CUMUL_DAYS[month]) {
+    d -= CUMUL_DAYS[month];
+    month++;
+  }
+  const mm = String(month + 1).padStart(2, '0');
+  const dd = String(d + 1).padStart(2, '0');
+  return `${pad4(year)}-${mm}-${dd}`;
+}
+
+function personId(index: number): string {
+  return `p-${String(index + 1).padStart(6, '0')}`;
+}
+
+/**
+ * Génère le batch initial de façon **strictement déterministe** : toute l'aléatoire passe
+ * par `rng`. Chaque individu naît à l'âge 0 dans `params.birthYear`, avec au plus un
+ * pouvoir (gabarit de mutation forte) selon `params.powerChancePct` (INV-1..7).
+ *
+ * Ordre des tirages par individu (fixe) : genre → prénom → jour de naissance →
+ * présence de pouvoir → [gabarit/traits/puissance/maîtrise si pouvoir].
+ */
+export function generateInitialPopulation(
+  params: Parameters,
+  catalog: Catalog,
+  rng: Rng,
+): Personne[] {
+  const espece = defaultEspece();
+  const concreteGenres = espece.genres.filter((g) => g.id !== GENRE_TOUT);
+  const genrePool = concreteGenres.length > 0 ? concreteGenres : espece.genres;
+
+  const population: Personne[] = [];
+  for (let i = 0; i < params.batchSize; i++) {
+    const genreId = rng.pick(genrePool).id;
+    const nom = generateName(rng, genreId);
+    const dayOfYear = rng.nextInt(365);
+    const dateNaissance = isoDate(params.birthYear, dayOfYear);
+
+    const personne: Personne = {
+      id: personId(i),
+      nom,
+      especeId: espece.id,
+      genreId,
+      dateNaissance,
+      vivant: true,
+      raisonDeces: null,
+      parents: [],
+      enfants: [],
+      conjoints: [],
+      adn: { traits: [] },
+      pouvoirs: [],
+      notes: null,
+    };
+
+    if (rng.chance(params.powerChancePct)) {
+      const power = generateStrongMutationPower(catalog, params, rng);
+      if (power) {
+        personne.pouvoirs = [power];
+        personne.adn = {
+          traits: power.traitIds.map((traitId) => ({
+            traitId,
+            active: true,
+            resilience: params.initialResilience,
+          })),
+        };
+      }
+    }
+
+    population.push(personne);
+  }
+  return population;
+}

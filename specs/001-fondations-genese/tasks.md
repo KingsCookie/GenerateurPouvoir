@@ -28,14 +28,14 @@ Projet unique, deux couches : cœur pur `src/core/`, UI Svelte `src/ui/`, tests 
 
 **Purpose**: initialiser le projet statique PWA (TS + Vite + Svelte + Vitest) et la CI Pages.
 
-- [ ] T001 Initialiser le projet npm dans `package.json` (TypeScript, Vite, Svelte, `@sveltejs/vite-plugin-svelte`, Vitest, `vite-plugin-pwa`) — **sans champ `author` nominatif** (Principe X), scripts `dev`/`build`/`preview`/`test`/`test:watch`.
-- [ ] T002 [P] Configurer TypeScript strict dans `tsconfig.json`.
-- [ ] T003 [P] Configurer Vite dans `vite.config.ts` : plugin Svelte, `vite-plugin-pwa` (manifeste + SW precache), **`base` lue depuis une variable d'env** (`/<repo>/` en prod, `/` en local).
-- [ ] T004 [P] Configurer Vitest dans `vitest.config.ts` (environnement node pour le cœur).
-- [ ] T005 [P] Configurer lint/format (ESLint + Prettier) dans `.eslintrc`/`.prettierrc` (porte de qualité « lint »).
-- [ ] T006 Créer l'arborescence `src/core/`, `src/ui/`, `tests/unit/`, `public/` (avec un `src/main.ts` minimal et `src/app.css`).
-- [ ] T007 [P] Ajouter le workflow CI `.github/workflows/deploy.yml` : `install → test → build (base=/<repo>/) → upload-pages-artifact → deploy-pages` sur push `main`.
-- [ ] T008 [P] Préparer les assets PWA : `public/icons/` et `public/404.html` (copie d'`index.html` pour le repli de routing Pages).
+- [x] T001 Initialiser le projet npm dans `package.json` (TypeScript, Vite, Svelte, `@sveltejs/vite-plugin-svelte`, Vitest, `vite-plugin-pwa`) — **sans champ `author` nominatif** (Principe X), scripts `dev`/`build`/`preview`/`test`/`test:watch`.
+- [x] T002 [P] Configurer TypeScript strict dans `tsconfig.json`.
+- [x] T003 [P] Configurer Vite dans `vite.config.ts` : plugin Svelte, `vite-plugin-pwa` (manifeste + SW precache), **`base` lue depuis une variable d'env** (`/<repo>/` en prod, `/` en local).
+- [x] T004 [P] Configurer Vitest dans `vitest.config.ts` (environnement node pour le cœur).
+- [x] T005 [P] Configurer lint/format (ESLint + Prettier) dans `.eslintrc`/`.prettierrc` (porte de qualité « lint »).
+- [x] T006 Créer l'arborescence `src/core/`, `src/ui/`, `tests/unit/`, `public/` (avec un `src/main.ts` minimal et `src/app.css`).
+- [x] T007 [P] Ajouter le workflow CI `.github/workflows/deploy.yml` : `install → test → build (base=/<repo>/) → upload-pages-artifact → deploy-pages` sur push `main`.
+- [x] T008 [P] Préparer les assets PWA : `public/icons/` et `public/404.html` (copie d'`index.html` pour le repli de routing Pages).
 
 ---
 
@@ -45,12 +45,12 @@ Projet unique, deux couches : cœur pur `src/core/`, UI Svelte `src/ui/`, tests 
 
 **⚠️ Aucune user story ne peut démarrer avant la fin de cette phase.**
 
-- [ ] T009 [P] Définir les types du domaine dans `src/core/model/` (`traitType.ts`, `trait.ts`, `adn.ts`, `pouvoir.ts`, `personne.ts`, `espece.ts`) conformément à `data-model.md`.
-- [ ] T010 Implémenter le **PRNG seedé déterministe** dans `src/core/rng/rng.ts` : `createSeed()` (seul point d'entropie, isolé), `createRng(seed)`, `nextU64/nextFloat/nextInt/chance/pick/pickWeighted` (SplitMix64 + xoshiro256\*\*, seed BigInt 64 bits) — contrat `contracts/core-api.md`.
-- [ ] T011 [P] Test déterminisme RNG dans `tests/unit/rng.test.ts` : même seed ⇒ même séquence ; `nextInt` sans biais ; `chance(0)`/`chance(100)`.
-- [ ] T012 [P] Catalogues par défaut dans `src/core/catalog/defaultCatalog.ts` : embarquer les 6 listes de traits (issues de `rsrc/ExempleTraits/`) **et** l'**espèce par défaut « humain »** avec son ensemble de **genres incluant le genre spécial « tout »** (FR-007, FR-011), en données du bundle.
-- [ ] T013 [P] Paramètres + valeurs par défaut dans `src/core/params/parameters.ts` (`batchSize=100`, `birthYear=0`, `powerChancePct=0`, `initialResilience`, `traitTypeWeights`, `templateWeights` AE majoritaire).
-- [ ] T014 [P] Test de **pureté du cœur** dans `tests/unit/core-purity.test.ts` : aucun import de `svelte`, DOM, `window`, `Date`, `crypto`, ni `Math.random` sous `src/core/` (hors `createSeed`).
+- [x] T009 [P] Définir les types du domaine dans `src/core/model/` (`traitType.ts`, `trait.ts`, `adn.ts`, `pouvoir.ts`, `personne.ts`, `espece.ts`) conformément à `data-model.md`.
+- [x] T010 Implémenter le **PRNG seedé déterministe** dans `src/core/rng/rng.ts` : `createSeed()` (seul point d'entropie, isolé), `createRng(seed)`, `nextU64/nextFloat/nextInt/chance/pick/pickWeighted` (SplitMix64 + xoshiro256\*\*, seed BigInt 64 bits) — contrat `contracts/core-api.md`.
+- [x] T011 [P] Test déterminisme RNG dans `tests/unit/rng.test.ts` : même seed ⇒ même séquence ; `nextInt` sans biais ; `chance(0)`/`chance(100)`.
+- [x] T012 [P] Catalogues par défaut dans `src/core/catalog/defaultCatalog.ts` : embarquer les 6 listes de traits (issues de `rsrc/ExempleTraits/`) **et** l'**espèce par défaut « humain »** avec son ensemble de **genres incluant le genre spécial « tout »** (FR-007, FR-011), en données du bundle.
+- [x] T013 [P] Paramètres + valeurs par défaut dans `src/core/params/parameters.ts` (`batchSize=100`, `birthYear=0`, `powerChancePct=0`, `initialResilience`, `traitTypeWeights`, `templateWeights` AE majoritaire).
+- [x] T014 [P] Test de **pureté du cœur** dans `tests/unit/core-purity.test.ts` : aucun import de `svelte`, DOM, `window`, `Date`, `crypto`, ni `Math.random` sous `src/core/` (hors `createSeed`).
 
 **Checkpoint**: socle prêt — les user stories peuvent commencer.
 
@@ -64,18 +64,18 @@ Projet unique, deux couches : cœur pur `src/core/`, UI Svelte `src/ui/`, tests 
 
 ### Tests (écrits AVANT l'implémentation — Principe V)
 
-- [ ] T015 [P] [US1] Tests genèse + invariants dans `tests/unit/genesis.test.ts` : INV-1 (reproductibilité), INV-2 (puissance/maîtrise ∈ [1,10]), INV-3 (0 %/100 %), INV-4 (sans pouvoir ⇒ ADN/pouvoirs vides), INV-7 (âge 0, date dans l'année), **+ test statistique sur grand effectif (≥ 1 000) : proportion d'individus avec pouvoir à moins de 5 points de `powerChancePct` (SC-003)**.
+- [x] T015 [P] [US1] Tests genèse + invariants dans `tests/unit/genesis.test.ts` : INV-1 (reproductibilité), INV-2 (puissance/maîtrise ∈ [1,10]), INV-3 (0 %/100 %), INV-4 (sans pouvoir ⇒ ADN/pouvoirs vides), INV-7 (âge 0, date dans l'année), **+ test statistique sur grand effectif (≥ 1 000) : proportion d'individus avec pouvoir à moins de 5 points de `powerChancePct` (SC-003)**.
 
 ### Implementation
 
-- [ ] T016 [P] [US1] Générateur de prénoms déterministe dans `src/core/genesis/names.ts` : tirage aléatoire (via `Rng`) dans deux listes embarquées **`rsrc/ExemplesPrenoms/prenoms_feminins.csv`** et **`rsrc/ExemplesPrenoms/prenoms_masculins.csv`** (genre féminin/masculin → liste correspondante ; genre « tout » ou autre → tirage de l'une des deux listes). Listes intégrées au bundle comme les catalogues (D9). *(Générateur plus poussé prévu pour une version future.)*
-- [ ] T017 [P] [US1] Helpers dérivés dans `src/core/genesis/derived.ts` : `computeGeneration(birthYear)`, `computeAge(birthYear, currentYear)`, `powerLabel(power, catalog)`.
-- [ ] T018 [P] [US1] Gabarit de mutation forte dans `src/core/powers/strongMutation.ts` : tirage pondéré du gabarit {AE,PE,PA,PR}, tirage pondéré des traits, `puissance`/`maitrise`=`nextInt(10)+1`, `null` si type requis vide.
-- [ ] T019 [US1] `generateInitialPopulation(params, catalog, rng)` dans `src/core/genesis/genesis.ts` (effectif, ids séquentiels, dates, ADN actif à `initialResilience`, au plus un pouvoir) — dépend de T009, T010, T012, T013, T016, T017, T018.
-- [ ] T020 [US1] Store d'état réactif dans `src/ui/stores/appState.ts` : enveloppe le cœur (paramètres, population), action **générer**, action **régénérer la seed** (`createSeed`).
-- [ ] T021 [US1] Écran paramètres `src/ui/views/ParametresView.svelte` : seed **affichée + éditable** + **bouton de régénération**, champs effectif/année/% pouvoir, bouton **Générer**.
-- [ ] T022 [US1] Écran liste `src/ui/views/ListeView.svelte` : une ligne par individu (**nom**, **date de naissance**, **âge**, **pouvoir(s)**).
-- [ ] T023 [US1] Coque applicative `src/ui/App.svelte` + `src/main.ts` : navigation entre Paramètres et Liste, branchement du store.
+- [x] T016 [P] [US1] Générateur de prénoms déterministe dans `src/core/genesis/names.ts` : tirage aléatoire (via `Rng`) dans deux listes embarquées **`rsrc/ExemplesPrenoms/prenoms_feminins.csv`** et **`rsrc/ExemplesPrenoms/prenoms_masculins.csv`** (genre féminin/masculin → liste correspondante ; genre « tout » ou autre → tirage de l'une des deux listes). Listes intégrées au bundle comme les catalogues (D9). *(Générateur plus poussé prévu pour une version future.)*
+- [x] T017 [P] [US1] Helpers dérivés dans `src/core/genesis/derived.ts` : `computeGeneration(birthYear)`, `computeAge(birthYear, currentYear)`, `powerLabel(power, catalog)`.
+- [x] T018 [P] [US1] Gabarit de mutation forte dans `src/core/powers/strongMutation.ts` : tirage pondéré du gabarit {AE,PE,PA,PR}, tirage pondéré des traits, `puissance`/`maitrise`=`nextInt(10)+1`, `null` si type requis vide.
+- [x] T019 [US1] `generateInitialPopulation(params, catalog, rng)` dans `src/core/genesis/genesis.ts` (effectif, ids séquentiels, dates, ADN actif à `initialResilience`, au plus un pouvoir) — dépend de T009, T010, T012, T013, T016, T017, T018.
+- [x] T020 [US1] Store d'état réactif dans `src/ui/stores/appState.ts` : enveloppe le cœur (paramètres, population), action **générer**, action **régénérer la seed** (`createSeed`).
+- [x] T021 [US1] Écran paramètres `src/ui/views/ParametresView.svelte` : seed **affichée + éditable** + **bouton de régénération**, champs effectif/année/% pouvoir, bouton **Générer**.
+- [x] T022 [US1] Écran liste `src/ui/views/ListeView.svelte` : une ligne par individu (**nom**, **date de naissance**, **âge**, **pouvoir(s)**).
+- [x] T023 [US1] Coque applicative `src/ui/App.svelte` + `src/main.ts` : navigation entre Paramètres et Liste, branchement du store.
 
 **Checkpoint**: US1 fonctionnelle et testable seule (MVP).
 
@@ -87,9 +87,9 @@ Projet unique, deux couches : cœur pur `src/core/`, UI Svelte `src/ui/`, tests 
 
 **Independent Test**: depuis la liste, ouvrir une fiche, vérifier la correspondance des données, revenir à la liste.
 
-- [ ] T024 [P] [US2] Test du modèle de vue fiche dans `tests/unit/fiche-vm.test.ts` : libellé de pouvoir, **génération** (tranche 20 ans), liste des traits actifs.
-- [ ] T025 [US2] Écran fiche `src/ui/views/FicheView.svelte` : nom, date de naissance, âge, **génération**, espèce, genre, statut vivant/décédé, pouvoir(s) avec puissance/maîtrise, traits actifs ; cas « sans pouvoir » explicite.
-- [ ] T026 [US2] Navigation liste → fiche → retour dans `src/ui/stores/appState.ts` et `src/ui/App.svelte` (sélection d'individu, conservation de l'état de liste).
+- [x] T024 [P] [US2] Test du modèle de vue fiche dans `tests/unit/fiche-vm.test.ts` : libellé de pouvoir, **génération** (tranche 20 ans), liste des traits actifs.
+- [x] T025 [US2] Écran fiche `src/ui/views/FicheView.svelte` : nom, date de naissance, âge, **génération**, espèce, genre, statut vivant/décédé, pouvoir(s) avec puissance/maîtrise, traits actifs ; cas « sans pouvoir » explicite.
+- [x] T026 [US2] Navigation liste → fiche → retour dans `src/ui/stores/appState.ts` et `src/ui/App.svelte` (sélection d'individu, conservation de l'état de liste).
 
 **Checkpoint**: US1 + US2 fonctionnent indépendamment.
 
@@ -103,12 +103,12 @@ Projet unique, deux couches : cœur pur `src/core/`, UI Svelte `src/ui/`, tests 
 
 ### Tests (écrits AVANT l'implémentation — Principe V)
 
-- [ ] T027 [P] [US3] Tests sérialisation dans `tests/unit/state.test.ts` : INV-6 (round-trip `serialize`→`deserialize` égal), ordre de clés déterministe (deux états égaux ⇒ fichier identique), rejet d'un `kind`/`formatVersion` invalide.
+- [x] T027 [P] [US3] Tests sérialisation dans `tests/unit/state.test.ts` : INV-6 (round-trip `serialize`→`deserialize` égal), ordre de clés déterministe (deux états égaux ⇒ fichier identique), rejet d'un `kind`/`formatVersion` invalide.
 
 ### Implementation
 
-- [ ] T028 [US3] Sérialisation dans `src/core/state/serialize.ts` : `serializeState` (déterministe, `kind:"full"`, `formatVersion`), `deserializeState` (validation → `Result`) — contrat `contracts/state-file.md`.
-- [ ] T029 [US3] UI export/import `src/ui/components/StateIO.svelte` : téléchargement via `Blob`, import via `<input type=file>`, message d'erreur clair, **aucune** sauvegarde automatique.
+- [x] T028 [US3] Sérialisation dans `src/core/state/serialize.ts` : `serializeState` (déterministe, `kind:"full"`, `formatVersion`), `deserializeState` (validation → `Result`) — contrat `contracts/state-file.md`.
+- [x] T029 [US3] UI export/import `src/ui/components/StateIO.svelte` : téléchargement via `Blob`, import via `<input type=file>`, message d'erreur clair, **aucune** sauvegarde automatique.
 
 **Checkpoint**: les 3 user stories fonctionnent indépendamment.
 
@@ -118,11 +118,11 @@ Projet unique, deux couches : cœur pur `src/core/`, UI Svelte `src/ui/`, tests 
 
 **Purpose**: performance, responsive, déploiement vérifié, documentation anonyme.
 
-- [ ] T030 [P] Test/bench de performance dans `tests/unit/perf.test.ts` : génération de **1 000 individus < 2 s** (SC-005).
-- [ ] T031 [P] Styles responsive (mobile → desktop) dans `src/app.css` et composants.
-- [ ] T032 [P] `README.md` **anonyme** (`KingsCookie`, sans email) : build, test, déploiement GitHub Pages, base path — lève le `TODO(README)` de la constitution.
-- [ ] T033 Vérifier les portes de la constitution : pureté du cœur (T014 vert), absence de `Math.random`, `package.json` sans `author` nominatif ; dérouler le smoke test de `quickstart.md`.
-- [ ] T034 [P] Vérifier le build statique avec `base=/<repo>/` + `404.html` via `npm run build && npm run preview` (déployabilité Pages).
+- [x] T030 [P] Test/bench de performance dans `tests/unit/perf.test.ts` : génération de **1 000 individus < 2 s** (SC-005).
+- [x] T031 [P] Styles responsive (mobile → desktop) dans `src/app.css` et composants.
+- [x] T032 [P] `README.md` **anonyme** (`KingsCookie`, sans email) : build, test, déploiement GitHub Pages, base path — lève le `TODO(README)` de la constitution.
+- [x] T033 Vérifier les portes de la constitution : pureté du cœur (T014 vert), absence de `Math.random`, `package.json` sans `author` nominatif ; dérouler le smoke test de `quickstart.md`.
+- [x] T034 [P] Vérifier le build statique avec `base=/<repo>/` + `404.html` via `npm run build && npm run preview` (déployabilité Pages).
 
 ---
 
