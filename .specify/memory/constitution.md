@@ -1,10 +1,11 @@
 <!--
 SYNC IMPACT REPORT
 ==================
-Version change: (template non initialisé) → 1.0.0
-Type de bump: ratification initiale (MINOR-equivalent — première définition concrète)
+Version change: 1.0.0 → 1.1.0
+Type de bump: MINOR — ajout du Principe X (Anonymat de l'auteur), sur demande explicite de l'auteur.
+Historique: ratification initiale 1.0.0 (2026-06-09) → amendement 1.1.0 (2026-06-09).
 
-Principes définis (9, depuis rsrc/PromptConstit.md + demande explicite de l'auteur pour IX):
+Principes définis (10):
   I.    Déterminisme par seed unique (NON NÉGOCIABLE)
   II.   Application 100 % statique et client-side (NON NÉGOCIABLE)
   III.  PWA multiplateforme et hors-ligne
@@ -14,6 +15,7 @@ Principes définis (9, depuis rsrc/PromptConstit.md + demande explicite de l'aut
   VII.  Tout est paramétrable
   VIII. Simplicité et YAGNI
   IX.   Spécification fonctionnelle comme source de vérité (NON NÉGOCIABLE)
+  X.    Anonymat de l'auteur (NON NÉGOCIABLE) — ajouté en 1.1.0
 
 Sections ajoutées:
   - Contraintes techniques & déploiement (GitHub Pages)
@@ -119,6 +121,18 @@ TODO de suivi:
 - **Rationale** : préserver l'intention de conception, éviter la dérive silencieuse, garantir une
   référence stable et fiable pour toutes les phases.
 
+### X. Anonymat de l'auteur (NON NÉGOCIABLE)
+
+- Toute identité publiée DOIT utiliser **exclusivement** le pseudonyme GitHub **`KingsCookie`**.
+- Le vrai nom de l'auteur et toute donnée personnelle (notamment une **adresse email**) NE DOIVENT
+  apparaître **nulle part** : dépôt, **historique Git** (auteur et committer), métadonnées, code,
+  documentation, licence, et artefacts publiés (site, manifeste PWA…).
+- Les commits DOIVENT utiliser l'identité Git `KingsCookie` **sans email** (email vide `<>`).
+- **Aucun email de contact** NE DOIT être fourni ; tout contact passe par le dépôt GitHub (issues).
+- Avant toute mise en public ou publication, l'**absence de fuite d'identité** (historique Git inclus)
+  DOIT être vérifiée.
+- **Rationale** : préserver l'anonymat de l'auteur.
+
 ## Contraintes techniques & déploiement
 
 - **Sortie de build** : artefacts statiques (HTML/CSS/JS + assets PWA) publiables sur GitHub Pages.
@@ -157,4 +171,4 @@ TODO de suivi:
 - `rsrc/DescriptionProjet.md` fait autorité sur le domaine fonctionnel ; cette constitution fait autorité
   sur les principes d'ingénierie, de déploiement et de gouvernance.
 
-**Version**: 1.0.0 | **Ratifiée le**: 2026-06-09 | **Dernier amendement**: 2026-06-09
+**Version**: 1.1.0 | **Ratifiée le**: 2026-06-09 | **Dernier amendement**: 2026-06-09
