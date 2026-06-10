@@ -46,7 +46,9 @@
       Cliquez une case pour recentrer l'arbre. Molette / pincement = zoom ; clic droit / doigt =
       déplacement.
     </p>
-    <GenealogyTree node={tree} showAge={true} onSelect={recenterTree} />
+    {#key $treeRootId}
+      <GenealogyTree node={tree} showAge={true} onSelect={recenterTree} />
+    {/key}
   {/if}
 </section>
 

@@ -80,7 +80,10 @@ de la Liste et de la Fiche.
 | Persistance des filtres | Store UI **module-level** (vit toute la session) + drapeau `generationTouched` ; restauré au retour sur la Liste ; **non** exporté. |
 | Mode d'affichage | Énumération `1 | 2 | 3`, **défaut 3** ; store UI. |
 | Tri déterministe | Nœuds & résultats triés par **date de naissance puis id** (stable, déterministe). |
-| Interaction arbre (BUG-002) | `GenealogyTree.svelte` = **viewport pan/zoom** : transform CSS `translate`+`scale` ; **molette** + **pincement** (2 pointeurs) pour le zoom (borné min/max) ; **pan** au **clic droit + drag** et au **drag tactile** ; `contextmenu` supprimé sur la zone. **UI pure**, sans impact cœur. Fiche : zone **en haut**, sous « Retour à la liste », **pleine largeur**. |
+| Interaction arbre (BUG-002) | `GenealogyTree.svelte` = **viewport pan/zoom** : transform CSS `translate`+`scale` ; **molette** + **pincement** (2 pointeurs) pour le zoom (borné min/max) ; **pan** au ~~clic droit~~ drag et au **drag tactile** ; `contextmenu` ~~supprimé~~. **UI pure**, sans impact cœur. Fiche : zone **en haut**, sous « Retour à la liste », **pleine largeur**. |
+| Interaction arbre (BUG-003) | **Pan au clic gauche maintenu** (et tactile) avec **seuil clic/glisser** (~5 px) : `pointerdown` mémorise l'origine **sans** paner ; le pan (et `setPointerCapture`) ne démarre qu'**au-delà du seuil** ; `pointerup` **sous** le seuil ⇒ **navigation** (FR-004). **Recentrage de vue** (reset zoom/translation). **Centrage initial** sur la racine (offset de base, pas écrasé par la `transform`). Suppression du `contextmenu` **facultative** (clic droit libre). |
+| Rendu graphique arbre (BUG-003) | **⚭ entre les deux membres** de chaque union ; **liens de filiation** ⚭→**enfants communs** (overlay SVG ou bordures/pseudo-éléments CSS) ; **ex-conjoint + enfants d'ex en pointillés** (classe selon `statut`), unions actuelles en trait plein ; **racine** en **couleur distincte**. **UI pure** ; le cœur `genealogy/` expose déjà `unions[].enfantsCommuns` (corrélation par id avec les cases `descendants`). |
+| Scroll fiche (BUG-003) | À l'ouverture d'une fiche (liste ou clic d'arbre), **défilement remis en haut** (FR-016) — UI, sans impact cœur. |
 
 ## Project Structure
 
@@ -145,3 +148,9 @@ dépendance ajoutée (Principe VIII) ; réutilisation de `computeGeneration`, `c
 **Bugfix**: 2026-06-10 — BUG-002 Arbre interactif (viewport pan/zoom) et placement sur la fiche.
 Impact **UI seul** (`GenealogyTree.svelte`, `FicheView.svelte`) ; le cœur `genealogy/` reste pur,
 déterministe et en lecture seule (aucun changement de contrat).
+
+**Bugfix**: 2026-06-10 — BUG-003 Updated from bugfix patch. Pan au **clic gauche** + seuil
+clic/glisser, **recentrage**/**centrage** de la vue, **rendu graphique** (⚭ entre membres, liens
+⚭→enfants, ex en pointillés, racine colorée) et **scroll fiche** en haut. Impact **UI seul**
+(`GenealogyTree.svelte`, `ArbreView.svelte`, `FicheView.svelte`/navigation) ; le cœur `genealogy/`
+**inchangé** (aucun changement de contrat).

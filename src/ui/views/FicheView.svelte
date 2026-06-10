@@ -72,7 +72,9 @@
             Explorer l'arbre →
           </button>
         </div>
-        <GenealogyTree node={tree} showAge={false} onSelect={selectPerson} />
+        {#key $selectedPerson?.id}
+          <GenealogyTree node={tree} showAge={false} onSelect={selectPerson} />
+        {/key}
       </div>
     {/if}
 

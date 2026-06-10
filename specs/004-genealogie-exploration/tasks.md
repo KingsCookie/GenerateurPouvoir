@@ -26,9 +26,9 @@ conjoints/unions, répétition multi-chemins, zoom/pan, recentrage.
 - [x] T004 [US1] Implémenter `buildGenealogyTree(rootId, byId, depth, ctx)` + types `TreeNode`/`Union` dans `src/core/genealogy/tree.ts` (cf. contracts/core-api) ; ré-exporter via `src/core/genealogy/index.ts`. Réutilise `computeAge`, `powerLabel`.
 - [x] T005 [P] [US1] `src/ui/lib/treeViewModel.ts` : adapter `TreeNode` → vue **fiche** (nom + pouvoirs) et vue **page dédiée** (nom + âge + pouvoirs) — FR-003b.
 - [x] T006 [US1] Étendre `src/ui/stores/appState.ts` : type `View` += `'arbre'` ; ajouter `treeRootId`/`treeDepth` (défaut 2, ≥ 1, sans plafond) ; fonctions `goToArbre(rootId)`, `recenterTree(id)`, `setTreeDepth(n)`.
-- [x] T007 [US1] Composant `src/ui/components/GenealogyTree.svelte` : rendu récursif des cases (champs paramétrables) + **viewport pan/zoom** (FR-002b) : zoom **molette** + **pincement** (2 pointeurs), borné min/max ; **pan** clic droit + drag et drag tactile ; `contextmenu` supprimé ; clic gauche sur une case ⇒ recentrage.
-- [x] T008 [US1] `src/ui/views/FicheView.svelte` : insérer la zone arbre **en haut, juste sous « Retour à la liste », pleine largeur** (FR-002c) ; profondeur **fixe 2** (FR-002a) ; cases **nom + pouvoirs** ; bouton **« Explorer l'arbre »** → `goToArbre` (FR-002a).
-- [x] T009 [US1] Créer `src/ui/views/ArbreView.svelte` (page dédiée) : profondeur **N réglable sans plafond**, cases **nom + âge + pouvoirs**, recentrage au clic, **sans informations latérales** ; brancher la vue `'arbre'` dans `src/ui/App.svelte` (rendu + navigation).
+- [x] T007 [US1] ✅ Corrigé (BUG-003) Composant `src/ui/components/GenealogyTree.svelte` : rendu récursif des cases (champs paramétrables) + **viewport pan/zoom** (FR-002b) : zoom **molette** + **pincement** (2 pointeurs), borné min/max ; **pan** clic droit + drag et drag tactile ; `contextmenu` supprimé ; clic gauche sur une case ⇒ recentrage. *(reopened — BUG-003 : pan/clics/recentrage non fonctionnels et rendu visuel incomplet ; voir T021/T022/T023.)*
+- [x] T008 [US1] ✅ Corrigé (BUG-003) `src/ui/views/FicheView.svelte` : insérer la zone arbre **en haut, juste sous « Retour à la liste », pleine largeur** (FR-002c) ; profondeur **fixe 2** (FR-002a) ; cases **nom + pouvoirs** ; bouton **« Explorer l'arbre »** → `goToArbre` (FR-002a). *(reopened — BUG-003 : ajouter le **défilement en haut** à l'ouverture de la fiche, FR-016 ; voir T024.)*
+- [x] T009 [US1] ✅ Corrigé (BUG-003) Créer `src/ui/views/ArbreView.svelte` (page dédiée) : profondeur **N réglable sans plafond**, cases **nom + âge + pouvoirs**, recentrage au clic, **sans informations latérales** ; brancher la vue `'arbre'` dans `src/ui/App.svelte` (rendu + navigation). *(reopened — BUG-003 : arbre **non centré à l'ouverture** ; dépend du correctif T021/T022.)*
 
 ## Phase 4 : User Story 2 — Recherche & filtres (Priority: P2)
 
@@ -58,6 +58,16 @@ persistance, reset.
 - [x] T019 [P] Styles **responsive** (mobile → desktop) pour `FilterBar`, le viewport `GenealogyTree` (zone tactile, pleine largeur sur la fiche) et `ArbreView`, dans `src/app.css` et les composants.
 - [x] T020 Portes de la constitution : `core-purity.test.ts` couvre `genealogy/` (aucun `Math.random`/`Date`/`crypto`/DOM) ; dérouler le smoke test de `quickstart.md` ; `npm run test` + `npm run lint` + `npm run build` verts.
 
+## Phase 7 : Bugfix BUG-003 (interactions + rendu graphique de l'arbre)
+
+**Bugfix**: 2026-06-10 — BUG-003 Updated from bugfix patch. Correctifs **UI seuls** (le cœur
+`genealogy/` reste inchangé). Voir `bugs/BUG-003.md`.
+
+- [x] T021 [US1] `src/ui/components/GenealogyTree.svelte` : **pan au clic gauche maintenu** (et drag tactile) avec **seuil clic/glisser** (~5 px) — `pointerdown` mémorise l'origine sans paner ; pan + `setPointerCapture` **uniquement** au-delà du seuil ; `pointerup` **sous** le seuil ⇒ déclenche `onSelect` (clic préservé). Rendre le **bouton de recentrage (⟳)** fonctionnel et **centrer la vue sur la racine à l'ouverture** (offset de base non écrasé par la `transform`). (FR-002b/FR-002d/FR-004)
+- [x] T022 [US1] `src/ui/components/GenealogyTree.svelte` : **rendu graphique** (FR-003c) — symbole **⚭ entre les deux membres** de chaque union ; **liens de filiation** ⚭→**enfants communs** (overlay SVG ou bordures/pseudo-éléments CSS) ; **ex-conjoint + enfants d'ex en pointillés** (classe selon `statut`), unions actuelles en trait plein ; **racine** en **couleur distincte**. Dépend de T021 (même fichier).
+- [x] T023 [US1] `src/ui/views/ArbreView.svelte` : vérifier le **centrage à l'ouverture** et le **recentrage au clic** de la page dédiée (dépend de T021). (FR-004/FR-005)
+- [x] T024 [US1] Défilement **en haut** à l'ouverture d'une fiche (FR-016) — dans `src/ui/views/FicheView.svelte` (ou `src/ui/stores/appState.ts` lors du passage en vue `'fiche'`).
+
 ## Dependencies & Execution Order
 
 - **Setup (T001)** avant tout. **Foundational (T002)** avant les tests cœur des stories.
@@ -65,6 +75,7 @@ persistance, reset.
 - **US2 (P2)** : T010 → T011 ; T012 ; T013 → T014 (T014 dépend T011/T012/T013). Indépendante d'US1.
 - **US3 (P3)** : T015 → T016 ; T017 (dépend T015 + **T008**, même fichier `FicheView.svelte`).
 - **Polish** : T018 (dépend T011), T019, T020 en fin.
+- **Bugfix BUG-003** : T021 → T022 (même fichier `GenealogyTree.svelte`, séquentiel) ; T023 dépend T021 ; T024 indépendant.
 - **Même fichier (séquentiel, pas de [P])** : `FicheView.svelte` (T008 puis T017) ; `App.svelte`/stores partagés.
 
 ## Parallel Opportunities
@@ -89,5 +100,7 @@ persistance, reset.
 - État d'interface (filtres, mode d'affichage, navigation arbre) **non** exporté (Principe VI).
 - Aucune dépendance ajoutée (Principe VIII) ; réutilise `computeGeneration`/`computeAge`/`powerLabel`.
 - Bugfix intégrés : **BUG-001** (fiche prof. 2 / page N ; cases distinctes ; défaut+persistance ;
-  trait portée ; pouvoir présence) et **BUG-002** (zoom/pan ; placement sur la fiche).
+  trait portée ; pouvoir présence), **BUG-002** (zoom/pan ; placement sur la fiche) et **BUG-003**
+  (pan clic gauche + seuil clic/glisser ; recentrage/centrage ; rendu graphique ⚭/liens/ex
+  pointillés/racine colorée ; scroll fiche — T021–T024).
 - Anonymat (Principe X) ; `main` reste déployable ; commit après chaque tâche ou groupe logique.

@@ -5,24 +5,34 @@
   export let node: TreeNode;
   /** Affiche l'âge dans les cases (page dédiée) ; masqué sur la fiche (FR-003b). */
   export let showAge = false;
-  /** Clic gauche sur une case : ouverture de fiche (fiche) ou recentrage (page dédiée). */
+  /** Clic (sans glisser) sur une case : ouverture de fiche (fiche) ou recentrage (page dédiée). */
   export let onSelect: (id: string) => void = () => {};
   /** Racine = composant viewport (pan/zoom) ; sinon nœud récursif. */
   export let root = true;
-  /** Affiche les unions (conjoints) du nœud — masqué pour les ancêtres (déjà couples affichés). */
+  /** Affiche les unions (conjoints) du nœud — masqué pour les ancêtres. */
   export let showUnions = true;
+  /** Nœud central (l'individu dont on consulte l'arbre) ⇒ couleur distincte (FR-003c). */
+  export let isRoot = false;
+  /** Case en pointillés (enfant issu d'une union avec un ex — FR-003c). */
+  export let dashed = false;
 
-  // --- Viewport pan/zoom (FR-002b) : uniquement au niveau racine ---
+  // --- Viewport pan/zoom (FR-002b/FR-002d) : uniquement au niveau racine ---
+  const THRESHOLD = 5; // px : en deçà = clic (navigation) ; au-delà = pan (déplacement)
+  const MIN_SCALE = 0.2;
+  const MAX_SCALE = 4;
   let scale = 1;
   let tx = 0;
   let ty = 0;
-  const MIN_SCALE = 0.2;
-  const MAX_SCALE = 4;
   let viewportEl: HTMLDivElement;
   const pointers = new Map<number, { x: number; y: number }>();
-  let panning = false;
-  let lastX = 0;
-  let lastY = 0;
+  let panId: number | null = null;
+  let startX = 0;
+  let startY = 0;
+  let baseTx = 0;
+  let baseTy = 0;
+  let panActive = false;
+  let didPan = false;
+  let pinching = false;
   let pinchDist0 = 0;
   let scale0 = 1;
 
@@ -40,39 +50,81 @@
   }
 
   function onPointerDown(e: PointerEvent) {
-    viewportEl.setPointerCapture(e.pointerId);
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (pointers.size === 2) {
-      // Début d'un pincement : on fige la distance/échelle de référence.
-      panning = false;
+      // Pincement : on fige la distance/échelle de référence (et on annule un éventuel pan).
+      pinching = true;
+      panActive = false;
+      panId = null;
       pinchDist0 = pinchDistance();
       scale0 = scale;
-    } else if (pointers.size === 1 && (e.pointerType !== 'mouse' || e.button === 2)) {
-      // Pan : doigt (tactile) ou clic droit (souris).
-      panning = true;
-      lastX = e.clientX;
-      lastY = e.clientY;
+    } else if (pointers.size === 1 && (e.pointerType !== 'mouse' || e.button === 0)) {
+      // Candidat au pan au clic gauche / doigt — sans capturer ni paner tant que le seuil n'est pas
+      // franchi (préserve le clic simple des cases et du bouton ⟳).
+      panId = e.pointerId;
+      startX = e.clientX;
+      startY = e.clientY;
+      baseTx = tx;
+      baseTy = ty;
+      panActive = false;
+      didPan = false;
     }
   }
 
   function onPointerMove(e: PointerEvent) {
     if (!pointers.has(e.pointerId)) return;
     pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (pointers.size >= 2) {
+    if (pinching && pointers.size >= 2) {
       const d = pinchDistance();
       if (pinchDist0 > 0) scale = clamp(scale0 * (d / pinchDist0));
-    } else if (panning) {
-      tx += e.clientX - lastX;
-      ty += e.clientY - lastY;
-      lastX = e.clientX;
-      lastY = e.clientY;
+      return;
+    }
+    if (panId === e.pointerId) {
+      const dx = e.clientX - startX;
+      const dy = e.clientY - startY;
+      if (!panActive && Math.hypot(dx, dy) > THRESHOLD) {
+        // Seuil franchi : c'est un glisser ⇒ on démarre le pan et on capture le pointeur.
+        panActive = true;
+        try {
+          viewportEl.setPointerCapture(e.pointerId);
+        } catch {
+          /* capture indisponible : pan dégradé sans capture */
+        }
+      }
+      if (panActive) {
+        tx = baseTx + dx;
+        ty = baseTy + dy;
+        didPan = true;
+      }
     }
   }
 
   function onPointerUp(e: PointerEvent) {
     pointers.delete(e.pointerId);
-    if (pointers.size < 2) pinchDist0 = 0;
-    if (pointers.size === 0) panning = false;
+    if (panId === e.pointerId) {
+      if (panActive) {
+        try {
+          viewportEl.releasePointerCapture(e.pointerId);
+        } catch {
+          /* rien */
+        }
+      }
+      panId = null;
+      panActive = false;
+    }
+    if (pointers.size < 2) {
+      pinching = false;
+      pinchDist0 = 0;
+    }
+  }
+
+  // Après un glisser, neutralise le clic synthétique pour ne pas déclencher la navigation.
+  function onClickCapture(e: MouseEvent) {
+    if (didPan) {
+      e.preventDefault();
+      e.stopPropagation();
+      didPan = false;
+    }
   }
 
   function resetView() {
@@ -81,28 +133,35 @@
     ty = 0;
   }
 
-  // Empêche le menu contextuel pendant le pan au clic droit (FR-002b).
-  function onContextMenu(e: MouseEvent) {
-    e.preventDefault();
+  // Regroupement des descendants par union (pour tracer les liens ⚭ → enfants communs).
+  $: unionChildIds = new Set(node.unions.flatMap((u) => u.enfantsCommuns));
+  $: otherDescendants = node.descendants.filter((d) => !unionChildIds.has(d.id));
+  function childrenOf(ids: string[]): TreeNode[] {
+    const s = new Set(ids);
+    return node.descendants.filter((d) => s.has(d.id));
   }
 </script>
 
 {#if root}
+  <!-- Zone de visualisation à interaction personnalisée (pan/zoom) ; rôle applicatif assumé. La
+       gestion clavier passe par les boutons internes (cases, ⟳) ; le handler de la zone ne sert qu'à
+       neutraliser le clic synthétique après un glisser. -->
+  <!-- svelte-ignore a11y_no_noninteractive_element_interactions a11y_click_events_have_key_events -->
   <div
     class="viewport"
     role="application"
-    aria-label="Arbre généalogique interactif (zoom et déplacement)"
+    aria-label="Arbre généalogique interactif (zoom molette/pincement, déplacement par glisser)"
     bind:this={viewportEl}
     on:wheel={onWheel}
     on:pointerdown={onPointerDown}
     on:pointermove={onPointerMove}
     on:pointerup={onPointerUp}
     on:pointercancel={onPointerUp}
-    on:contextmenu={onContextMenu}
+    on:click|capture={onClickCapture}
   >
     <button type="button" class="reset" on:click={resetView} title="Recentrer la vue">⟳</button>
-    <div class="canvas" style="transform: translate({tx}px, {ty}px) scale({scale});">
-      <svelte:self {node} {showAge} {onSelect} root={false} />
+    <div class="canvas" style="transform: translate(calc(-50% + {tx}px), {ty}px) scale({scale});">
+      <svelte:self {node} {showAge} {onSelect} root={false} isRoot={true} />
     </div>
   </div>
 {:else}
@@ -119,8 +178,9 @@
       <button
         type="button"
         class="cell"
+        class:root={isRoot}
+        class:dashed
         on:click={() => onSelect(node.id)}
-        title="Centrer / ouvrir"
       >
         <strong class="nom">{node.nom || '—'}</strong>
         {#each cellLines(node, showAge) as line}
@@ -130,26 +190,56 @@
 
       {#if showUnions}
         {#each node.unions as u (u.conjointId + u.statut)}
-          <div class="union" title={`${u.enfantsCommuns.length} enfant(s) en commun`}>
-            <span class="lien">{u.statut === 'actuel' ? '⚭' : '⚮'}</span>
-            <button type="button" class="cell spouse" on:click={() => onSelect(u.conjointId)}>
-              <strong class="nom">{u.conjoint.nom || '—'}</strong>
-              {#if showAge}<span class="line">{u.conjoint.age} an(s)</span>{/if}
-              <span class="line">{powersLabel(u.conjoint)}</span>
-              {#if u.enfantsCommuns.length > 0}
-                <span class="line muted">{u.enfantsCommuns.length} enfant(s)</span>
-              {/if}
-            </button>
-          </div>
+          <span class="lien" title={u.statut === 'actuel' ? 'union actuelle' : 'ex-union'}>⚭</span>
+          <button
+            type="button"
+            class="cell spouse"
+            class:dashed={u.statut === 'ex'}
+            on:click={() => onSelect(u.conjointId)}
+          >
+            <strong class="nom">{u.conjoint.nom || '—'}</strong>
+            {#if showAge}<span class="line">{u.conjoint.age} an(s)</span>{/if}
+            <span class="line">{powersLabel(u.conjoint)}</span>
+          </button>
         {/each}
       {/if}
     </div>
 
-    {#if node.descendants.length > 0}
-      <div class="level descendants">
-        {#each node.descendants as d (d.id)}
-          <svelte:self node={d} {showAge} {onSelect} root={false} />
-        {/each}
+    {#if showUnions}
+      {#each node.unions as u (u.conjointId + u.statut + '-children')}
+        {#if childrenOf(u.enfantsCommuns).length > 0}
+          <div class="union-children" class:ex={u.statut === 'ex'}>
+            <span
+              class="union-marker"
+              title={u.statut === 'actuel' ? 'enfants de l’union' : 'enfants de l’ex-union'}>⚭</span
+            >
+            <div class="children-row" class:single={childrenOf(u.enfantsCommuns).length === 1}>
+              {#each childrenOf(u.enfantsCommuns) as child (child.id)}
+                <div class="child-wrap">
+                  <svelte:self
+                    node={child}
+                    {showAge}
+                    {onSelect}
+                    root={false}
+                    dashed={u.statut === 'ex'}
+                  />
+                </div>
+              {/each}
+            </div>
+          </div>
+        {/if}
+      {/each}
+    {/if}
+
+    {#if otherDescendants.length > 0}
+      <div class="union-children">
+        <div class="children-row" class:single={otherDescendants.length === 1}>
+          {#each otherDescendants as child (child.id)}
+            <div class="child-wrap">
+              <svelte:self node={child} {showAge} {onSelect} root={false} />
+            </div>
+          {/each}
+        </div>
       </div>
     {/if}
   </div>
@@ -200,9 +290,6 @@
     justify-content: center;
     gap: 1rem;
   }
-  .level.descendants {
-    align-items: flex-start;
-  }
   .self-row {
     display: flex;
     align-items: center;
@@ -224,6 +311,16 @@
   .cell:hover {
     border-color: var(--accent);
   }
+  /* Racine (individu consulté) : couleur distincte (FR-003c). */
+  .cell.root {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 22%, var(--bg));
+    color: var(--fg);
+  }
+  /* Ex-conjoint et enfants d'ex : pointillés (FR-003c). */
+  .cell.dashed {
+    border-style: dashed;
+  }
   .cell .nom {
     font-size: 0.9rem;
   }
@@ -233,17 +330,72 @@
     overflow-wrap: anywhere;
   }
   .cell.spouse {
-    border-style: dashed;
-  }
-  .union {
-    display: flex;
-    align-items: center;
-    gap: 0.3rem;
+    background: var(--bg-elev);
   }
   .lien {
     color: var(--fg-muted);
+    font-size: 1.1rem;
   }
-  .muted {
+
+  /* Liens de filiation : un trait part du ⚭ et relie tous les enfants communs (FR-003c). */
+  .union-children {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  .union-marker {
     color: var(--fg-muted);
+    font-size: 1rem;
+    line-height: 1;
+  }
+  .union-marker::after {
+    content: '';
+    display: block;
+    width: 0;
+    height: 0.7rem;
+    margin: 0 auto;
+    border-left: 2px solid var(--border);
+  }
+  .union-children.ex .union-marker::after {
+    border-left-style: dashed;
+  }
+  .children-row {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    position: relative;
+    padding-top: 0.7rem;
+  }
+  /* Barre horizontale reliant les enfants (masquée s'il n'y en a qu'un). */
+  .children-row::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 25%;
+    right: 25%;
+    border-top: 2px solid var(--border);
+  }
+  .children-row.single::before {
+    display: none;
+  }
+  .union-children.ex .children-row::before {
+    border-top-style: dashed;
+  }
+  .child-wrap {
+    position: relative;
+    display: flex;
+    justify-content: center;
+  }
+  /* Descente verticale vers chaque enfant. */
+  .child-wrap::before {
+    content: '';
+    position: absolute;
+    top: -0.7rem;
+    left: 50%;
+    height: 0.7rem;
+    border-left: 2px solid var(--border);
+  }
+  .union-children.ex .child-wrap::before {
+    border-left-style: dashed;
   }
 </style>

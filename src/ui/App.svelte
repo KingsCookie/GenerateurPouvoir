@@ -1,10 +1,19 @@
 <script lang="ts">
+  import { tick } from 'svelte';
   import { currentView, goToParametres, backToList, population } from './stores/appState.js';
   import ParametresView from './views/ParametresView.svelte';
   import ListeView from './views/ListeView.svelte';
   import FicheView from './views/FicheView.svelte';
   import ArbreView from './views/ArbreView.svelte';
   import StateIO from './components/StateIO.svelte';
+
+  // À l'ouverture d'une fiche (ou de la page arbre), remettre le défilement en haut (FR-016).
+  $: scrollTopOnView($currentView);
+  function scrollTopOnView(view: string) {
+    if (view === 'fiche' || view === 'arbre') {
+      tick().then(() => window.scrollTo({ top: 0 }));
+    }
+  }
 </script>
 
 <header>
