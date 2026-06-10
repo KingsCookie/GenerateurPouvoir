@@ -8,7 +8,7 @@
 - **Contrats** : `specs/003-avancement-temps-population/contracts/` (RNG sérialisable, gaussienne, tick, mort)
 - **Simulation** : tick annuel §6.6 (divorces → candidats/gaussienne → appariement → portées), vieillissement §6.5,
   mort manuelle §6.7, conjoints actuel/ex, portées M/N/X. **État du RNG sérialisé** (continuation déterministe, FR-021).
-  Réutilise `reproduce` (F2) pour chaque enfant. Défauts humain gaussienne 16/25/50 pic 40 %, groupe 2, portée M1/N4/X15 %, consanguinité interdite.
+  Réutilise `reproduce` (F2) pour chaque enfant. Défauts humain gaussienne 18/25/50 pic 40 %, groupe 2, portée M1/N4/X15 %, consanguinité interdite.
 - Features livrées : 1 (`specs/001-fondations-genese/`) seed/RNG, modèle, genèse, liste/fiche, export/import ;
   2 (`specs/002-reproduction-heredite/`) moteur génétique (hérédité §4, traits→pouvoirs §6.4, P/M §7.2, reproduction).
 

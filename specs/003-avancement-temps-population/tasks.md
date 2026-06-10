@@ -43,7 +43,7 @@ Projet unique, deux couches : cœur pur `src/core/`, UI Svelte `src/ui/`, tests 
 - [x] T002 [P] Ajouter `getState(): string[]` à l'interface `Rng` et à `createRng`, plus `createRngFromState(state)` dans `src/core/rng/rng.ts` ; exposer via `src/core/rng/index.ts` et la façade `src/core/index.ts` (FR-021, R2).
 - [x] T003 [P] Test sérialisation RNG dans `tests/unit/rng-state.test.ts` : `createRngFromState(r.getState())` produit la **même suite** que `r` ; `getState` ne consomme pas d'aléatoire.
 - [x] T004 [P] Étendre `Espece` (paramètres de reproduction) dans `src/core/model/espece.ts` : `reproStartAge`, `reproPeakAge`, `reproEndAge`, `reproPeakPct`, `reproSlope`, `groupSize`, `litterMin`, `litterMax`, `litterExtraPct`, `divorcePct` (cf. data-model).
-- [x] T005 [P] Renseigner les **défauts humain** (16/25/50, pic 40 %, pente 8, groupe 2, M1/N4/X15 %, divorce 0 %) dans `defaultEspece`/`defaultEspeces` (`src/core/catalog/defaultCatalog.ts`).
+- [x] T005 [P] Renseigner les **défauts humain** (18/25/50, pic 40 %, pente 8, groupe 2, M1/N4/X15 %, divorce 0 %) dans `defaultEspece`/`defaultEspeces` (`src/core/catalog/defaultCatalog.ts`).
 - [x] T006 [P] Ajouter `consanguinityAllowed: boolean` (défaut `false`) à `Parameters` + `defaultParameters()` dans `src/core/params/parameters.ts`.
 - [x] T007 [P] Créer l'entité `Couple` dans `src/core/model/couple.ts` (`id`, `memberIds[]`, `reproPct: number | null`) ; l'exporter via `src/core/model/index.ts`.
 - [x] T008 Étendre l'état dans `src/core/state/serialize.ts` : `AppState` gagne `currentYear`, `couples`, `rngState` ; `FORMAT_VERSION = 2` ; `deserializeState` accepte `formatVersion: 1` avec défauts sûrs (currentYear = birthYear, couples = [], rngState ré-amorcé) — INV-11 ; `createInitialState` initialise les nouveaux champs.
@@ -127,6 +127,9 @@ exclu de la reproduction ; tuer sans cause ⇒ refusé.
 - [x] T032 [P] Test de performance dans `tests/unit/perf.test.ts` : avancer **1 an sur ~1 000 individus < ~1 s** (SC-009).
 - [x] T033 [P] Styles responsive pour `TimeBar`, le statut décédé et l'édition de couple (mobile → desktop) dans `src/app.css` et composants.
 - [x] T034 Vérifier les portes de la constitution : pureté du cœur (la garde `core-purity.test.ts` couvre `repro/`, `time/`, `life/` ; aucun `Math.random`/`Date`/`crypto` ; `Math.exp` autorisé) ; dérouler le smoke test de `quickstart.md` ; `npm run lint` + `npm run build` verts.
+- [x] T035 [US1] (BUG-001) Séparer les **pouvoirs multiples** par ` || ` (au lieu de `, `) dans `src/ui/views/ListeView.svelte` (FR-022).
+
+**Bugfix**: 2026-06-10 — BUG-001 Ajout de T035 (séparateur ` || ` des pouvoirs multiples dans la liste).
 
 ---
 

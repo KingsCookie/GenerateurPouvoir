@@ -60,7 +60,7 @@
               {#if row.pouvoirs.length === 0}
                 <span class="muted">—</span>
               {:else}
-                {row.pouvoirs.join(', ')}
+                {row.pouvoirs.join(' || ')}
               {/if}
             </td>
           </tr>

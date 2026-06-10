@@ -173,7 +173,7 @@ avancements suivants.
   **gaussienne de reproduction** (âge de début, âge de fin/maximal, âge du pic, probabilité au pic, pente/
   écart-type), le **% de divorce** par an, et la **taille du groupe de reproduction** (défaut **2**). Le **%
   de reproduction d'un couple** dérive de cette gaussienne (pas de paramètre séparé) mais reste éditable
-  par couple (FR-011). Défauts **humain** : gaussienne **début 16 / pic 25 / fin 50**, **probabilité au
+  par couple (FR-011). Défauts **humain** : gaussienne **début 18 / pic 25 / fin 50**, **probabilité au
   pic 40 %**, pente modérée (clarification, ajusté).
 - **FR-018** : Le paramètre global **consanguinité** (FR-010) DOIT être exposé (défaut interdite) au niveau
   **modèle & export/import** en Feature 3 ; son **édition dans l'écran des paramètres** relève de la
@@ -188,6 +188,13 @@ avancements suivants.
 - **FR-021** : L'**état du RNG** DOIT être inclus dans l'export ; après un import, **avancer le temps**
   produit la **même suite** que si l'on n'avait pas sauvegardé/rechargé (continuation strictement
   déterministe, clarification — tranche le point en suspens §13 sur la persistance du RNG).
+
+**Affichage (liste)**
+- **FR-022** : Dans l'écran **Liste**, lorsqu'une personne possède **plusieurs pouvoirs**, ceux-ci
+  DOIVENT être séparés par un **délimiteur lisible distinct des virgules internes aux libellés** —
+  en l'occurrence ` || ` (double barre verticale) — et non par une simple virgule.
+
+**Bugfix**: 2026-06-10 — BUG-001 Ajout de FR-022 (séparateur ` || ` des pouvoirs multiples dans la liste).
 
 ### Key Entities *(include if feature involves data)*
 
@@ -233,7 +240,7 @@ avancements suivants.
   de cette taille.
 - **Gaussienne → probabilité** : la « gaussienne de reproduction » fournit, pour un âge donné, un **%** de
   volonté de reproduction, à partir de (âge début, âge fin, âge pic, proba au pic, pente). Défauts humain
-  fixés (clarification) : **16 / 25 / 50**, **pic 40 %** ; hors de la plage [début, fin] la probabilité est
+  fixés (clarification) : **18 / 25 / 50**, **pic 40 %** ; hors de la plage [début, fin] la probabilité est
   nulle. La **formule exacte** de la courbe (normale tronquée) est un détail d'implémentation (`/speckit-plan`).
 - **Couple = parents d'une portée** : la reproduction d'un couple utilise **tous** ses membres comme
   parents via le moteur Feature 2 (≥ 1 parent ; généralement 2).
@@ -252,6 +259,6 @@ avancements suivants.
 - Q: Taille du groupe de reproduction (« couple ») ? → A: **Paramétrable par espèce, défaut 2** (autorise > 2 ultérieurement ; le moteur F2 gère déjà plusieurs parents).
 - Q: Un nouveau couple produit-il une portée dès l'année de sa formation ? → A: **Oui**, dès le tick de formation.
 - Q: Déterminisme après export/import puis avancement ? → A: **Inclure l'état du RNG dans l'export** (continuation strictement déterministe après import).
-- Q: Profil de gaussienne de reproduction par défaut (humain) ? → A: **16 / 25 / 50** (début / pic / fin), **probabilité au pic 60 %**, pente modérée. _(Ajusté ensuite à **40 %** ; portée X de 40 % → **15 %**.)_
+- Q: Profil de gaussienne de reproduction par défaut (humain) ? → A: **16 / 25 / 50** (début / pic / fin), **probabilité au pic 60 %**, pente modérée. _(Ajusté ensuite : début **16 → 18**, pic **60 % → 40 %** ; portée X de 40 % → **15 %**.)_
 - Q: (analyse C1) Édition du paramètre **consanguinité** dans l'UI ? → A: **Reportée à la Feature 5** ; en F3, exposé au niveau modèle & export/import uniquement.
 - Q: (analyse A1) Le **genre** contraint-il l'appariement en F3 ? → A: **Non** — le genre n'a aucun effet sur la reproduction pour l'instant ; contraintes de genre reportées à une feature ultérieure.

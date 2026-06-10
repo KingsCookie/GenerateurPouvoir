@@ -53,7 +53,7 @@ pas de création/édition manuelle d'individus §6.8 (feature ultérieure).
 
 | Paramètre (espèce `humain`, sauf indication) | Défaut | Rationale |
 |---|---|---|
-| Gaussienne — âge de **début** | **16** | clarification (fenêtre de reproduction). |
+| Gaussienne — âge de **début** | **18** | clarification (fenêtre de reproduction ; ajusté). |
 | Gaussienne — âge du **pic** | **25** | clarification. |
 | Gaussienne — âge de **fin** (max) | **50** | clarification ; au-delà, probabilité nulle. |
 | Gaussienne — **probabilité au pic** | **40 %** | clarification (ajusté). |
@@ -151,3 +151,6 @@ Le `Rng` gagne la **sérialisation d'état** (FR-021) sans changer son algorithm
 ## Complexity Tracking
 
 > Aucune violation de la Constitution Check → section vide.
+
+**Bugfix**: 2026-06-10 — BUG-001 Correctif d'affichage UNIQUEMENT côté UI (`ListeView.svelte`) :
+pouvoirs multiples séparés par ` || ` (FR-022). Aucun impact sur le cœur (`src/core`) ni l'architecture.

@@ -15,7 +15,7 @@ Features 1 & 2 **sans le casser**. Réutilise `Personne` (dont `conjoints` actue
 
 | Champ | Type | Défaut (humain) | Règles |
 |---|---|---|---|
-| `reproStartAge` | number | **16** | âge de début de reproduction (≥ 0). |
+| `reproStartAge` | number | **18** | âge de début de reproduction (≥ 0). |
 | `reproPeakAge` | number | **25** | âge du pic de probabilité. |
 | `reproEndAge` | number | **50** | âge de fin/maximal ; au-delà, probabilité nulle. |
 | `reproPeakPct` | number | **40** | probabilité (%) au pic [0..100]. |

@@ -1,4 +1,6 @@
 Diviser le pourcentage de chance qu'un couple ait à nouveau un enfant par le nomre d'enfant qu'ils ont * un facteur dépendant de l'espece
 
+Utiliser une courbe de bezier plutot qu'une gaussienne pour la reproduction.
+
 Afficher le % de chance qu'une personne passe l'age de fin de reproduction de son espece sans se reproduire.
 
