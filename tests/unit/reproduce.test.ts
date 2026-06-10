@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest';
 import { createRng } from '../../src/core/rng/rng.js';
 import { reproduce } from '../../src/core/birth/reproduce.js';
-import { defaultCatalog } from '../../src/core/catalog/defaultCatalog.js';
+import { defaultCatalog, defaultEspeces } from '../../src/core/catalog/defaultCatalog.js';
 import { defaultParameters, type Parameters } from '../../src/core/params/parameters.js';
 import {
   serializeState,
@@ -119,7 +119,11 @@ describe('reproduce — round-trip export/import (INV-10 / SC-007 / T025)', () =
       kind: 'full',
       parameters: P,
       catalog,
+      especes: defaultEspeces(),
       population: [...ps, child],
+      currentYear: P.birthYear,
+      couples: [],
+      rngState: createRng(0x5eedn).getState(),
     };
     const json = serializeState(state);
     const res = deserializeState(json);

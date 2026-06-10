@@ -1,10 +1,44 @@
 <script lang="ts">
-  import { selectedPerson, parameters, getCatalog, backToList } from '../stores/appState.js';
+  import {
+    selectedPerson,
+    currentYear,
+    population,
+    couples,
+    getCatalog,
+    backToList,
+    killPerson,
+    setCoupleReproPct,
+  } from '../stores/appState.js';
   import { buildFicheView } from '../lib/ficheViewModel.js';
 
   const catalog = getCatalog();
-  $: currentYear = $parameters.birthYear;
-  $: fiche = $selectedPerson ? buildFicheView($selectedPerson, catalog, currentYear) : null;
+  $: fiche = $selectedPerson ? buildFicheView($selectedPerson, catalog, $currentYear) : null;
+
+  // Couple actuel de l'individu (réactif sur la liste des couples).
+  $: couple =
+    $selectedPerson != null
+      ? ($couples.find((c) => c.memberIds.includes($selectedPerson.id)) ?? null)
+      : null;
+
+  // Libellés de noms pour afficher les conjoints.
+  $: nameById = new Map($population.map((p) => [p.id, p.nom]));
+
+  // Mort manuelle (cause obligatoire).
+  let cause = '';
+  let killError: string | null = null;
+  function onKill() {
+    if (!$selectedPerson) return;
+    const err = killPerson($selectedPerson.id, cause);
+    killError = err;
+    if (!err) cause = '';
+  }
+
+  // Édition du % de reproduction du couple (vide ⇒ hérité de la gaussienne).
+  function onReproPct(e: Event) {
+    if (!couple) return;
+    const raw = (e.target as HTMLInputElement).value.trim();
+    setCoupleReproPct(couple.id, raw === '' ? null : Number(raw));
+  }
 </script>
 
 <section>
@@ -47,6 +81,54 @@
         </dd>
       </div>
     </dl>
+
+    <h3>Cycle de vie</h3>
+    <div class="vie">
+      {#if $selectedPerson && $selectedPerson.conjoints.length > 0}
+        <div class="conjoints">
+          <span class="dt">Conjoints</span>
+          <ul>
+            {#each $selectedPerson.conjoints as c (c.id + c.statut)}
+              <li>
+                {nameById.get(c.id) ?? c.id}
+                <span class="badge-statut {c.statut}"
+                  >{c.statut === 'actuel' ? 'actuel' : 'ex'}</span
+                >
+              </li>
+            {/each}
+          </ul>
+        </div>
+      {:else}
+        <p class="muted">Aucun conjoint.</p>
+      {/if}
+
+      {#if couple}
+        <div class="couple">
+          <label for="reproPct">% de reproduction du couple</label>
+          <input
+            id="reproPct"
+            type="number"
+            min="0"
+            max="100"
+            placeholder="hérité de la gaussienne"
+            value={couple.reproPct ?? ''}
+            on:change={onReproPct}
+          />
+          <span class="muted">Laisser vide ⇒ dérivé de la gaussienne d'espèce.</span>
+        </div>
+      {/if}
+
+      {#if fiche.vivant}
+        <div class="kill">
+          <label for="cause">Cause du décès</label>
+          <div class="kill-row">
+            <input id="cause" type="text" bind:value={cause} placeholder="cause obligatoire" />
+            <button type="button" class="danger" on:click={onKill}>Tuer</button>
+          </div>
+          {#if killError}<p class="error">{killError}</p>{/if}
+        </div>
+      {/if}
+    </div>
 
     <h3>Pouvoir(s)</h3>
     {#if fiche.pouvoirs.length === 0}
@@ -144,6 +226,63 @@
   }
   .traits.inactifs {
     opacity: 0.7;
+  }
+  .vie {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
+    margin-bottom: 0.5rem;
+  }
+  .vie .dt {
+    color: var(--fg-muted);
+    font-size: 0.8rem;
+  }
+  .conjoints ul {
+    margin: 0.2rem 0 0;
+    padding-left: 1.2rem;
+  }
+  .badge-statut {
+    font-size: 0.7rem;
+    border-radius: 999px;
+    padding: 0 0.4rem;
+    border: 1px solid var(--border);
+    color: var(--fg-muted);
+  }
+  .badge-statut.actuel {
+    color: var(--accent);
+    border-color: var(--accent);
+  }
+  .couple,
+  .kill {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    max-width: 28rem;
+  }
+  .couple label,
+  .kill label {
+    color: var(--fg-muted);
+    font-size: 0.85rem;
+  }
+  .kill-row {
+    display: flex;
+    gap: 0.5rem;
+  }
+  .kill-row input {
+    flex: 1;
+  }
+  .danger {
+    background: #b3261e;
+    color: #fff;
+    border: none;
+    border-radius: var(--radius);
+    padding: 0 0.8rem;
+    cursor: pointer;
+  }
+  .error {
+    color: #b3261e;
+    font-size: 0.85rem;
+    margin: 0;
   }
   .mono {
     font-family: ui-monospace, monospace;

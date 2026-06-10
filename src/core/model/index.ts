@@ -7,3 +7,4 @@ export type { Pouvoir, PowerTemplate, PowerKind } from './pouvoir.js';
 export { GENRE_TOUT } from './espece.js';
 export type { Genre, Espece } from './espece.js';
 export type { Personne, Conjoint } from './personne.js';
+export type { Couple } from './couple.js';

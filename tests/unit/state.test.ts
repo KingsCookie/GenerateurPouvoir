@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { createRng } from '../../src/core/rng/rng.js';
-import { defaultCatalog } from '../../src/core/catalog/defaultCatalog.js';
+import { defaultCatalog, defaultEspeces } from '../../src/core/catalog/defaultCatalog.js';
 import { defaultParameters } from '../../src/core/params/parameters.js';
 import { generateInitialPopulation } from '../../src/core/genesis/genesis.js';
 import {
@@ -20,7 +20,17 @@ function sampleState(seed: bigint): AppState {
   };
   const catalog = defaultCatalog();
   const population = generateInitialPopulation(parameters, catalog, createRng(seed));
-  return { formatVersion: FORMAT_VERSION, kind: 'full', parameters, catalog, population };
+  return {
+    formatVersion: FORMAT_VERSION,
+    kind: 'full',
+    parameters,
+    catalog,
+    especes: defaultEspeces(),
+    population,
+    currentYear: parameters.birthYear,
+    couples: [],
+    rngState: createRng(seed).getState(),
+  };
 }
 
 describe('Sérialisation de l’état (US3)', () => {
@@ -41,9 +51,13 @@ describe('Sérialisation de l’état (US3)', () => {
   it('la sérialisation est insensible à l’ordre d’insertion des clés', () => {
     const state = createInitialState({ seed: '42' });
     const reordered = {
+      rngState: state.rngState,
       population: state.population,
+      couples: state.couples,
+      especes: state.especes,
       catalog: state.catalog,
       kind: state.kind,
+      currentYear: state.currentYear,
       parameters: state.parameters,
       formatVersion: state.formatVersion,
     } as AppState;
@@ -76,5 +90,20 @@ describe('Sérialisation de l’état (US3)', () => {
   it('rejette une structure incomplète', () => {
     const res = deserializeState(JSON.stringify({ kind: 'full', formatVersion: 1 }));
     expect(res.ok).toBe(false);
+  });
+
+  it('INV-11 : importe un fichier v1 (sans currentYear/couples/rngState) avec défauts sûrs', () => {
+    const parameters = { ...defaultParameters(), seed: '7', batchSize: 5, birthYear: 1990 };
+    const catalog = defaultCatalog();
+    const population = generateInitialPopulation(parameters, catalog, createRng(7n));
+    // Fichier « Feature 1/2 » : formatVersion 1, sans les champs de la Feature 3.
+    const v1 = JSON.stringify({ formatVersion: 1, kind: 'full', parameters, catalog, population });
+    const res = deserializeState(v1);
+    expect(res.ok).toBe(true);
+    if (res.ok) {
+      expect(res.value.currentYear).toBe(1990); // = birthYear
+      expect(res.value.couples).toEqual([]);
+      expect(res.value.rngState).toEqual(createRng(7n).getState());
+    }
   });
 });

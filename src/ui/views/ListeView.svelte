@@ -1,7 +1,7 @@
 <script lang="ts">
   import {
     population,
-    parameters,
+    currentYear,
     getCatalog,
     selectPerson,
     selectedIds,
@@ -9,11 +9,11 @@
   } from '../stores/appState.js';
   import { buildListRow } from '../lib/ficheViewModel.js';
   import ReproduceBar from '../components/ReproduceBar.svelte';
+  import TimeBar from '../components/TimeBar.svelte';
 
   const catalog = getCatalog();
-  // En Feature 2 (sans avancement du temps), l'année courante = année de naissance ⇒ âge 0.
-  $: currentYear = $parameters.birthYear;
-  $: rows = $population.map((p) => buildListRow(p, catalog, currentYear));
+  // Année courante issue de la simulation (Feature 3) ; l'âge en découle.
+  $: rows = $population.map((p) => buildListRow(p, catalog, $currentYear));
 </script>
 
 <section>
@@ -22,6 +22,7 @@
   {#if $population.length === 0}
     <p class="empty">Aucune population générée. Rendez-vous dans les paramètres pour générer.</p>
   {:else}
+    <TimeBar />
     <ReproduceBar />
     <table>
       <thead>

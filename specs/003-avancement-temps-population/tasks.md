@@ -29,7 +29,7 @@ Projet unique, deux couches : cœur pur `src/core/`, UI Svelte `src/ui/`, tests 
 **Purpose**: la stack et le projet existent déjà (Features 1-2) ; rien à initialiser. Cette feature
 **étend** le cœur et l'UI sans nouvelle dépendance (Principe VIII).
 
-- [ ] T001 Vérifier l'état de départ : `npm install`, `npm run test` (Features 1-2 vertes, 90 tests) avant d'étendre.
+- [x] T001 Vérifier l'état de départ : `npm install`, `npm run test` (Features 1-2 vertes, 90 tests) avant d'étendre.
 
 ---
 
@@ -40,14 +40,14 @@ Projet unique, deux couches : cœur pur `src/core/`, UI Svelte `src/ui/`, tests 
 
 **⚠️ Aucune user story ne peut démarrer avant la fin de cette phase.**
 
-- [ ] T002 [P] Ajouter `getState(): string[]` à l'interface `Rng` et à `createRng`, plus `createRngFromState(state)` dans `src/core/rng/rng.ts` ; exposer via `src/core/rng/index.ts` et la façade `src/core/index.ts` (FR-021, R2).
-- [ ] T003 [P] Test sérialisation RNG dans `tests/unit/rng-state.test.ts` : `createRngFromState(r.getState())` produit la **même suite** que `r` ; `getState` ne consomme pas d'aléatoire.
-- [ ] T004 [P] Étendre `Espece` (paramètres de reproduction) dans `src/core/model/espece.ts` : `reproStartAge`, `reproPeakAge`, `reproEndAge`, `reproPeakPct`, `reproSlope`, `groupSize`, `litterMin`, `litterMax`, `litterExtraPct`, `divorcePct` (cf. data-model).
-- [ ] T005 [P] Renseigner les **défauts humain** (16/25/50, pic 60 %, pente 8, groupe 2, M1/N4/X40 %, divorce 0 %) dans `defaultEspece`/`defaultEspeces` (`src/core/catalog/defaultCatalog.ts`).
-- [ ] T006 [P] Ajouter `consanguinityAllowed: boolean` (défaut `false`) à `Parameters` + `defaultParameters()` dans `src/core/params/parameters.ts`.
-- [ ] T007 [P] Créer l'entité `Couple` dans `src/core/model/couple.ts` (`id`, `memberIds[]`, `reproPct: number | null`) ; l'exporter via `src/core/model/index.ts`.
-- [ ] T008 Étendre l'état dans `src/core/state/serialize.ts` : `AppState` gagne `currentYear`, `couples`, `rngState` ; `FORMAT_VERSION = 2` ; `deserializeState` accepte `formatVersion: 1` avec défauts sûrs (currentYear = birthYear, couples = [], rngState ré-amorcé) — INV-11 ; `createInitialState` initialise les nouveaux champs.
-- [ ] T009 [P] Test compatibilité/round-trip de base dans `tests/unit/state.test.ts` : sérialisation inclut `currentYear`/`couples`/`rngState` ; import d'un fichier `formatVersion: 1` réussit avec défauts (INV-11).
+- [x] T002 [P] Ajouter `getState(): string[]` à l'interface `Rng` et à `createRng`, plus `createRngFromState(state)` dans `src/core/rng/rng.ts` ; exposer via `src/core/rng/index.ts` et la façade `src/core/index.ts` (FR-021, R2).
+- [x] T003 [P] Test sérialisation RNG dans `tests/unit/rng-state.test.ts` : `createRngFromState(r.getState())` produit la **même suite** que `r` ; `getState` ne consomme pas d'aléatoire.
+- [x] T004 [P] Étendre `Espece` (paramètres de reproduction) dans `src/core/model/espece.ts` : `reproStartAge`, `reproPeakAge`, `reproEndAge`, `reproPeakPct`, `reproSlope`, `groupSize`, `litterMin`, `litterMax`, `litterExtraPct`, `divorcePct` (cf. data-model).
+- [x] T005 [P] Renseigner les **défauts humain** (16/25/50, pic 60 %, pente 8, groupe 2, M1/N4/X40 %, divorce 0 %) dans `defaultEspece`/`defaultEspeces` (`src/core/catalog/defaultCatalog.ts`).
+- [x] T006 [P] Ajouter `consanguinityAllowed: boolean` (défaut `false`) à `Parameters` + `defaultParameters()` dans `src/core/params/parameters.ts`.
+- [x] T007 [P] Créer l'entité `Couple` dans `src/core/model/couple.ts` (`id`, `memberIds[]`, `reproPct: number | null`) ; l'exporter via `src/core/model/index.ts`.
+- [x] T008 Étendre l'état dans `src/core/state/serialize.ts` : `AppState` gagne `currentYear`, `couples`, `rngState` ; `FORMAT_VERSION = 2` ; `deserializeState` accepte `formatVersion: 1` avec défauts sûrs (currentYear = birthYear, couples = [], rngState ré-amorcé) — INV-11 ; `createInitialState` initialise les nouveaux champs.
+- [x] T009 [P] Test compatibilité/round-trip de base dans `tests/unit/state.test.ts` : sérialisation inclut `currentYear`/`couples`/`rngState` ; import d'un fichier `formatVersion: 1` réussit avec défauts (INV-11).
 
 **Checkpoint**: RNG sérialisable + paramètres d'espèce + Couple + état étendu prêts — les user stories peuvent commencer.
 
@@ -63,25 +63,25 @@ des portées (enfants reliés, nés dans l'année), tout le monde vieillit d'1 a
 
 ### Tests (écrits AVANT l'implémentation — Principe V)
 
-- [ ] T010 [P] [US1] Tests gaussienne dans `tests/unit/gaussian.test.ts` : `reproProbability` = 0 hors [début, fin], maximum `reproPeakPct` au pic, décroissance symétrique (R3).
-- [ ] T011 [P] [US1] Tests portée dans `tests/unit/litter.test.ts` : `litterSize` ∈ [M, N] ; procédure « M garantis + X % » (INV-3) ; X=0 ⇒ M ; X=100 ⇒ N.
-- [ ] T012 [P] [US1] Tests appariement dans `tests/unit/pairing.test.ts` : **non-inter-espèces** (INV-5), **anti-consanguinité** parents/grands-parents (INV-4), candidats non appariés reportés (FR-008), déterminisme (même seed ⇒ mêmes couples). *(Le genre n'intervient pas en F3 — décision A1 ; pas d'assertion de genre.)*
-- [ ] T013 [P] [US1] Tests tick (chemin normal) dans `tests/unit/tick.test.ts` : déterminisme (INV-1), vieillissement + `currentYear += 1` (INV-2), formation de couples + portées, nouveau couple reproduit **dès l'année de formation**, parenté symétrique (INV-9).
+- [x] T010 [P] [US1] Tests gaussienne dans `tests/unit/gaussian.test.ts` : `reproProbability` = 0 hors [début, fin], maximum `reproPeakPct` au pic, décroissance symétrique (R3).
+- [x] T011 [P] [US1] Tests portée dans `tests/unit/litter.test.ts` : `litterSize` ∈ [M, N] ; procédure « M garantis + X % » (INV-3) ; X=0 ⇒ M ; X=100 ⇒ N.
+- [x] T012 [P] [US1] Tests appariement dans `tests/unit/pairing.test.ts` : **non-inter-espèces** (INV-5), **anti-consanguinité** parents/grands-parents (INV-4), candidats non appariés reportés (FR-008), déterminisme (même seed ⇒ mêmes couples). *(Le genre n'intervient pas en F3 — décision A1 ; pas d'assertion de genre.)*
+- [x] T013 [P] [US1] Tests tick (chemin normal) dans `tests/unit/tick.test.ts` : déterminisme (INV-1), vieillissement + `currentYear += 1` (INV-2), formation de couples + portées, nouveau couple reproduit **dès l'année de formation**, parenté symétrique (INV-9).
 
 ### Implementation (cœur)
 
-- [ ] T014 [P] [US1] Gaussienne dans `src/core/repro/gaussian.ts` : `reproProbability(age, espece)` (cloche tronquée, pure) — dépend de T004.
-- [ ] T015 [P] [US1] Portée dans `src/core/repro/litter.ts` : `litterSize(espece, rng)` (M + boucle X % ≤ N) — dépend de T004.
-- [ ] T016 [P] [US1] Sélection des candidats dans `src/core/repro/candidates.ts` : éligibilité (vivant, célibataire/divorcé, `âge ≤ reproEndAge`) + volonté via `reproProbability` ; ordre stable (R4) — dépend de T014.
-- [ ] T017 [US1] Appariement dans `src/core/repro/pairing.ts` : `formCouples(candidateIds, population, params, especeById, rng, nextCoupleId)` — mélange déterministe, groupes de `groupSize`, **même espèce**, anti-consanguinité (parents/grands-parents), non appariés reportés (R5/R6). **Le genre n'est pas une contrainte en F3** (décision A1, reporté) — dépend de T002, T007.
-- [ ] T018 [US1] Tick annuel & avance dans `src/core/time/tick.ts` : `tick(state, rng)` (chemin **normal** : candidats → appariement → reproduction des nouveaux couples via `litterSize` + `reproduce` F2, parenté posée, `currentYear += 1`) et `advanceYears(state, years, rng)` (boucle X fois, persiste `rngState`) — dépend de T015, T016, T017, et `reproduce` (F2). *(Divorce & couples existants ajoutés en US2.)*
-- [ ] T019 [US1] Exposer via la façade `src/core/index.ts` : `reproProbability`, `litterSize`, `formCouples`, `tick`, `advanceYears` (+ types `Couple`).
+- [x] T014 [P] [US1] Gaussienne dans `src/core/repro/gaussian.ts` : `reproProbability(age, espece)` (cloche tronquée, pure) — dépend de T004.
+- [x] T015 [P] [US1] Portée dans `src/core/repro/litter.ts` : `litterSize(espece, rng)` (M + boucle X % ≤ N) — dépend de T004.
+- [x] T016 [P] [US1] Sélection des candidats dans `src/core/repro/candidates.ts` : éligibilité (vivant, célibataire/divorcé, `âge ≤ reproEndAge`) + volonté via `reproProbability` ; ordre stable (R4) — dépend de T014.
+- [x] T017 [US1] Appariement dans `src/core/repro/pairing.ts` : `formCouples(candidateIds, population, params, especeById, rng, nextCoupleId)` — mélange déterministe, groupes de `groupSize`, **même espèce**, anti-consanguinité (parents/grands-parents), non appariés reportés (R5/R6). **Le genre n'est pas une contrainte en F3** (décision A1, reporté) — dépend de T002, T007.
+- [x] T018 [US1] Tick annuel & avance dans `src/core/time/tick.ts` : `tick(state, rng)` (chemin **normal** : candidats → appariement → reproduction des nouveaux couples via `litterSize` + `reproduce` F2, parenté posée, `currentYear += 1`) et `advanceYears(state, years, rng)` (boucle X fois, persiste `rngState`) — dépend de T015, T016, T017, et `reproduce` (F2). *(Divorce & couples existants ajoutés en US2.)*
+- [x] T019 [US1] Exposer via la façade `src/core/index.ts` : `reproProbability`, `litterSize`, `formCouples`, `tick`, `advanceYears` (+ types `Couple`).
 
 ### Implementation (UI)
 
-- [ ] T020 [US1] Store : avance du temps dans `src/ui/stores/appState.ts` — `currentYear`, `couples`, action `advanceYears(X)` (construit le `Rng` depuis `rngState`/seed, appelle `advanceYears`, met à jour population/couples/année/rngState).
-- [ ] T021 [US1] Composant `src/ui/components/TimeBar.svelte` : champ **X (≥ 1)** + bouton **« avancer de X ans »** + affichage de la **date/année courante**.
-- [ ] T022 [US1] Brancher l'année courante dans `src/ui/views/ListeView.svelte` (âge calculé sur `currentYear`) et insérer `TimeBar` ; la colonne âge reflète l'avance.
+- [x] T020 [US1] Store : avance du temps dans `src/ui/stores/appState.ts` — `currentYear`, `couples`, action `advanceYears(X)` (construit le `Rng` depuis `rngState`/seed, appelle `advanceYears`, met à jour population/couples/année/rngState).
+- [x] T021 [US1] Composant `src/ui/components/TimeBar.svelte` : champ **X (≥ 1)** + bouton **« avancer de X ans »** + affichage de la **date/année courante**.
+- [x] T022 [US1] Brancher l'année courante dans `src/ui/views/ListeView.svelte` (âge calculé sur `currentYear`) et insérer `TimeBar` ; la colonne âge reflète l'avance.
 
 **Checkpoint**: US1 fonctionnelle et testable seule (MVP de la simulation temporelle).
 
@@ -94,10 +94,10 @@ des portées (enfants reliés, nés dans l'année), tout le monde vieillit d'1 a
 **Independent Test**: divorce 100 % ⇒ tous les couples dissous en 1 an (ex-conjoints) ; taux de repro de
 couple élevé ⇒ portées annuelles des couples existants.
 
-- [ ] T023 [P] [US2] Tests divorce & repro des couples dans `tests/unit/tick.test.ts` : divorce 0 % ⇒ 0 divorce, 100 % ⇒ tous dissous + conjoints en `ex` (INV-7) ; couple existant produit une portée selon `reproPct ?? gaussienne` ; un couple ne se reproduit qu'en son sein.
-- [ ] T024 [US2] Étendre `src/core/time/tick.ts` : (1) **divorces** en début de tick (`chance(espèce.divorcePct)` → couple retiré, conjoints `actuel` → `ex`) ; (4 bis) **reproduction des couples existants** (`chance(reproPct ?? reproProbability(âge moyen))`) ⇒ portée. **Ordre §6.6 respecté** : divorces → candidats/appariement (nouveaux couples) → reproduction nouveaux couples → reproduction couples existants → avance. Dépend de T018.
-- [ ] T025 [US2] Mise à jour des conjoints (actuel/ex) côté store dans `src/ui/stores/appState.ts` : refléter formations/divorces dans la population affichée.
-- [ ] T026 [US2] Édition du **% de reproduction par couple** (FR-011) dans `src/ui/views/FicheView.svelte` : afficher les conjoints actuels/ex et permettre de régler `reproPct` du couple (sinon hérité de la gaussienne).
+- [x] T023 [P] [US2] Tests divorce & repro des couples dans `tests/unit/tick.test.ts` : divorce 0 % ⇒ 0 divorce, 100 % ⇒ tous dissous + conjoints en `ex` (INV-7) ; couple existant produit une portée selon `reproPct ?? gaussienne` ; un couple ne se reproduit qu'en son sein.
+- [x] T024 [US2] Étendre `src/core/time/tick.ts` : (1) **divorces** en début de tick (`chance(espèce.divorcePct)` → couple retiré, conjoints `actuel` → `ex`) ; (4 bis) **reproduction des couples existants** (`chance(reproPct ?? reproProbability(âge moyen))`) ⇒ portée. **Ordre §6.6 respecté** : divorces → candidats/appariement (nouveaux couples) → reproduction nouveaux couples → reproduction couples existants → avance. Dépend de T018.
+- [x] T025 [US2] Mise à jour des conjoints (actuel/ex) côté store dans `src/ui/stores/appState.ts` : refléter formations/divorces dans la population affichée.
+- [x] T026 [US2] Édition du **% de reproduction par couple** (FR-011) dans `src/ui/views/FicheView.svelte` : afficher les conjoints actuels/ex et permettre de régler `reproPct` du couple (sinon hérité de la gaussienne).
 
 **Checkpoint**: US1 + US2 — cycle de vie complet des couples exerçable.
 
@@ -110,10 +110,10 @@ couple élevé ⇒ portées annuelles des couples existants.
 **Independent Test**: depuis une fiche, tuer avec une cause ⇒ statut décédé ; aux avancements suivants,
 exclu de la reproduction ; tuer sans cause ⇒ refusé.
 
-- [ ] T027 [P] [US3] Tests mort dans `tests/unit/death.test.ts` : cause vide ⇒ refus (aucune mutation) ; cause valide ⇒ `vivant=false` + `raisonDeces` ; mort exclu des candidats/couples ; dissolution du couple si un membre meurt (INV-8).
-- [ ] T028 [US3] Mort manuelle dans `src/core/life/death.ts` : `kill(state, personId, cause)` (cause obligatoire, dissout le couple éventuel, conjoints `actuel` → `ex`) ; exposer via la façade `src/core/index.ts`.
-- [ ] T029 [US3] Exclusion des morts dans `src/core/repro/candidates.ts` (déjà filtrés `vivant`) — vérifier/garantir l'invariant au tick.
-- [ ] T030 [US3] UI : action **« tuer »** dans `src/ui/views/FicheView.svelte` (saisie de cause obligatoire) + affichage du statut **décédé** et de la cause ; action `kill` dans `src/ui/stores/appState.ts`.
+- [x] T027 [P] [US3] Tests mort dans `tests/unit/death.test.ts` : cause vide ⇒ refus (aucune mutation) ; cause valide ⇒ `vivant=false` + `raisonDeces` ; mort exclu des candidats/couples ; dissolution du couple si un membre meurt (INV-8).
+- [x] T028 [US3] Mort manuelle dans `src/core/life/death.ts` : `kill(state, personId, cause)` (cause obligatoire, dissout le couple éventuel, conjoints `actuel` → `ex`) ; exposer via la façade `src/core/index.ts`.
+- [x] T029 [US3] Exclusion des morts dans `src/core/repro/candidates.ts` (déjà filtrés `vivant`) — vérifier/garantir l'invariant au tick.
+- [x] T030 [US3] UI : action **« tuer »** dans `src/ui/views/FicheView.svelte` (saisie de cause obligatoire) + affichage du statut **décédé** et de la cause ; action `kill` dans `src/ui/stores/appState.ts`.
 
 **Checkpoint**: les 3 user stories fonctionnent indépendamment.
 
@@ -123,10 +123,10 @@ exclu de la reproduction ; tuer sans cause ⇒ refusé.
 
 **Purpose**: continuation déterministe, performance, responsive, portes de la constitution.
 
-- [ ] T031 [P] Test continuation/round-trip dans `tests/unit/state.test.ts` : export → import (avec `rngState`/`currentYear`/`couples`) ⇒ état **égal** ; `advanceYears` après import = même résultat qu'une session continue (INV-10 / SC-008).
-- [ ] T032 [P] Test de performance dans `tests/unit/perf.test.ts` : avancer **1 an sur ~1 000 individus < ~1 s** (SC-009).
-- [ ] T033 [P] Styles responsive pour `TimeBar`, le statut décédé et l'édition de couple (mobile → desktop) dans `src/app.css` et composants.
-- [ ] T034 Vérifier les portes de la constitution : pureté du cœur (la garde `core-purity.test.ts` couvre `repro/`, `time/`, `life/` ; aucun `Math.random`/`Date`/`crypto` ; `Math.exp` autorisé) ; dérouler le smoke test de `quickstart.md` ; `npm run lint` + `npm run build` verts.
+- [x] T031 [P] Test continuation/round-trip dans `tests/unit/state.test.ts` : export → import (avec `rngState`/`currentYear`/`couples`) ⇒ état **égal** ; `advanceYears` après import = même résultat qu'une session continue (INV-10 / SC-008).
+- [x] T032 [P] Test de performance dans `tests/unit/perf.test.ts` : avancer **1 an sur ~1 000 individus < ~1 s** (SC-009).
+- [x] T033 [P] Styles responsive pour `TimeBar`, le statut décédé et l'édition de couple (mobile → desktop) dans `src/app.css` et composants.
+- [x] T034 Vérifier les portes de la constitution : pureté du cœur (la garde `core-purity.test.ts` couvre `repro/`, `time/`, `life/` ; aucun `Math.random`/`Date`/`crypto` ; `Math.exp` autorisé) ; dérouler le smoke test de `quickstart.md` ; `npm run lint` + `npm run build` verts.
 
 ---
 

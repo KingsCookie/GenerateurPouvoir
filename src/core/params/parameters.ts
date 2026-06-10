@@ -26,6 +26,9 @@ export interface Parameters {
   genomeMalusEnabled: boolean; // option « malus sur le génome » (cas spéciaux)
   statB: number; // probabilité B (%) pour moyenne∓1 (§7.2)
   statC: number; // probabilité C (%) pour moyenne ; A = 100 − 2·B − C
+
+  // --- Simulation temporelle (Feature 3). ---
+  consanguinityAllowed: boolean; // si false, interdit l'appariement entre proches (§6.6.1)
 }
 
 function defaultTraitTypeWeights(): Record<TraitType, number> {
@@ -63,6 +66,8 @@ export function defaultParameters(): Parameters {
     genomeMalusEnabled: false,
     statB: 10,
     statC: 30, // ⇒ A = 100 − 2·10 − 30 = 50
+
+    consanguinityAllowed: false, // consanguinité interdite par défaut (§6.6.1 / §9.5)
   };
 }
 

@@ -6,6 +6,12 @@ function pad4(year: number): string {
   return sign + String(Math.abs(year)).padStart(4, '0');
 }
 
+/** Extrait l'année (entier, éventuellement négatif) d'une date ISO YYYY-MM-DD. */
+export function yearOfIso(dateIso: string): number {
+  const m = /^(-?\d+)-/.exec(dateIso);
+  return m ? Number(m[1]) : 0;
+}
+
 /** Convertit un jour de l'année [0..364] en date ISO YYYY-MM-DD (calendrier fixe 365 j). */
 export function isoDate(year: number, dayOfYear: number): string {
   let d = dayOfYear;

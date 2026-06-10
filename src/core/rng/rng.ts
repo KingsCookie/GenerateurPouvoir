@@ -19,6 +19,8 @@ export interface Rng {
   pickWeighted<T>(items: readonly T[], weightOf: (t: T) => number): T;
   /** Permutation déterministe (Fisher–Yates) ; renvoie une **nouvelle** copie, ne mute pas l'entrée. */
   shuffle<T>(items: readonly T[]): T[];
+  /** État courant du générateur (4 mots xoshiro en décimal) — sérialisable (FR-021). */
+  getState(): string[];
 }
 
 function splitmix64(state: bigint): { state: bigint; value: bigint } {
@@ -34,17 +36,8 @@ function rotl(x: bigint, k: bigint): bigint {
   return ((x << k) | (x >> (64n - k))) & MASK64;
 }
 
-/** Crée un générateur déterministe à partir d'une seed 64 bits. */
-export function createRng(seed: bigint): Rng {
-  // Dérive les 4 mots d'état xoshiro depuis la seed via SplitMix64.
-  let sm = seed & MASK64;
-  const s: bigint[] = [];
-  for (let i = 0; i < 4; i++) {
-    const r = splitmix64(sm);
-    sm = r.state;
-    s.push(r.value);
-  }
-
+// Construit un Rng autour d'un état xoshiro256** mutable de 4 mots (closure partagée).
+function makeRng(s: bigint[]): Rng {
   function nextU64(): bigint {
     const result = (rotl((s[1] * 5n) & MASK64, 7n) * 9n) & MASK64;
     const t = (s[1] << 17n) & MASK64;
@@ -122,5 +115,30 @@ export function createRng(seed: bigint): Rng {
     return out;
   }
 
-  return { nextU64, nextFloat, nextInt, chance, pick, pickWeighted, shuffle };
+  function getState(): string[] {
+    return s.map((x) => x.toString());
+  }
+
+  return { nextU64, nextFloat, nextInt, chance, pick, pickWeighted, shuffle, getState };
+}
+
+/** Crée un générateur déterministe à partir d'une seed 64 bits. */
+export function createRng(seed: bigint): Rng {
+  // Dérive les 4 mots d'état xoshiro depuis la seed via SplitMix64.
+  let sm = seed & MASK64;
+  const s: bigint[] = [];
+  for (let i = 0; i < 4; i++) {
+    const r = splitmix64(sm);
+    sm = r.state;
+    s.push(r.value);
+  }
+  return makeRng(s);
+}
+
+/** Restitue un générateur à l'état exact capturé par `getState()` (FR-021). */
+export function createRngFromState(state: readonly string[]): Rng {
+  if (state.length !== 4) {
+    throw new Error(`createRngFromState: 4 mots attendus (reçu ${state.length}).`);
+  }
+  return makeRng(state.map((v) => BigInt(v) & MASK64));
 }

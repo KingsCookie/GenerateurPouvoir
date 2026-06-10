@@ -1,29 +1,42 @@
 import type { Catalog } from '../model/trait.js';
 import type { Personne } from '../model/personne.js';
+import type { Couple } from '../model/couple.js';
+import type { Espece } from '../model/espece.js';
 import type { Parameters } from '../params/parameters.js';
 import { defaultParameters } from '../params/parameters.js';
-import { defaultCatalog } from '../catalog/defaultCatalog.js';
+import { defaultCatalog, defaultEspeces } from '../catalog/defaultCatalog.js';
+import { createRng } from '../rng/rng.js';
 
-export const FORMAT_VERSION = 1;
+// v1 (Features 1-2) → v2 (Feature 3 : currentYear, couples, état du RNG). Compatibilité ascendante.
+export const FORMAT_VERSION = 2;
 
 export interface AppState {
   formatVersion: number;
   kind: 'full';
   parameters: Parameters;
   catalog: Catalog;
+  especes: Espece[]; // catalogue d'espèces (paramètres de reproduction, Feature 3 / §9.4)
   population: Personne[];
+  currentYear: number; // année courante (1ᵉʳ janvier), progresse au tick (Feature 3)
+  couples: Couple[]; // couples actuels
+  rngState: string[]; // état sérialisé du RNG (continuation déterministe, FR-021)
 }
 
 export type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 
 /** État initial vide (population non générée). */
 export function createInitialState(params?: Partial<Parameters>): AppState {
+  const parameters = { ...defaultParameters(), ...params };
   return {
     formatVersion: FORMAT_VERSION,
     kind: 'full',
-    parameters: { ...defaultParameters(), ...params },
+    parameters,
     catalog: defaultCatalog(),
+    especes: defaultEspeces(),
     population: [],
+    currentYear: parameters.birthYear,
+    couples: [],
+    rngState: createRng(BigInt(parameters.seed)).getState(),
   };
 }
 
@@ -82,5 +95,20 @@ export function deserializeState(json: string): Result<AppState> {
     return { ok: false, error: 'Structure de l’état incomplète (parameters/catalog/population).' };
   }
 
-  return { ok: true, value: parsed as unknown as AppState };
+  // Compatibilité ascendante (INV-11) : un fichier v1 (sans currentYear/couples/rngState) est
+  // accepté en complétant des valeurs par défaut sûres.
+  const value = parsed as unknown as AppState;
+  const seed = String((value.parameters as Parameters).seed ?? '0');
+  if (typeof value.currentYear !== 'number') {
+    value.currentYear = (value.parameters as Parameters).birthYear ?? 0;
+  }
+  if (!Array.isArray(value.couples)) value.couples = [];
+  if (!Array.isArray(value.especes) || value.especes.length === 0) {
+    value.especes = defaultEspeces();
+  }
+  if (!Array.isArray(value.rngState) || value.rngState.length !== 4) {
+    value.rngState = createRng(BigInt(seed)).getState();
+  }
+
+  return { ok: true, value };
 }

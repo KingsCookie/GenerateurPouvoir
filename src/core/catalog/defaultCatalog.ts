@@ -202,6 +202,17 @@ export function defaultEspece(): Espece {
       { id: 'feminin', label: 'Féminin' },
       { id: 'masculin', label: 'Masculin' },
     ],
+    // Défauts humain (clarification + plan §Décisions de paramètres par défaut).
+    reproStartAge: 16,
+    reproPeakAge: 25,
+    reproEndAge: 50,
+    reproPeakPct: 60,
+    reproSlope: 8,
+    groupSize: 2,
+    litterMin: 1,
+    litterMax: 4,
+    litterExtraPct: 40,
+    divorcePct: 0,
   };
 }
 

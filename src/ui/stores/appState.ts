@@ -2,15 +2,21 @@ import { writable, derived, get } from 'svelte/store';
 import {
   createSeed,
   createRng,
+  createRngFromState,
   defaultCatalog,
+  defaultEspeces,
   defaultParameters,
   generateInitialPopulation,
   reproduce,
+  advanceYears as advanceYearsCore,
+  kill as killCore,
   serializeState,
   deserializeState,
   FORMAT_VERSION,
   type AppState,
   type Catalog,
+  type Couple,
+  type Espece,
   type Parameters,
   type Personne,
   type Rng,
@@ -31,6 +37,10 @@ export const population = writable<Personne[]>([]);
 export const currentView = writable<View>('parametres');
 export const selectedPersonId = writable<string | null>(null);
 
+// Simulation temporelle (Feature 3) : année courante + couples actuels.
+export const currentYear = writable<number>(0);
+export const couples = writable<Couple[]>([]);
+
 // Sélection multiple pour la reproduction (US1). Set d'ids ; l'ordre de reproduction suit
 // l'ordre de la population (déterminisme).
 export const selectedIds = writable<Set<string>>(new Set());
@@ -38,6 +48,10 @@ export const selectedIds = writable<Set<string>>(new Set());
 // Générateur du moteur : on **continue le flux** de la genèse (déterminisme : seed + séquence
 // d'actions ⇒ résultat reproductible, Principe I). (Re)créé à chaque génération/import.
 let engineRng: Rng = createRng(0n);
+
+// Catalogue d'espèces (paramètres de reproduction). Non éditable dans l'UI en Feature 3
+// (édition complète en Feature 5) ; inclus dans l'export/import.
+let especesRef: Espece[] = defaultEspeces();
 
 // Individu actuellement sélectionné (US2), dérivé de la population et de l'id sélectionné.
 export const selectedPerson = derived(
@@ -63,9 +77,51 @@ export function setParam<K extends keyof Parameters>(key: K, value: Parameters[K
 export function generate(): void {
   const p = get(parameters);
   engineRng = createRng(BigInt(p.seed));
+  especesRef = defaultEspeces();
   population.set(generateInitialPopulation(p, catalog, engineRng));
+  currentYear.set(p.birthYear);
+  couples.set([]);
   selectedIds.set(new Set());
   currentView.set('liste');
+}
+
+/** Assemble l'état applicatif courant (pour le cœur ou l'export). */
+function snapshot(): AppState {
+  return {
+    formatVersion: FORMAT_VERSION,
+    kind: 'full',
+    parameters: get(parameters),
+    catalog,
+    especes: especesRef,
+    population: get(population),
+    currentYear: get(currentYear),
+    couples: get(couples),
+    rngState: engineRng.getState(),
+  };
+}
+
+/**
+ * Avance la simulation de `years` années (≥ 1) via le tick annuel déterministe (Feature 3).
+ * Continue le flux `engineRng` ; met à jour population, couples et année courante.
+ */
+export function advanceYears(years: number): void {
+  if (!Number.isFinite(years) || years < 1) return;
+  const result = advanceYearsCore(snapshot(), Math.floor(years), engineRng);
+  population.set(result.population);
+  couples.set(result.couples);
+  currentYear.set(result.currentYear);
+}
+
+/**
+ * Tue manuellement un individu (cause obligatoire, §6.7). Renvoie un message d'erreur si refusé
+ * (cause vide), sinon `null`.
+ */
+export function killPerson(personId: string, cause: string): string | null {
+  const res = killCore(snapshot(), personId, cause);
+  if (!res.ok) return res.error;
+  population.set(res.state.population);
+  couples.set(res.state.couples);
+  return null;
 }
 
 /** Bascule la sélection d'un individu (pour la reproduction). */
@@ -113,6 +169,16 @@ export function reproduceSelected(): string | null {
   return childId;
 }
 
+/** Couple actuel contenant un individu, ou null. */
+export function coupleOf(personId: string): Couple | null {
+  return get(couples).find((c) => c.memberIds.includes(personId)) ?? null;
+}
+
+/** Édite le % de reproduction d'un couple (null ⇒ hérité de la gaussienne, FR-011). */
+export function setCoupleReproPct(coupleId: string, pct: number | null): void {
+  couples.update((list) => list.map((c) => (c.id === coupleId ? { ...c, reproPct: pct } : c)));
+}
+
 /** Ouvre la fiche d'un individu (US2). */
 export function selectPerson(id: string): void {
   selectedPersonId.set(id);
@@ -134,16 +200,9 @@ export function goToParametres(): void {
 
 export const importError = writable<string | null>(null);
 
-/** Construit le JSON de l'état courant (paramètres + seed + catalogue + population). */
+/** Construit le JSON de l'état courant (paramètres, catalogue, population, année, couples, état RNG). */
 export function buildStateJson(): string {
-  const state: AppState = {
-    formatVersion: FORMAT_VERSION,
-    kind: 'full',
-    parameters: get(parameters),
-    catalog,
-    population: get(population),
-  };
-  return serializeState(state);
+  return serializeState(snapshot());
 }
 
 /**
@@ -158,11 +217,14 @@ export function applyImport(json: string): boolean {
   }
   importError.set(null);
   parameters.set(res.value.parameters);
+  especesRef = res.value.especes;
   population.set(res.value.population);
+  currentYear.set(res.value.currentYear);
+  couples.set(res.value.couples);
   selectedPersonId.set(null);
   selectedIds.set(new Set());
-  // Réamorce le moteur depuis la seed importée (reproductions déterministes post-import).
-  engineRng = createRng(BigInt(res.value.parameters.seed));
+  // Restitue l'état EXACT du RNG (continuation strictement déterministe après import, FR-021).
+  engineRng = createRngFromState(res.value.rngState);
   currentView.set('liste');
   return true;
 }
