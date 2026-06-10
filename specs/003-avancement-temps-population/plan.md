@@ -56,12 +56,12 @@ pas de création/édition manuelle d'individus §6.8 (feature ultérieure).
 | Gaussienne — âge de **début** | **16** | clarification (fenêtre de reproduction). |
 | Gaussienne — âge du **pic** | **25** | clarification. |
 | Gaussienne — âge de **fin** (max) | **50** | clarification ; au-delà, probabilité nulle. |
-| Gaussienne — **probabilité au pic** | **60 %** | clarification. |
+| Gaussienne — **probabilité au pic** | **40 %** | clarification (ajusté). |
 | Gaussienne — **pente** (écart-type) | **8 ans** | cloche large couvrant la fenêtre [16,50]. |
 | **Taille du groupe** de reproduction | **2** | clarification (couple classique). |
 | Portée **M** (min) | **1** | au moins un enfant par reproduction. |
 | Portée **N** (max) | **4** | plafond raisonnable. |
-| Portée **X %** (enfant suppl.) | **40 %** | portées modérées (espérance ~2). |
+| Portée **X %** (enfant suppl.) | **15 %** | portées resserrées (espérance ~1,2). |
 | **% de divorce** / an | **0 %** | baseline prévisible (comme les taux F2) ; activable. |
 | **Consanguinité** (global) | **interdite** | source de vérité §6.6.1 / §9.5. |
 

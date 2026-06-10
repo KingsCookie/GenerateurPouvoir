@@ -1,5 +1,6 @@
 import type { Rng } from '../rng/rng.js';
 import type { Catalog, Trait } from '../model/trait.js';
+import { TRAIT_TYPES } from '../model/traitType.js';
 import type { Parameters } from '../params/parameters.js';
 import type { Personne } from '../model/personne.js';
 import type { ADN, ResilientTrait } from '../model/adn.js';
@@ -157,8 +158,11 @@ function activateTraits(adn: ADN, traitIds: string[], params: Parameters): ADN {
   return { traits: [...byId.values()] };
 }
 
+// Ordre canonique fixe (TRAIT_TYPES) : indépendant de l'ordre des clés de l'objet `byType`,
+// que la sérialisation canonique réordonne (clés triées). Garantit que `pickWeighted` tire le
+// même trait avant/après export-import (déterminisme strict, FR-021).
 function flattenCatalog(catalog: Catalog): Trait[] {
   const out: Trait[] = [];
-  for (const list of Object.values(catalog.byType)) out.push(...list);
+  for (const type of TRAIT_TYPES) out.push(...catalog.byType[type]);
   return out;
 }

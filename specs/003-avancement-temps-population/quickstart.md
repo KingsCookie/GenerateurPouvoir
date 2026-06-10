@@ -30,7 +30,7 @@ npm run lint
 ## Vérification manuelle (smoke test de la feature)
 
 1. `npm run dev`, générer une population (≥ quelques dizaines d'individus, `% pouvoir` élevé).
-2. Régler une **gaussienne** active (défauts humain 16/25/50, pic 60 %) et une **portée** (M/N/X).
+2. Régler une **gaussienne** active (défauts humain 16/25/50, pic 40 %) et une **portée** (M/N/X, X=15 %).
 3. Cliquer **« avancer de 1 an »** → des couples se forment, des enfants naissent (âge 0, année courante),
    tout le monde vieillit d'1 an, la **date courante** affiche l'année suivante.
 4. Avancer de plusieurs années → la population croît ; ouvrir des fiches : conjoints **actuels**, enfants,

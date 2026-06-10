@@ -18,12 +18,12 @@ Features 1 & 2 **sans le casser**. Réutilise `Personne` (dont `conjoints` actue
 | `reproStartAge` | number | **16** | âge de début de reproduction (≥ 0). |
 | `reproPeakAge` | number | **25** | âge du pic de probabilité. |
 | `reproEndAge` | number | **50** | âge de fin/maximal ; au-delà, probabilité nulle. |
-| `reproPeakPct` | number | **60** | probabilité (%) au pic [0..100]. |
+| `reproPeakPct` | number | **40** | probabilité (%) au pic [0..100]. |
 | `reproSlope` | number | **8** | pente = écart-type (années, > 0) de la cloche. |
 | `groupSize` | number | **2** | taille du groupe de reproduction (≥ 1). |
 | `litterMin` (M) | number | **1** | enfants garantis (≥ 0). |
 | `litterMax` (N) | number | **4** | plafond (≥ M). |
-| `litterExtraPct` (X) | number | **40** | chance (%) d'un enfant supplémentaire [0..100]. |
+| `litterExtraPct` (X) | number | **15** | chance (%) d'un enfant supplémentaire [0..100]. |
 | `divorcePct` | number | **0** | chance (%) de divorce par an et par couple [0..100]. |
 
 ## Parameters — champ ajouté

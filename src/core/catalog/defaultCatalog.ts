@@ -206,12 +206,12 @@ export function defaultEspece(): Espece {
     reproStartAge: 16,
     reproPeakAge: 25,
     reproEndAge: 50,
-    reproPeakPct: 60,
+    reproPeakPct: 40,
     reproSlope: 8,
     groupSize: 2,
     litterMin: 1,
     litterMax: 4,
-    litterExtraPct: 40,
+    litterExtraPct: 15,
     divorcePct: 0,
   };
 }
