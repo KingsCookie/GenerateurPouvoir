@@ -1,16 +1,22 @@
 <!-- SPECKIT START -->
-## Feature active : 003-avancement-temps-population
+## Feature active : 004-genealogie-exploration
 
-- **Plan** : `specs/003-avancement-temps-population/plan.md` (contexte technique, défauts d'espèce, Constitution Check)
-- **Spec** : `specs/003-avancement-temps-population/spec.md` (source : `rsrc/DescriptionProjet.md`, NE PAS modifier sans accord)
-- **Recherche / décisions** : `specs/003-avancement-temps-population/research.md`
-- **Modèle de données** : `specs/003-avancement-temps-population/data-model.md`
-- **Contrats** : `specs/003-avancement-temps-population/contracts/` (RNG sérialisable, gaussienne, tick, mort)
-- **Simulation** : tick annuel §6.6 (divorces → candidats/gaussienne → appariement → portées), vieillissement §6.5,
-  mort manuelle §6.7, conjoints actuel/ex, portées M/N/X. **État du RNG sérialisé** (continuation déterministe, FR-021).
-  Réutilise `reproduce` (F2) pour chaque enfant. Défauts humain gaussienne 18/25/50 pic 40 %, groupe 2, portée M1/N4/X15 %, consanguinité interdite.
+- **Plan** : `specs/004-genealogie-exploration/plan.md` (contexte technique, décisions, Constitution Check)
+- **Spec** : `specs/004-genealogie-exploration/spec.md` (source : `rsrc/DescriptionProjet.md` §8.1–8.5, NE PAS modifier sans accord)
+- **Recherche / décisions** : `specs/004-genealogie-exploration/research.md`
+- **Modèle de données** : `specs/004-genealogie-exploration/data-model.md`
+- **Contrats** : `specs/004-genealogie-exploration/contracts/core-api.md` (arbre, filtres, dernière génération)
+- **Exploration (lecture seule)** : `src/core/genealogy/` pur — `buildGenealogyTree` (borné par N, répétition
+  multi-chemins, unions conjoints actuel/ex + enfants communs), `filterPopulation` (OU intra / ET inter ; trait
+  portée actifs/inactifs/tous ; pouvoir présence/absence ; nom normalisé), `lastGeneration`. Réutilise
+  `computeGeneration` (tranche 20 ans), `computeAge`, `powerLabel`. Fiche : arbre profondeur **fixe 2** (cases
+  nom+pouvoirs) + bouton « Explorer l'arbre » ; page dédiée : profondeur **N réglable sans plafond** (cases
+  nom+âge+pouvoirs). Liste : défaut **dernière génération** dynamique + **persistance** des filtres (état UI, non
+  exporté). 3 modes d'affichage des traits (**défaut Mode 3**).
 - Features livrées : 1 (`specs/001-fondations-genese/`) seed/RNG, modèle, genèse, liste/fiche, export/import ;
-  2 (`specs/002-reproduction-heredite/`) moteur génétique (hérédité §4, traits→pouvoirs §6.4, P/M §7.2, reproduction).
+  2 (`specs/002-reproduction-heredite/`) moteur génétique (hérédité §4, traits→pouvoirs §6.4, P/M §7.2, reproduction) ;
+  3 (`specs/003-avancement-temps-population/`) tick annuel §6.6, vieillissement, mort, conjoints, état RNG sérialisé.
+  Défauts humain : gaussienne 18/25/50 pic 40 %, groupe 2, portée M1/N4/X15 %, consanguinité interdite.
 
 ### Stack
 TypeScript 5.x · Vite · Svelte · Vitest · vite-plugin-pwa. App **100 % statique** (PWA), déployée sur

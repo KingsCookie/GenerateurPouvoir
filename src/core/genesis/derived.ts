@@ -1,6 +1,12 @@
 import type { Pouvoir, PowerTemplate } from '../model/pouvoir.js';
 import type { Catalog } from '../model/trait.js';
 
+/** Extrait l'année (entier, éventuellement négatif) d'une date ISO `YYYY-MM-DD`. */
+export function yearOf(dateIso: string): number {
+  const m = /^(-?\d+)-/.exec(dateIso);
+  return m ? Number(m[1]) : 0;
+}
+
 /** Génération d'affichage = tranche de 20 ans de l'année de naissance (FR-020). */
 export function computeGeneration(birthYear: number): number {
   return Math.floor(birthYear / 20);

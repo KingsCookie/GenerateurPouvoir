@@ -4,10 +4,14 @@ import {
   computeAge,
   computeGeneration,
   powerLabel,
+  yearOf,
   type Catalog,
   type Personne,
   type PowerKind,
 } from '../../core/index.js';
+
+// Réexport pour compatibilité (yearOf vit désormais dans le cœur, réutilisé par la généalogie).
+export { yearOf };
 
 export interface TraitView {
   traitId: string;
@@ -36,12 +40,6 @@ export interface FicheView {
   pouvoirs: PouvoirView[];
   traitsActifs: TraitView[];
   traitsInactifs: TraitView[];
-}
-
-/** Extrait l'année (entier, éventuellement négatif) d'une date ISO YYYY-MM-DD. */
-export function yearOf(dateIso: string): number {
-  const m = /^(-?\d+)-/.exec(dateIso);
-  return m ? Number(m[1]) : 0;
 }
 
 function labelIndex(catalog: Catalog): Map<string, string> {

@@ -4,3 +4,8 @@ Utiliser une courbe de bezier plutot qu'une gaussienne pour la reproduction.
 
 Afficher le % de chance qu'une personne passe l'age de fin de reproduction de son espece sans se reproduire.
 
+Avoir un bandeau en bas de page avec le versionning du logiciel.
+
+Pouvoir report des beug, ça envoie un mail à <adressemailgenerique> avec une importance [faible] [moyen] [critique], un message rentré par la personne qui a report le bug et un fichier contenant le détail de toutes les actions faites par l'utilisateur depuis la dernière génération initiale.
+
+
