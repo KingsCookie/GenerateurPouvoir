@@ -45,11 +45,16 @@ enfants que ces ex/conjoints ont eus avec d'autres, ni les parents des ex/conjoi
 fiche, chaque case affiche **nom + pouvoir(s)**. Un bouton **« Explorer l'arbre »** ouvre une
 **page dédiée** affichant le même arbre en grand, **sans informations latérales**, avec une
 **profondeur N réglable** (≥ 1, défaut **2**) ; sur cette page, chaque case affiche **nom + âge +
-pouvoir(s)**. Cliquer une case **recentre** l'arbre sur l'individu cliqué.
+pouvoir(s)**. Cliquer une case **recentre** l'arbre sur l'individu cliqué. L'arbre (fiche et page
+dédiée) est une **zone interactive** : **zoom** (molette / pincement) et **déplacement** (pan au
+clic droit ou au doigt). Sur la fiche, cette zone est **en haut**, sous « Retour à la liste », en
+**pleine largeur**.
 
 **Bugfix**: 2026-06-10 — BUG-001 Profondeur fixe 2 sur la fiche (bouton « Explorer l'arbre » → page
 dédiée à profondeur N réglable) ; contenu des cases distinct fiche (nom + pouvoirs) / page (nom +
 âge + pouvoirs).
+**Bugfix**: 2026-06-10 — BUG-002 Arbre = zone interactive zoom/pan (molette + pincement ; pan clic
+droit / tactile) ; placement en haut de la fiche, pleine largeur (FR-002b/FR-002c).
 
 **Why this priority** : c'est le cœur de la valeur « explorer la généalogie » et la brique la
 plus visible de la feature ; elle exploite directement les liens `parents`/`enfants` déjà
@@ -77,6 +82,11 @@ une case recentre.
 6. **Given** un individu de l'arbre ayant un conjoint actuel et un ex, **When** j'affiche l'arbre,
    **Then** le conjoint et l'ex apparaissent rattachés à lui, **avec** les enfants issus de ces
    unions, **sans** les enfants que ces conjoints/ex ont eus avec d'autres personnes ni leurs parents.
+7. **Given** l'arbre (fiche ou page dédiée), **When** j'utilise la molette / le pincement, **Then**
+   l'arbre **zoome/dézoome** ; **When** je maintiens le **clic droit** (ou glisse au doigt) et
+   déplace, **Then** l'arbre **se déplace (pan)** et le **menu contextuel** n'apparaît pas.
+8. **Given** la **fiche**, **When** je l'ouvre, **Then** la zone arbre est **en haut**, **juste sous
+   « Retour à la liste »**, en **pleine largeur**.
 
 ---
 
@@ -164,6 +174,10 @@ les 3 modes et vérifier que le contenu affiché correspond exactement à chaque
 - **Filtre par génération sans individu dans la tranche** : résultat vide, pas d'erreur.
 - **Recherche insensible à la casse / aux accents** : « leo » trouve « Léon ».
 - **Individu isolé** (ni parents ni enfants) : l'arbre se réduit à sa seule case.
+- **Zoom borné** : le zoom DOIT être limité par un facteur **min/max** raisonnable (pas de zoom
+  infini/nul) ; une action de **recentrage** (ré-ajuster à la vue) DEVRAIT être disponible.
+- **Clic droit ↔ menu contextuel** : sur la zone arbre, le menu contextuel natif DOIT être
+  supprimé pour ne pas gêner le pan ; le clic **gauche** sur une case conserve le **recentrage**.
 - **Population sur une seule génération** : le défaut « dernière génération » affiche cette unique
   tranche (pas d'état vide trompeur).
 - **Avance du temps après filtrage manuel** : le défaut dynamique **ne s'applique plus** ; les
@@ -183,6 +197,13 @@ les 3 modes et vérifier que le contenu affiché correspond exactement à chaque
 - **FR-002a** : Sur la **fiche**, la profondeur de l'arbre DOIT être **fixe = 2** (2 niveaux
   d'ancêtres + 2 niveaux de descendants), **non réglable**. La fiche DOIT exposer un bouton
   **« Explorer l'arbre »** ouvrant la **page dédiée** (FR-005).
+- **FR-002b** : L'arbre (fiche **et** page dédiée) DOIT être une **zone interactive** permettant de
+  **zoomer/dézoomer** (molette de la souris **et** pincement tactile) et de **se déplacer (pan)**
+  dans l'arbre (**clic droit maintenu + déplacement** à la souris **et** glisser au **doigt** sur
+  écran tactile). Le **clic droit** servant au pan, le **menu contextuel** du navigateur DOIT être
+  supprimé sur la zone.
+- **FR-002c** : Sur la **fiche**, la zone arbre DOIT être placée **tout en haut**, **juste sous le
+  bouton « Retour à la liste »**, et occuper **toute la largeur** disponible.
 - **FR-003** : ~~Chaque **case** de l'arbre DOIT afficher **nom**, **date de naissance / âge** et
   **pouvoir(s)** de l'individu.~~ *(remplacé — BUG-001 : contenu distinct selon la page.)*
 - **FR-003b** : Sur la **fiche**, chaque case d'arbre DOIT afficher **nom + pouvoir(s)** (sans
