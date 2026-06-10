@@ -75,7 +75,9 @@
               {#if row.pouvoirs.length === 0}
                 <span class="muted">—</span>
               {:else}
-                {row.pouvoirs.join(' || ')}
+                {#each row.pouvoirs as pouvoir}
+                  <div class="pouvoir">{pouvoir}</div>
+                {/each}
               {/if}
             </td>
           </tr>
@@ -123,6 +125,9 @@
   }
   .muted {
     color: var(--fg-muted);
+  }
+  .pouvoir + .pouvoir {
+    margin-top: 0.15rem;
   }
   .empty {
     color: var(--fg-muted);
