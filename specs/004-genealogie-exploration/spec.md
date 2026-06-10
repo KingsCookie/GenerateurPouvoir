@@ -190,7 +190,8 @@ les 3 modes et vérifier que le contenu affiché correspond exactement à chaque
 **Arbre généalogique (§8.2 / §8.3)**
 - **FR-001** : La fiche d'un individu DOIT afficher un **arbre généalogique centré** sur lui, avec
   **N niveaux d'ancêtres** au-dessus et **N niveaux de descendants** en dessous, selon les liens
-  `parents`/`enfants` disponibles.
+  `parents`/`enfants` disponibles. Les **ascendants** (parents, grands-parents, …) DOIVENT être
+  représentés en **couples** (cf. FR-003d), au même titre que les descendants. *(précisé — BUG-004)*
 - **FR-002** : ~~La **profondeur N** DOIT être **sélectionnable** par l'utilisateur, avec une
   valeur **par défaut de 2**, et N ≥ 1.~~ *(remplacé — BUG-001 : la profondeur est désormais figée
   sur la fiche et réglable seulement sur la page dédiée ; cf. FR-002a/FR-005.)*
@@ -207,7 +208,9 @@ les 3 modes et vérifier que le contenu affiché correspond exactement à chaque
   **distinguer un clic d'un glisser** au moyen d'un **seuil de déplacement** : un appui relâché
   **sans franchir le seuil** = **clic** (recentrage/ouverture, cf. FR-004) ; un appui **dépassant le
   seuil** = **pan** (déplacement de la vue, **sans** déclencher la navigation). La zone DOIT en
-  outre exposer un **recentrage de la vue** (réinitialisation du zoom/déplacement). *(BUG-003)*
+  outre exposer un **recentrage de la vue**. *(BUG-003)* Le **recentrage** DOIT ramener le **centre
+  de la case de la personne observée** (la **racine**) au **centre de la fenêtre d'exploration**
+  (viewport), et pas seulement réinitialiser le zoom. *(précisé — BUG-004)*
 - **FR-002c** : Sur la **fiche**, la zone arbre DOIT être placée **tout en haut**, **juste sous le
   bouton « Retour à la liste »**, et occuper **toute la largeur** disponible.
 - **FR-003** : ~~Chaque **case** de l'arbre DOIT afficher **nom**, **date de naissance / âge** et
@@ -218,7 +221,9 @@ les 3 modes et vérifier que le contenu affiché correspond exactement à chaque
   **conjoint actuel** et ses **ex-conjoints**, ainsi que les **enfants issus de ces unions**
   (enfants ayant pour parents l'individu **et** le conjoint/ex concerné). Le système NE DOIT **pas**
   afficher les **autres enfants** de ces conjoints/ex (issus d'unions avec des tiers) **ni** les
-  **parents** des conjoints/ex.
+  **parents** des conjoints/ex. **Côté ascendance** : pour le **couple parental** d'un individu de
+  l'arbre, le **seul enfant relié** est celui **présent dans la lignée** (l'individu lui-même), **et
+  non** ses fratries / autres enfants du couple parental. *(précisé — BUG-004)*
 - **FR-003c** : Le **rendu graphique** de l'arbre DOIT : *(BUG-003)*
   - placer le **symbole d'union ⚭ entre les deux membres** de chaque couple (et non à côté du seul
     conjoint) ;
@@ -229,6 +234,14 @@ les 3 modes et vérifier que le contenu affiché correspond exactement à chaque
     **actuelles** restant en trait plein) ;
   - mettre en évidence la **racine** (l'individu dont on consulte l'arbre) par une **couleur
     distincte** des autres nœuds.
+- **FR-003d** : Le rendu graphique DOIT s'appliquer **symétriquement aux ascendants** : les **deux
+  parents** (et grands-parents…) DOIVENT être **groupés en couple** avec le **symbole ⚭** entre eux
+  et un **trait de filiation** descendant vers **leur enfant de la lignée** (un seul enfant relié,
+  cf. FR-003a) ; un **couple parental « ex »** suit la même distinction visuelle (**pointillés**)
+  que les unions, si le statut est disponible (sinon trait plein). Les **traits de filiation**
+  (ascendants **et** descendants) DOIVENT être tracés de manière **fiable et alignée** sur les cases
+  réelles (tracé **SVG**, **pas** d'approximation CSS) et **suivre le zoom/déplacement** de la zone.
+  *(BUG-004)*
 - **FR-004** : Un **clic** (sans glisser, cf. FR-002d) sur une case DOIT **recentrer** l'arbre sur
   l'individu cliqué (ouverture de sa fiche / recentrage). À l'**ouverture** de l'arbre (fiche et
   page dédiée), la vue DOIT être **centrée** sur la racine. *(centrage à l'ouverture précisé —
@@ -292,6 +305,11 @@ persistance des filtres entre navigations (FR-011b).
 **Bugfix**: 2026-06-10 — BUG-003 Arbre : pan au **clic gauche** + seuil clic/glisser (FR-002b/d),
 recentrage de vue, **centrage à l'ouverture** (FR-004), **rendu graphique** ⚭ entre membres + liens
 ⚭→enfants + ex en pointillés + racine colorée (FR-003c), **scroll fiche** en haut (FR-016).
+
+**Bugfix**: 2026-06-10 — BUG-004 Arbre : **ascendants en couples** (⚭ + filiation vers le seul
+enfant de la lignée — FR-001/FR-003a/FR-003d) et **refonte des connecteurs en SVG fiable** (fin des
+traits CSS approximatifs ; tracé aligné suivant le zoom — FR-003c/FR-003d). **Recentrage (⟳)**
+ramène la racine au centre du viewport (FR-002d). **Sans dépendance** (Constitution VIII préservée).
 
 **Déterminisme & cohérence**
 - **FR-014** : Toutes ces fonctionnalités sont **en lecture seule** sur la généalogie : elles NE

@@ -26,7 +26,7 @@ conjoints/unions, répétition multi-chemins, zoom/pan, recentrage.
 - [x] T004 [US1] Implémenter `buildGenealogyTree(rootId, byId, depth, ctx)` + types `TreeNode`/`Union` dans `src/core/genealogy/tree.ts` (cf. contracts/core-api) ; ré-exporter via `src/core/genealogy/index.ts`. Réutilise `computeAge`, `powerLabel`.
 - [x] T005 [P] [US1] `src/ui/lib/treeViewModel.ts` : adapter `TreeNode` → vue **fiche** (nom + pouvoirs) et vue **page dédiée** (nom + âge + pouvoirs) — FR-003b.
 - [x] T006 [US1] Étendre `src/ui/stores/appState.ts` : type `View` += `'arbre'` ; ajouter `treeRootId`/`treeDepth` (défaut 2, ≥ 1, sans plafond) ; fonctions `goToArbre(rootId)`, `recenterTree(id)`, `setTreeDepth(n)`.
-- [x] T007 [US1] ✅ Corrigé (BUG-003) Composant `src/ui/components/GenealogyTree.svelte` : rendu récursif des cases (champs paramétrables) + **viewport pan/zoom** (FR-002b) : zoom **molette** + **pincement** (2 pointeurs), borné min/max ; **pan** clic droit + drag et drag tactile ; `contextmenu` supprimé ; clic gauche sur une case ⇒ recentrage. *(reopened — BUG-003 : pan/clics/recentrage non fonctionnels et rendu visuel incomplet ; voir T021/T022/T023.)*
+- [x] T007 [US1] ✅ Corrigé (BUG-004) Composant `src/ui/components/GenealogyTree.svelte` : rendu récursif des cases (champs paramétrables) + **viewport pan/zoom** (FR-002b) : zoom **molette** + **pincement** (2 pointeurs), borné min/max ; **pan** clic droit + drag et drag tactile ; `contextmenu` supprimé ; clic gauche sur une case ⇒ recentrage. *(reopened — BUG-003 : pan/clics/recentrage non fonctionnels et rendu visuel incomplet ; voir T021/T022/T023.)* *(reopened — BUG-004 : ascendants en couples + refonte SVG des liens ; voir T025/T026/T027.)*
 - [x] T008 [US1] ✅ Corrigé (BUG-003) `src/ui/views/FicheView.svelte` : insérer la zone arbre **en haut, juste sous « Retour à la liste », pleine largeur** (FR-002c) ; profondeur **fixe 2** (FR-002a) ; cases **nom + pouvoirs** ; bouton **« Explorer l'arbre »** → `goToArbre` (FR-002a). *(reopened — BUG-003 : ajouter le **défilement en haut** à l'ouverture de la fiche, FR-016 ; voir T024.)*
 - [x] T009 [US1] ✅ Corrigé (BUG-003) Créer `src/ui/views/ArbreView.svelte` (page dédiée) : profondeur **N réglable sans plafond**, cases **nom + âge + pouvoirs**, recentrage au clic, **sans informations latérales** ; brancher la vue `'arbre'` dans `src/ui/App.svelte` (rendu + navigation). *(reopened — BUG-003 : arbre **non centré à l'ouverture** ; dépend du correctif T021/T022.)*
 
@@ -64,9 +64,18 @@ persistance, reset.
 `genealogy/` reste inchangé). Voir `bugs/BUG-003.md`.
 
 - [x] T021 [US1] `src/ui/components/GenealogyTree.svelte` : **pan au clic gauche maintenu** (et drag tactile) avec **seuil clic/glisser** (~5 px) — `pointerdown` mémorise l'origine sans paner ; pan + `setPointerCapture` **uniquement** au-delà du seuil ; `pointerup` **sous** le seuil ⇒ déclenche `onSelect` (clic préservé). Rendre le **bouton de recentrage (⟳)** fonctionnel et **centrer la vue sur la racine à l'ouverture** (offset de base non écrasé par la `transform`). (FR-002b/FR-002d/FR-004)
-- [x] T022 [US1] `src/ui/components/GenealogyTree.svelte` : **rendu graphique** (FR-003c) — symbole **⚭ entre les deux membres** de chaque union ; **liens de filiation** ⚭→**enfants communs** (overlay SVG ou bordures/pseudo-éléments CSS) ; **ex-conjoint + enfants d'ex en pointillés** (classe selon `statut`), unions actuelles en trait plein ; **racine** en **couleur distincte**. Dépend de T021 (même fichier).
+- [x] T022 [US1] ✅ Corrigé (BUG-004) `src/ui/components/GenealogyTree.svelte` : **rendu graphique** (FR-003c) — symbole **⚭ entre les deux membres** de chaque union ; **liens de filiation** ⚭→**enfants communs** (overlay SVG ou bordures/pseudo-éléments CSS) ; **ex-conjoint + enfants d'ex en pointillés** (classe selon `statut`), unions actuelles en trait plein ; **racine** en **couleur distincte**. Dépend de T021 (même fichier). *(reopened — BUG-004 : connecteurs CSS approximatifs **remplacés par un tracé SVG** fiable et **étendus aux ascendants** ; voir T025/T026.)*
 - [x] T023 [US1] `src/ui/views/ArbreView.svelte` : vérifier le **centrage à l'ouverture** et le **recentrage au clic** de la page dédiée (dépend de T021). (FR-004/FR-005)
 - [x] T024 [US1] Défilement **en haut** à l'ouverture d'une fiche (FR-016) — dans `src/ui/views/FicheView.svelte` (ou `src/ui/stores/appState.ts` lors du passage en vue `'fiche'`).
+
+## Phase 8 : Bugfix BUG-004 (ascendants en couples + refonte SVG des liens)
+
+**Bugfix**: 2026-06-10 — BUG-004 Updated from bugfix patch. Correctifs **UI seuls**, **sans
+dépendance** (Constitution VIII). Voir `bugs/BUG-004.md`.
+
+- [x] T025 [US1] `src/ui/components/GenealogyTree.svelte` : **refonte du tracé des liens en overlay SVG** — `<svg>` enfant du `canvas` (suit `transform`), stratégie **mesure-puis-tracé** (`getBoundingClientRect` des ancrages ⚭/cases relativement au `canvas`, recalcul au changement de données + `ResizeObserver`). **Supprimer** les connecteurs CSS approximatifs ; tracer les filiations **descendants ET ascendants** de façon **alignée**. (FR-003c/FR-003d)
+- [x] T026 [US1] `src/ui/components/GenealogyTree.svelte` : **ascendants en couples** — grouper les deux parents (et grands-parents) avec **⚭** + **trait de filiation vers le seul enfant de la lignée** (FR-001/FR-003a/FR-003d) ; **pointillés** si le couple parental est « ex », **statut déduit de `ancestors[].unions`** (option (c) : pour `[parent1, parent2]`, lire `parent1.unions` → `conjointId === parent2.id` ; trait plein par défaut). **Aucun `byId`, cœur inchangé.** Dépend de T025 (même fichier).
+- [x] T027 [US1] `src/ui/components/GenealogyTree.svelte` : **recentrage (⟳)** — ramener le **centre de la case racine** au **centre du viewport** à partir des **positions mesurées** (et plus un simple `tx=ty=0`). FR-002d. Dépend de T025 (mécanisme de mesure DOM).
 
 ## Dependencies & Execution Order
 
@@ -76,6 +85,7 @@ persistance, reset.
 - **US3 (P3)** : T015 → T016 ; T017 (dépend T015 + **T008**, même fichier `FicheView.svelte`).
 - **Polish** : T018 (dépend T011), T019, T020 en fin.
 - **Bugfix BUG-003** : T021 → T022 (même fichier `GenealogyTree.svelte`, séquentiel) ; T023 dépend T021 ; T024 indépendant.
+- **Bugfix BUG-004** : T025 → T026 → T027 (même fichier `GenealogyTree.svelte`, séquentiel ; T026 et T027 réutilisent le mécanisme de mesure DOM de T025). Statut du couple parental déduit de `ancestors[].unions` (option (c)) — pas de `byId`, cœur inchangé.
 - **Même fichier (séquentiel, pas de [P])** : `FicheView.svelte` (T008 puis T017) ; `App.svelte`/stores partagés.
 
 ## Parallel Opportunities
@@ -102,5 +112,7 @@ persistance, reset.
 - Bugfix intégrés : **BUG-001** (fiche prof. 2 / page N ; cases distinctes ; défaut+persistance ;
   trait portée ; pouvoir présence), **BUG-002** (zoom/pan ; placement sur la fiche) et **BUG-003**
   (pan clic gauche + seuil clic/glisser ; recentrage/centrage ; rendu graphique ⚭/liens/ex
-  pointillés/racine colorée ; scroll fiche — T021–T024).
+  pointillés/racine colorée ; scroll fiche — T021–T024) et **BUG-004** (ascendants en couples ⚭ +
+  filiation vers le seul enfant de la lignée ; **refonte SVG** des liens ; **recentrage ⟳** vers la
+  racine ; statut couple parental via `ancestors[].unions` (option c) — sans dépendance — T025–T027).
 - Anonymat (Principe X) ; `main` reste déployable ; commit après chaque tâche ou groupe logique.

@@ -84,6 +84,9 @@ de la Liste et de la Fiche.
 | Interaction arbre (BUG-003) | **Pan au clic gauche maintenu** (et tactile) avec **seuil clic/glisser** (~5 px) : `pointerdown` mémorise l'origine **sans** paner ; le pan (et `setPointerCapture`) ne démarre qu'**au-delà du seuil** ; `pointerup` **sous** le seuil ⇒ **navigation** (FR-004). **Recentrage de vue** (reset zoom/translation). **Centrage initial** sur la racine (offset de base, pas écrasé par la `transform`). Suppression du `contextmenu` **facultative** (clic droit libre). |
 | Rendu graphique arbre (BUG-003) | **⚭ entre les deux membres** de chaque union ; **liens de filiation** ⚭→**enfants communs** (overlay SVG ou bordures/pseudo-éléments CSS) ; **ex-conjoint + enfants d'ex en pointillés** (classe selon `statut`), unions actuelles en trait plein ; **racine** en **couleur distincte**. **UI pure** ; le cœur `genealogy/` expose déjà `unions[].enfantsCommuns` (corrélation par id avec les cases `descendants`). |
 | Scroll fiche (BUG-003) | À l'ouverture d'une fiche (liste ou clic d'arbre), **défilement remis en haut** (FR-016) — UI, sans impact cœur. |
+| Tracé des liens (BUG-004) | **Refonte en SVG** : les connecteurs CSS approximatifs sont remplacés par un **overlay `<svg>` enfant du `canvas`** (donc soumis au même `transform` ⇒ suit zoom/pan). Stratégie **mesure-puis-tracé** : on mesure les ancrages (⚭, cases) **relativement au `canvas`** (`getBoundingClientRect`) et on trace des `<path>`/`<line>` ; recalcul au **changement de données** et via `ResizeObserver`, **pas** à chaque pan/zoom. Alignement exact, **sans dépendance** (pas de D3 ni lib ⇒ Constitution VIII préservée). |
+| Ascendants en couples (BUG-004) | Les deux parents (et grands-parents) **groupés en couple** avec **⚭** + **trait de filiation** vers **leur seul enfant de la lignée** (FR-003a/FR-003d). **Statut actuel/ex du couple parental — option (c)** : déduit des **`unions` déjà portées par les nœuds ascendants** du `TreeNode` (pour `[parent1, parent2]`, lire `parent1.unions` → `conjointId === parent2.id`). **Ni cœur modifié, ni `byId`** ; **défaut trait plein** si non trouvé. |
+| Recentrage ⟳ (BUG-004) | Le bouton recentrage ramène le **centre de la case racine** au **centre du viewport** (et plus un simple `tx=ty=0`) : calcul à partir des **positions mesurées** (même mécanisme de mesure DOM que le tracé SVG). FR-002d. |
 
 ## Project Structure
 
@@ -154,3 +157,10 @@ clic/glisser, **recentrage**/**centrage** de la vue, **rendu graphique** (⚭ en
 ⚭→enfants, ex en pointillés, racine colorée) et **scroll fiche** en haut. Impact **UI seul**
 (`GenealogyTree.svelte`, `ArbreView.svelte`, `FicheView.svelte`/navigation) ; le cœur `genealogy/`
 **inchangé** (aucun changement de contrat).
+
+**Bugfix**: 2026-06-10 — BUG-004 Updated from bugfix patch. **Ascendants en couples** (⚭ + filiation
+vers le seul enfant de la lignée) et **refonte des connecteurs en SVG** (overlay `<svg>` mesuré,
+fin des traits CSS approximatifs). Statut du couple parental **déduit de `ancestors[].unions`**
+(option (c) — ni cœur modifié, ni `byId`). **Recentrage ⟳** = racine centrée dans le viewport
+(FR-002d). Impact **UI seul** (`GenealogyTree.svelte`) ; **aucune dépendance ajoutée**
+(Constitution VIII) ; cœur `genealogy/` **inchangé**.
