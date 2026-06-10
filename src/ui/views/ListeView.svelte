@@ -7,23 +7,38 @@
     selectedIds,
     toggleSelect,
   } from '../stores/appState.js';
+  import { criteria, generationTouched } from '../stores/filters.js';
   import { buildListRow } from '../lib/ficheViewModel.js';
+  import { filterPopulation, lastGeneration } from '../../core/index.js';
   import ReproduceBar from '../components/ReproduceBar.svelte';
   import TimeBar from '../components/TimeBar.svelte';
+  import FilterBar from '../components/FilterBar.svelte';
 
   const catalog = getCatalog();
+
+  // Défaut dynamique : tant que le filtre génération n'a pas été touché, on affiche la dernière
+  // génération recalculée à chaque avancée du temps (FR-011a / INV-G5).
+  $: derniere = lastGeneration($population);
+  $: effectiveGenerations =
+    $generationTouched || derniere === null ? $criteria.generations : new Set<number>([derniere]);
+  $: effectiveCriteria = { ...$criteria, generations: effectiveGenerations };
   // Année courante issue de la simulation (Feature 3) ; l'âge en découle.
-  $: rows = $population.map((p) => buildListRow(p, catalog, $currentYear));
+  $: filtered = filterPopulation($population, effectiveCriteria, { currentYear: $currentYear });
+  $: rows = filtered.map((p) => buildListRow(p, catalog, $currentYear));
 </script>
 
 <section>
-  <h2>Population — {$population.length} individu(s)</h2>
+  <h2>Population — {rows.length} / {$population.length} individu(s)</h2>
 
   {#if $population.length === 0}
     <p class="empty">Aucune population générée. Rendez-vous dans les paramètres pour générer.</p>
   {:else}
     <TimeBar />
     <ReproduceBar />
+    <FilterBar />
+    {#if rows.length === 0}
+      <p class="empty">Aucun individu ne correspond aux filtres.</p>
+    {/if}
     <table>
       <thead>
         <tr>

@@ -8,11 +8,23 @@
     backToList,
     killPerson,
     setCoupleReproPct,
+    selectPerson,
+    goToArbre,
   } from '../stores/appState.js';
   import { buildFicheView } from '../lib/ficheViewModel.js';
+  import { buildGenealogyTree } from '../../core/index.js';
+  import { traitMode } from '../stores/ui.js';
+  import GenealogyTree from '../components/GenealogyTree.svelte';
+  import TraitModeSelector from '../components/TraitModeSelector.svelte';
 
   const catalog = getCatalog();
   $: fiche = $selectedPerson ? buildFicheView($selectedPerson, catalog, $currentYear) : null;
+
+  // Arbre de la fiche : profondeur FIXE 2 (FR-002a), cases nom + pouvoirs (showAge masqué, FR-003b).
+  $: byId = new Map($population.map((p) => [p.id, p]));
+  $: tree = $selectedPerson
+    ? buildGenealogyTree($selectedPerson.id, byId, 2, { currentYear: $currentYear, catalog })
+    : null;
 
   // Couple actuel de l'individu (réactif sur la liste des couples).
   $: couple =
@@ -47,6 +59,23 @@
   {#if !fiche}
     <p class="muted">Aucun individu sélectionné.</p>
   {:else}
+    <!-- Arbre généalogique en haut, pleine largeur (FR-002c). Clic = ouvrir la fiche cliquée. -->
+    {#if tree}
+      <div class="arbre-zone">
+        <div class="arbre-head">
+          <h3>Arbre généalogique</h3>
+          <button
+            type="button"
+            class="explorer"
+            on:click={() => $selectedPerson && goToArbre($selectedPerson.id)}
+          >
+            Explorer l'arbre →
+          </button>
+        </div>
+        <GenealogyTree node={tree} showAge={false} onSelect={selectPerson} />
+      </div>
+    {/if}
+
     <h2>{fiche.nom}</h2>
 
     <dl class="infos">
@@ -130,7 +159,13 @@
       {/if}
     </div>
 
-    <h3>Pouvoir(s)</h3>
+    <div class="traits-head">
+      <h3>Traits & pouvoirs</h3>
+      <TraitModeSelector />
+    </div>
+
+    <!-- Mode 1 = pouvoirs seuls ; Mode 2 = + traits actifs ; Mode 3 = + inactifs + résilience. -->
+    <h4>Pouvoir(s)</h4>
     {#if fiche.pouvoirs.length === 0}
       <p class="muted">Cet individu ne possède aucun pouvoir.</p>
     {:else}
@@ -148,26 +183,34 @@
       {/each}
     {/if}
 
-    <h3>ADN — traits actifs</h3>
-    {#if fiche.traitsActifs.length === 0}
-      <p class="muted">Aucun trait actif.</p>
-    {:else}
-      <ul class="traits">
-        {#each fiche.traitsActifs as t (t.traitId)}
-          <li>{t.label} <span class="muted">— résilience {t.resilience} %</span></li>
-        {/each}
-      </ul>
+    {#if $traitMode >= 2}
+      <h4>ADN — traits actifs</h4>
+      {#if fiche.traitsActifs.length === 0}
+        <p class="muted">Aucun trait actif.</p>
+      {:else}
+        <ul class="traits">
+          {#each fiche.traitsActifs as t (t.traitId)}
+            <li>
+              {t.label}{#if $traitMode >= 3}<span class="muted">
+                  — résilience {t.resilience} %</span
+                >{/if}
+            </li>
+          {/each}
+        </ul>
+      {/if}
     {/if}
 
-    <h3>ADN — traits inactifs</h3>
-    {#if fiche.traitsInactifs.length === 0}
-      <p class="muted">Aucun trait inactif.</p>
-    {:else}
-      <ul class="traits inactifs">
-        {#each fiche.traitsInactifs as t (t.traitId)}
-          <li>{t.label} <span class="muted">— résilience {t.resilience} %</span></li>
-        {/each}
-      </ul>
+    {#if $traitMode >= 3}
+      <h4>ADN — traits inactifs</h4>
+      {#if fiche.traitsInactifs.length === 0}
+        <p class="muted">Aucun trait inactif.</p>
+      {:else}
+        <ul class="traits inactifs">
+          {#each fiche.traitsInactifs as t (t.traitId)}
+            <li>{t.label} <span class="muted">— résilience {t.resilience} %</span></li>
+          {/each}
+        </ul>
+      {/if}
     {/if}
   {/if}
 </section>
@@ -175,6 +218,37 @@
 <style>
   .back {
     margin-bottom: 1rem;
+  }
+  .arbre-zone {
+    width: 100%;
+    margin-bottom: 1.25rem;
+  }
+  .arbre-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    margin-bottom: 0.4rem;
+  }
+  .arbre-head h3 {
+    margin: 0;
+  }
+  .explorer {
+    cursor: pointer;
+  }
+  .traits-head {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 1rem;
+  }
+  .traits-head h3 {
+    margin: 0;
+  }
+  h4 {
+    margin: 0.8rem 0 0.3rem;
   }
   .infos {
     display: grid;

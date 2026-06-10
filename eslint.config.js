@@ -11,6 +11,16 @@ export default tseslint.config(
   ...tseslint.configs.recommended,
   ...svelte.configs['flat/recommended'],
   {
+    // Convention : un argument/variable préfixé par « _ » est volontairement inutilisé
+    // (ex. paramètre imposé par un contrat d'API mais non requis par l'implémentation).
+    rules: {
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', caughtErrorsIgnorePattern: '^_' },
+      ],
+    },
+  },
+  {
     // Couche UI (Svelte + stores) : environnement navigateur.
     files: ['**/*.svelte', 'src/ui/**/*.ts'],
     languageOptions: {

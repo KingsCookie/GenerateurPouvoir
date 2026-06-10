@@ -22,7 +22,7 @@ import {
   type Rng,
 } from '../../core/index.js';
 
-export type View = 'parametres' | 'liste' | 'fiche';
+export type View = 'parametres' | 'liste' | 'fiche' | 'arbre';
 
 // Catalogue embarqué (données du cœur, non réactif en Feature 1).
 const catalog: Catalog = defaultCatalog();
@@ -36,6 +36,11 @@ export const parameters = writable<Parameters>(initialParameters());
 export const population = writable<Personne[]>([]);
 export const currentView = writable<View>('parametres');
 export const selectedPersonId = writable<string | null>(null);
+
+// Page dédiée à l'arbre (Feature 4) : individu centre + profondeur réglable (≥ 1, défaut 2,
+// sans plafond). État d'interface uniquement (non exporté — Principe VI).
+export const treeRootId = writable<string | null>(null);
+export const treeDepth = writable<number>(2);
 
 // Simulation temporelle (Feature 3) : année courante + couples actuels.
 export const currentYear = writable<number>(0);
@@ -189,6 +194,30 @@ export function selectPerson(id: string): void {
 export function backToList(): void {
   selectedPersonId.set(null);
   currentView.set('liste');
+}
+
+/** Ouvre la page dédiée à l'arbre, centrée sur `rootId` (FR-002a/FR-005). */
+export function goToArbre(rootId: string): void {
+  treeRootId.set(rootId);
+  currentView.set('arbre');
+}
+
+/** Recentre l'arbre de la page dédiée sur un autre individu (FR-004). */
+export function recenterTree(id: string): void {
+  treeRootId.set(id);
+}
+
+/** Règle la profondeur de la page dédiée (≥ 1, sans plafond). */
+export function setTreeDepth(n: number): void {
+  if (!Number.isFinite(n)) return;
+  treeDepth.set(Math.max(1, Math.floor(n)));
+}
+
+/** Quitte la page dédiée vers la fiche de l'individu centré. */
+export function arbreToFiche(): void {
+  const id = get(treeRootId);
+  if (id) selectedPersonId.set(id);
+  currentView.set(id ? 'fiche' : 'liste');
 }
 
 /** Va à l'écran des paramètres. */

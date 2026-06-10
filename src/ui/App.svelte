@@ -3,6 +3,7 @@
   import ParametresView from './views/ParametresView.svelte';
   import ListeView from './views/ListeView.svelte';
   import FicheView from './views/FicheView.svelte';
+  import ArbreView from './views/ArbreView.svelte';
   import StateIO from './components/StateIO.svelte';
 </script>
 
@@ -14,7 +15,9 @@
     </button>
     <button
       type="button"
-      class:active={$currentView === 'liste' || $currentView === 'fiche'}
+      class:active={$currentView === 'liste' ||
+        $currentView === 'fiche' ||
+        $currentView === 'arbre'}
       on:click={backToList}
       disabled={$population.length === 0}
     >
@@ -32,6 +35,8 @@
     <ParametresView />
   {:else if $currentView === 'fiche'}
     <FicheView />
+  {:else if $currentView === 'arbre'}
+    <ArbreView />
   {:else}
     <ListeView />
   {/if}
