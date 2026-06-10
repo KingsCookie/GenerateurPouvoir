@@ -28,6 +28,10 @@
   un sélecteur de portée (**actifs** / **inactifs** / **tous**) accompagne le filtre trait.
 - Q: Fonctionnement du filtre « pouvoir » ? → A: **Présence/absence seulement** (« a un pouvoir »
   / « aucun pouvoir »), **pas** de sélection d'un pouvoir précis.
+- Q: Affichage d'un individu atteignable par plusieurs chemins (consanguinité) ? → A: **Affiché à
+  chaque emplacement** (répétition assumée, bornée par la profondeur) — vue arbre, **pas** de
+  déduplication ni de vue graphe.
+- Q: Plafond de la profondeur N (page dédiée) ? → A: **Aucun plafond** (N ≥ 1, libre).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -152,7 +156,8 @@ les 3 modes et vérifier que le contenu affiché correspond exactement à chaque
 
 - **Cycles / parenté incomplète** : un individu peut apparaître comme ancêtre *et* descendant via
   des branches différentes (consanguinité autorisée) ; l'arbre DOIT rester fini (borné par N) et
-  ne pas boucler indéfiniment.
+  ne pas boucler indéfiniment. La répétition d'un même individu **à plusieurs emplacements** est
+  **attendue** (pas de déduplication) ; la terminaison est garantie par la **borne N**.
 - **Très grande fratrie / descendance** : l'arbre DOIT rester lisible (le rendu peut défiler ;
   aucune limite de données n'est imposée mais l'affichage ne doit pas casser).
 - **Population vide ou aucun résultat de filtre** : afficher un état vide explicite, sans erreur.
@@ -191,10 +196,12 @@ les 3 modes et vérifier que le contenu affiché correspond exactement à chaque
   fiche / recentrage).
 - **FR-005** : Une **page dédiée** DOIT afficher **le même arbre** (même individu, même règles de
   conjoints/unions) **sans informations latérales**, avec sa **propre profondeur N réglable**
-  (N ≥ 1, défaut **2**) — indépendante de la fiche (figée à 2) ; un clic sur une case y **recentre**
-  l'arbre.
+  (N ≥ 1, **sans plafond**, défaut **2**) — indépendante de la fiche (figée à 2) ; un clic sur une
+  case y **recentre** l'arbre.
 - **FR-006** : Le calcul de l'arbre DOIT être **borné par N** et **terminer** même en présence de
-  parentés partagées (consanguinité), sans boucle infinie ni doublon incohérent.
+  parentés partagées (consanguinité). Un individu **atteignable par plusieurs chemins** DOIT être
+  **affiché à chaque emplacement** où il apparaît (répétition assumée, bornée par N) ; **pas** de
+  déduplication ni de vue graphe. La profondeur N **n'a pas de plafond** (N ≥ 1).
 
 **Recherche & filtres (§8.1)**
 - **FR-007** : La liste des individus DOIT offrir une **recherche par nom** (insensible à la casse
