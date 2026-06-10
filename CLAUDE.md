@@ -1,14 +1,16 @@
 <!-- SPECKIT START -->
-## Feature active : 002-reproduction-heredite
+## Feature active : 003-avancement-temps-population
 
-- **Plan** : `specs/002-reproduction-heredite/plan.md` (contexte technique, défauts paramètres, Constitution Check)
-- **Spec** : `specs/002-reproduction-heredite/spec.md` (source : `rsrc/DescriptionProjet.md`, NE PAS modifier sans accord)
-- **Recherche / décisions** : `specs/002-reproduction-heredite/research.md`
-- **Modèle de données** : `specs/002-reproduction-heredite/data-model.md`
-- **Contrats** : `specs/002-reproduction-heredite/contracts/` (API du moteur génétique)
-- **Moteur** : hérédité §4, pipeline naissance §5, traits→pouvoirs §6.4 (D/K distincts), P/M héritées §7.2,
-  mutations forte/faible/sans pouvoir ; déclenché par **reproduction manuelle** (1 enfant). Arbre §6.4.2 **verbatim**.
-- Feature 1 (`specs/001-fondations-genese/`) **livrée** : seed/RNG, modèle, genèse, liste/fiche, export/import.
+- **Plan** : `specs/003-avancement-temps-population/plan.md` (contexte technique, défauts d'espèce, Constitution Check)
+- **Spec** : `specs/003-avancement-temps-population/spec.md` (source : `rsrc/DescriptionProjet.md`, NE PAS modifier sans accord)
+- **Recherche / décisions** : `specs/003-avancement-temps-population/research.md`
+- **Modèle de données** : `specs/003-avancement-temps-population/data-model.md`
+- **Contrats** : `specs/003-avancement-temps-population/contracts/` (RNG sérialisable, gaussienne, tick, mort)
+- **Simulation** : tick annuel §6.6 (divorces → candidats/gaussienne → appariement → portées), vieillissement §6.5,
+  mort manuelle §6.7, conjoints actuel/ex, portées M/N/X. **État du RNG sérialisé** (continuation déterministe, FR-021).
+  Réutilise `reproduce` (F2) pour chaque enfant. Défauts humain gaussienne 16/25/50 pic 60 %, groupe 2, consanguinité interdite.
+- Features livrées : 1 (`specs/001-fondations-genese/`) seed/RNG, modèle, genèse, liste/fiche, export/import ;
+  2 (`specs/002-reproduction-heredite/`) moteur génétique (hérédité §4, traits→pouvoirs §6.4, P/M §7.2, reproduction).
 
 ### Stack
 TypeScript 5.x · Vite · Svelte · Vitest · vite-plugin-pwa. App **100 % statique** (PWA), déployée sur

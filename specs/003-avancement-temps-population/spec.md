@@ -104,8 +104,10 @@ avancements suivants.
   couple partiel n'est formé.
 - **Population sans individu en âge de reproduction** : avancer le temps ne produit aucune naissance, mais
   l'âge et la date courante avancent normalement.
-- **Genre `"tout"`** : peut être groupé avec n'importe quel genre, **jamais en inter-espèces**, et **ne
-  brise pas** un couple existant.
+- **Genre** : en Feature 3, le genre **n'a aucun effet** sur l'appariement — tout candidat peut se grouper
+  avec tout autre candidat de la **même espèce** ; les contraintes de genre (dont le genre `"tout"`) sont
+  **reportées** à une feature ultérieure. La règle **jamais inter-espèces** s'applique, et seuls les
+  individus **seuls** (célibataires/divorcés) forment un **nouveau** couple.
 - **Avancer de plusieurs années** : appliquer le tick **année par année**, dans l'ordre, X fois (un X ≥ 1).
 - **Un individu décédé** : exclu des candidats et des couples ; un couple dont un membre meurt n'est plus
   reproductif (le membre survivant peut re-candidater).
@@ -136,8 +138,9 @@ avancements suivants.
   évaluée à son âge, le **% de chance de vouloir se reproduire** cette année.
 - **FR-007** : (Formation de couples) Le système DOIT constituer la **liste des candidats** et former des
   **groupes** de la **taille de reproduction de l'espèce**, par **tirage déterministe**, en respectant :
-  **pas d'inter-espèces**, règles de **consanguinité** (FR-010), et compatibilité de **genre** (le genre
-  `"tout"` est compatible avec tout genre de la **même espèce**).
+  **pas d'inter-espèces** et règles de **consanguinité** (FR-010). *(En Feature 3, le **genre n'impacte pas**
+  la capacité à se reproduire ; toute contrainte de compatibilité de genre — y compris le genre `"tout"` —
+  relève d'une **feature ultérieure**.)*
 - **FR-008** : (Candidats non appariés) Les candidats n'ayant **pas** trouvé assez de partenaires NE
   DOIVENT **pas** former de couple cette année ; ils sont **notés** et **re-candidatent l'année suivante**.
 - **FR-009** : (Couples formés) Un groupe formé devient un **couple** : ses membres deviennent **conjoints
@@ -172,7 +175,9 @@ avancements suivants.
   de reproduction d'un couple** dérive de cette gaussienne (pas de paramètre séparé) mais reste éditable
   par couple (FR-011). Défauts **humain** : gaussienne **début 16 / pic 25 / fin 50**, **probabilité au
   pic 60 %**, pente modérée (clarification).
-- **FR-018** : Le paramètre global **consanguinité** (FR-010) DOIT être exposé (défaut interdite).
+- **FR-018** : Le paramètre global **consanguinité** (FR-010) DOIT être exposé (défaut interdite) au niveau
+  **modèle & export/import** en Feature 3 ; son **édition dans l'écran des paramètres** relève de la
+  **Feature 5** (page de paramètres complète).
 
 **Déterminisme & persistance**
 - **FR-019** : Tout l'aléatoire du tick (divorces, volonté de reproduction, formation des groupes, portées,
@@ -248,3 +253,5 @@ avancements suivants.
 - Q: Un nouveau couple produit-il une portée dès l'année de sa formation ? → A: **Oui**, dès le tick de formation.
 - Q: Déterminisme après export/import puis avancement ? → A: **Inclure l'état du RNG dans l'export** (continuation strictement déterministe après import).
 - Q: Profil de gaussienne de reproduction par défaut (humain) ? → A: **16 / 25 / 50** (début / pic / fin), **probabilité au pic 60 %**, pente modérée.
+- Q: (analyse C1) Édition du paramètre **consanguinité** dans l'UI ? → A: **Reportée à la Feature 5** ; en F3, exposé au niveau modèle & export/import uniquement.
+- Q: (analyse A1) Le **genre** contraint-il l'appariement en F3 ? → A: **Non** — le genre n'a aucun effet sur la reproduction pour l'instant ; contraintes de genre reportées à une feature ultérieure.
