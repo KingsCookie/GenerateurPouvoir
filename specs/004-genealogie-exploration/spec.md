@@ -237,6 +237,10 @@ les 3 modes et vérifier que le contenu affiché correspond exactement à chaque
   - relier chaque **membre d'un couple au symbole ⚭** par un **segment** (case ↔ ⚭ ↔ case) ;
     *(BUG-005)* le lien de couple DOIT être tracé en **2 segments** dont le **⚭ est le sommet**
     (membre A → ⚭ → membre B), et non un trait droit unique ; *(BUG-006)*
+  - **segments non jointifs au symbole** : le lien de couple DOIT être tracé en **2 segments
+    distincts**, chacun s'arrêtant à un **petit espace (gap)** **avant** le symbole (⚭ ou ⚮) — les
+    segments **ne touchent pas** le symbole ; de même, le **trait de filiation** DOIT **partir du
+    symbole** en laissant un **espace** (il ne touche pas non plus le symbole). *(BUG-007)*
   - **union à plus de deux** : lorsqu'un groupe compte **> 2 membres** en union, un **symbole ⚭ DOIT
     figurer entre CHAQUE paire consécutive** de membres (n membres ⇒ n−1 symboles), chacun relié à
     ses deux voisins par le lien en 2 segments ; *(BUG-006)*
@@ -263,6 +267,16 @@ les 3 modes et vérifier que le contenu affiché correspond exactement à chaque
   chaque paire consécutive** de parents en union (cf. FR-003c). Le même principe vaut **côté
   descendance** pour un enfant issu d'un **groupe de > 2 parents** (regroupement par **ensemble de
   parents**, et non par union binaire). *(BUG-006)*
+  **Co-parents non conjoints** : si les N parents **ne sont pas conjoints** entre eux, l'arbre DOIT
+  tout de même les **relier par une ligne horizontale continue** (alignant toutes les cases), **sans
+  aucun symbole ⚭** ; s'ils sont **tous conjoints**, un **⚭ figure entre chaque paire consécutive**
+  (cf. FR-003c). *(BUG-007)*
+  **Position médiane du trait de filiation** : le trait vertical descendant vers l'enfant DOIT
+  partir de la **position médiane** des parents — si le nombre de parents est **impair**, **sous le
+  parent du milieu** (ex. p3 pour 5 parents) ; s'il est **pair**, **sous l'élément central** reliant
+  les deux parents du milieu (le **⚭ central** s'ils sont conjoints, sinon le **milieu du segment
+  central** de la ligne de co-parents) — et **non** au simple milieu géométrique des extrêmes.
+  *(BUG-007)*
 - **FR-003e** : Une **légende** des symboles et couleurs DOIT être affichée **sur la fiche ET sur la
   page dédiée** : ⚭ union / ⚮ ou pointillés = ex, **fond grisé** = conjoint (pièce rapportée),
   accentuation = personne observée (racine), couleur + « † » = décédé. *(BUG-005)*
@@ -343,6 +357,11 @@ ramène la racine au centre du viewport (FR-002d). **Sans dépendance** (Constit
 **Bugfix**: 2026-06-10 — BUG-006 Arbre : lien de couple en **2 segments** (⚭ sommet) et support des
 **familles à > 2 parents** — tous les parents reliés à l'enfant, **⚭ entre chaque paire** de membres
 en union ; regroupement des enfants par **ensemble de parents** (FR-003a/FR-003c/FR-003d). UI seul.
+
+**Bugfix**: 2026-06-10 — BUG-007 Arbre (géométrie) : segments de couple **non jointifs** au symbole
+et **filiation détachée** du symbole (espaces) ; **co-parents non conjoints reliés** par une ligne
+horizontale **sans ⚭** ; **trait de filiation à la position médiane** des parents (sous le parent du
+milieu si impair ; sous le ⚭/segment central si pair) (FR-003c/FR-003d). UI seul, cœur inchangé.
 
 **Déterminisme & cohérence**
 - **FR-014** : Toutes ces fonctionnalités sont **en lecture seule** sur la généalogie : elles NE

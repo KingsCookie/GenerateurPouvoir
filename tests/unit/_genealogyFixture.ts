@@ -188,6 +188,12 @@ export function buildGenealogyFixture(): { population: Personne[]; byId: Map<str
       enfants: ['tri'],
     }),
     mk({ id: 'tri', nom: 'Tristan', dateNaissance: '0033-01-01', parents: ['pa', 'pb', 'pc'] }),
+
+    // Co-parents NON conjoints (BUG-007) — qa et qb ont un enfant commun `duo` mais ne sont PAS en
+    // union (aucun `conjoints`). Valide le cas « parents reliés sans symbole ⚭ » côté données.
+    mk({ id: 'qa', nom: 'Quill', dateNaissance: '0034-01-01', enfants: ['duo'] }),
+    mk({ id: 'qb', nom: 'Quira', dateNaissance: '0035-01-01', enfants: ['duo'] }),
+    mk({ id: 'duo', nom: 'Dario', dateNaissance: '0036-01-01', parents: ['qa', 'qb'] }),
   ];
 
   const byId = new Map(population.map((p) => [p.id, p]));

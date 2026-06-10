@@ -14,6 +14,7 @@ const COUPLE_GAP = 34; // écart entre les deux membres d'un couple (place pour 
 const V_GAP = 70; // écart vertical entre générations (place pour les liens)
 const PAD = 24; // marge autour de l'arbre
 const BUS = 26; // hauteur de la « barre horizontale » au-dessus des enfants (équerre)
+const GAP = 7; // espace (BUG-007) entre les segments/la filiation et le symbole ⚭/⚮ (jamais jointifs)
 const LEVEL = CARD_H + V_GAP;
 
 export interface LayoutBox {
@@ -149,7 +150,8 @@ function placeDown(
   const nodeX = clusterLeft;
   pushBox(out, m.node, nodeX, y, showAge, isRoot, dashedSelf, false);
 
-  const unionMark = new Map<string, { x: number; y: number }>();
+  const nodeCenterX = nodeX + CARD_W / 2;
+  const spouseCenter = new Map<string, number>();
   let cx = nodeX;
   for (const s of m.spouses) {
     const markX = cx + CARD_W + COUPLE_GAP / 2;
@@ -157,17 +159,25 @@ function placeDown(
     out.marks.push({ key: `m${out.seq++}`, x: markX, y: yc, ex: s.ex });
     // Conjoint = « pièce rapportée » (grisé) ; pointillés si « ex ».
     pushBox(out, s.conjoint, spouseX, y, showAge, false, s.ex, true);
-    // Lien de couple en 2 segments dont le ⚭ est le sommet (BUG-006).
+    // Lien de couple en 2 segments SÉPARÉS, ne touchant pas le symbole (BUG-007 : gap de part et
+    // d'autre du ⚭).
     out.links.push({
       key: `c${out.seq++}`,
       points: [
         { x: cx + CARD_W, y: yc },
-        { x: markX, y: yc },
+        { x: markX - GAP, y: yc },
+      ],
+      ex: s.ex,
+    });
+    out.links.push({
+      key: `c${out.seq++}`,
+      points: [
+        { x: markX + GAP, y: yc },
         { x: spouseX, y: yc },
       ],
       ex: s.ex,
     });
-    unionMark.set(s.conjointId, { x: markX, y: y + CARD_H });
+    spouseCenter.set(s.conjointId, spouseX + CARD_W / 2);
     cx = spouseX;
   }
 
@@ -175,26 +185,28 @@ function placeDown(
   let clx = childrenLeft;
   for (const c of m.children) {
     const childCenterX = placeDown(c.m, clx, depth + 1, out, showAge, false, c.ex);
-    // Origine de la filiation : centre du GROUPE de parents (toutes les unions de l'enfant), sinon
-    // bas de la case du nœud (enfant sans conjoint identifié) — BUG-006.
-    const marks = c.unionIds
-      .map((id) => unionMark.get(id))
-      .filter((v): v is { x: number; y: number } => !!v);
-    const from =
-      marks.length > 0
-        ? {
-            x: marks.reduce((s, p) => s + p.x, 0) / marks.length,
-            y: Math.max(...marks.map((p) => p.y)),
-          }
-        : { x: nodeX + CARD_W / 2, y: y + CARD_H };
+    // Parents de cet enfant = nœud + conjoints des unions qui le revendiquent (BUG-006), triés en X.
+    const parentCenters = [
+      nodeCenterX,
+      ...c.unionIds.map((id) => spouseCenter.get(id)).filter((v): v is number => v != null),
+    ].sort((a, b) => a - b);
+    // Origine du trait de filiation à la position MÉDIANE des parents (BUG-007) : sous le parent du
+    // milieu si impair ; sous le ⚭/segment central si pair. Démarre sous le symbole sans le toucher
+    // (pair, gap) ou au bas de la case (impair, sous un parent).
+    const n = parentCenters.length;
+    const odd = n % 2 === 1;
+    const fromX = odd
+      ? parentCenters[(n - 1) / 2]
+      : (parentCenters[n / 2 - 1] + parentCenters[n / 2]) / 2;
+    const fromY = odd ? y + CARD_H : yc + GAP;
     const childTopY = (depth + 1) * LEVEL;
     const busY = childTopY - BUS;
-    // Filiation en équerre (3 segments) : ⚭ ↓ barre ↓ enfant (BUG-005).
+    // Filiation en équerre (3 segments) : médiane ↓ barre ↓ enfant (BUG-005/007).
     out.links.push({
       key: `l${out.seq++}`,
       points: [
-        { x: from.x, y: from.y },
-        { x: from.x, y: busY },
+        { x: fromX, y: fromY },
+        { x: fromX, y: busY },
         { x: childCenterX, y: busY },
         { x: childCenterX, y: childTopY },
       ],
@@ -202,7 +214,7 @@ function placeDown(
     });
     clx += c.m.width + H_GAP;
   }
-  return nodeX + CARD_W / 2;
+  return nodeCenterX;
 }
 
 // --- Ascendance (vers le haut) ---
@@ -257,31 +269,56 @@ function placeUp(
     px += p.width + H_GAP;
   }
 
-  // ⚭ entre CHAQUE paire consécutive de parents en union (BUG-006), avec lien en 2 segments.
+  // Relie chaque paire consécutive de parents : si en union, ⚭ + 2 segments NON jointifs (BUG-006/
+  // 007) ; sinon (co-parents non conjoints) une simple ligne horizontale continue, SANS symbole.
   for (let i = 0; i < parents.length - 1; i++) {
+    const aRight = cardLefts[i] + CARD_W;
+    const bLeft = cardLefts[i + 1];
     const st = coupleStatut(parents[i].node, parents[i + 1].node);
-    if (st === null) continue;
+    if (st === null) {
+      out.links.push({
+        key: `c${out.seq++}`,
+        points: [
+          { x: aRight, y: ycUp },
+          { x: bLeft, y: ycUp },
+        ],
+        ex: false,
+      });
+      continue;
+    }
     const pairEx = st === 'ex';
     const markX = (centers[i] + centers[i + 1]) / 2;
     out.marks.push({ key: `m${out.seq++}`, x: markX, y: ycUp, ex: pairEx });
     out.links.push({
       key: `c${out.seq++}`,
       points: [
-        { x: cardLefts[i] + CARD_W, y: ycUp },
-        { x: markX, y: ycUp },
-        { x: cardLefts[i + 1], y: ycUp },
+        { x: aRight, y: ycUp },
+        { x: markX - GAP, y: ycUp },
+      ],
+      ex: pairEx,
+    });
+    out.links.push({
+      key: `c${out.seq++}`,
+      points: [
+        { x: markX + GAP, y: ycUp },
+        { x: bLeft, y: ycUp },
       ],
       ex: pairEx,
     });
   }
 
-  // Filiation en équerre depuis le centre du GROUPE parental vers le seul enfant de la lignée.
-  const groupX = (centers[0] + centers[centers.length - 1]) / 2;
+  // Filiation en équerre depuis la position MÉDIANE des parents (BUG-007) vers le seul enfant de la
+  // lignée : sous le parent du milieu si impair ; sous le ⚭/segment central si pair (gap sous le
+  // symbole, ou bas de la case sous un parent).
+  const nUp = centers.length;
+  const oddUp = nUp % 2 === 1;
+  const groupX = oddUp ? centers[(nUp - 1) / 2] : (centers[nUp / 2 - 1] + centers[nUp / 2]) / 2;
+  const startY = oddUp ? yUp + CARD_H : ycUp + GAP;
   const busY = nodeY - BUS;
   out.links.push({
     key: `l${out.seq++}`,
     points: [
-      { x: groupX, y: yUp + CARD_H },
+      { x: groupX, y: startY },
       { x: groupX, y: busY },
       { x: nodeCenterX, y: busY },
       { x: nodeCenterX, y: nodeY },

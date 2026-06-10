@@ -99,6 +99,18 @@ describe('buildGenealogyTree — arbre généalogique (US1)', () => {
     expect(pa.unions.map((u) => u.conjointId).sort()).toEqual(['pb', 'pc']);
   });
 
+  it('co-parents non conjoints : deux parents en ascendance sans union mutuelle (BUG-007)', () => {
+    const { byId } = buildGenealogyFixture();
+    const tree = buildGenealogyTree('duo', byId, 1, ctx);
+    // duo a 2 parents (qa, qb) présents en ascendance, triés par date.
+    expect(tree.ancestors.map((n) => n.id)).toEqual(['qa', 'qb']);
+    // Ni l'un ni l'autre n'est en union ⇒ le rendu relie les co-parents SANS symbole ⚭ (UI).
+    const qa = tree.ancestors.find((n) => n.id === 'qa')!;
+    const qb = tree.ancestors.find((n) => n.id === 'qb')!;
+    expect(qa.unions).toEqual([]);
+    expect(qb.unions).toEqual([]);
+  });
+
   it('lecture seule : ne mute pas la population en entrée (INV-G6)', () => {
     const { population, byId } = buildGenealogyFixture();
     const before = JSON.stringify(population);

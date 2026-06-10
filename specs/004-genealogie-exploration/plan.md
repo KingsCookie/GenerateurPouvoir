@@ -93,6 +93,9 @@ de la Liste et de la Fiche.
 | Légende (BUG-005) | Composant `TreeLegend.svelte` (UI pur) inséré sous la zone arbre dans `FicheView` **et** `ArbreView` (FR-003e). |
 | Lien de couple 2 segments (BUG-006) | `treeLayout.ts` : le lien membre↔membre devient une **poly-ligne passant par le ⚭** (`[bord A, ⚭, bord B]`) ⇒ 2 segments dont le ⚭ est le sommet. |
 | Familles à N parents (BUG-006) | **Ascendance** : `placeUp` gère `parents.length ≥ 1` — tous les parents en ligne, un **⚭ entre chaque paire consécutive** en union (statut via `ancestors[].unions`), filiation en équerre depuis le **centre du groupe parental** vers l'enfant. **Descendance** : regrouper les enfants par **ensemble de parents** (et non par `conjointId` binaire) ; un enfant à > 2 parents est relié au groupe. **Cœur inchangé** (`parents` est déjà `string[]` sans plafond). |
+| Segments non jointifs (BUG-007) | `treeLayout.ts` : constante **`GAP`** px. Le lien de couple devient **2 poly-lignes séparées** (`[bord A, ⚭−GAP]` et `[⚭+GAP, bord B]`) au lieu d'une seule passant par le ⚭ ; la **filiation** démarre à **`GAP` px sous le ⚭** (et non au ⚭ même). Aucun segment ne touche le symbole. Appliqué côté **ascendance** (couple/groupe parental) et **descendance** (couple node↔conjoint, filiation). |
+| Co-parents non conjoints (BUG-007) | `treeLayout.ts` `placeUp` : pour chaque paire consécutive de parents **sans union**, tracer un **segment horizontal continu** (sans ⚭) reliant toute la ligne de parents ; les paires **en union** gardent le ⚭ + 2 segments non jointifs (BUG-006/007). |
+| Filiation à l'index médian (BUG-007) | `treeLayout.ts` : l'origine X de la filiation = **index médian** des parents (et non le milieu géométrique des extrêmes) — **impair** ⇒ `centers[(n−1)/2]` (sous le parent du milieu) ; **pair** ⇒ milieu de `centers[n/2−1]` / `centers[n/2]` (sous le ⚭ central si conjoints, sinon sous le segment central). Même règle pour un **enfant de groupe** (> 2 parents) côté descendance. |
 
 ## Project Structure
 
@@ -182,3 +185,9 @@ testée). Reste **sans dépendance** (Constitution VIII).
 sommet) et **familles à > 2 parents** : ascendance à N parents (⚭ entre chaque paire, filiation
 depuis le groupe), descendance regroupée par **ensemble de parents**. Impact **UI seul**
 (`treeLayout.ts`, `GenealogyTree.svelte`) ; cœur `genealogy/` **inchangé**.
+
+**Bugfix**: 2026-06-10 — BUG-007 Updated from bugfix patch. Géométrie fine des liens (`treeLayout.ts`)
+: **espaces (GAP)** autour du symbole — 2 segments de couple séparés et filiation détachée ne touchant
+pas le ⚭/⚮ ; **co-parents non conjoints** reliés par une ligne horizontale sans symbole ; **ancrage
+médian** du trait de filiation (parent du milieu si impair, ⚭/segment central si pair) en remplacement
+du milieu géométrique. Impact **UI seul** ; cœur `genealogy/` **inchangé**.

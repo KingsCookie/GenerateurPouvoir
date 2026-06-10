@@ -83,8 +83,8 @@ dépendance** (Constitution VIII). Voir `bugs/BUG-004.md`.
 Voir `bugs/BUG-005.md`.
 
 - [x] T028 [US1] **Cœur** : ajouter `vivant: boolean` à `TreeNodeLite` (`src/core/genealogy/tree.ts` : `nodeLite` + conjoint des unions), repris de `Personne.vivant`. Mettre à jour `tests/unit/genealogy-tree.test.ts` (assertion `vivant`, seed fixe) ; data-model + contrats déjà à jour. Pur, déterministe, lecture seule.
-- [x] T029 [US1] ✅ Corrigé (BUG-006) `src/ui/lib/treeLayout.ts` : modèle de lien en **poly-ligne** — (a) segments **membre↔⚭** ; (b) filiation en **équerre** (du ⚭ vers une **barre horizontale** par fratrie, puis descente vers chaque enfant), ascendants **et** descendants. Poser le flag **« pièce rapportée »** sur les cases conjoint (racine + descendance, pas les ascendants) ; propager **`vivant`** dans les `LayoutBox`. Dépend de T028. *(reopened — BUG-006 : lien de couple en **2 segments** (⚭ sommet) + **familles à N parents** ; voir T032.)*
-- [x] T030 [US1] ✅ Corrigé (BUG-006) `src/ui/components/GenealogyTree.svelte` : rendre les liens en **`<polyline>`** ; classes CSS **cumulables** — **ex** `border-style: dashed` ; **pièce rapportée** fond grisé ; **décédé** couleur de bordure + marqueur « † » ; **racine** accentuation. Dépend de T029. *(reopened — BUG-006 : vérifier le rendu des `<polyline>` à sommets multiples / ⚭ multiples (probablement sans changement) ; voir T032.)*
+- [x] T029 [US1] ✅ Corrigé (BUG-007) `src/ui/lib/treeLayout.ts` : modèle de lien en **poly-ligne** — (a) segments **membre↔⚭** ; (b) filiation en **équerre** (du ⚭ vers une **barre horizontale** par fratrie, puis descente vers chaque enfant), ascendants **et** descendants. Poser le flag **« pièce rapportée »** sur les cases conjoint (racine + descendance, pas les ascendants) ; propager **`vivant`** dans les `LayoutBox`. Dépend de T028. *(reopened — BUG-006 : lien de couple en **2 segments** (⚭ sommet) + **familles à N parents** ; voir T032.)* *(reopened — BUG-007 : **espaces (GAP)** autour du symbole + filiation à l'**index médian** ; voir T034/T036.)*
+- [x] T030 [US1] ✅ Corrigé (BUG-007) `src/ui/components/GenealogyTree.svelte` : rendre les liens en **`<polyline>`** ; classes CSS **cumulables** — **ex** `border-style: dashed` ; **pièce rapportée** fond grisé ; **décédé** couleur de bordure + marqueur « † » ; **racine** accentuation. Dépend de T029. *(reopened — BUG-006 : vérifier le rendu des `<polyline>` à sommets multiples / ⚭ multiples (probablement sans changement) ; voir T032.)* *(reopened — BUG-007 : vérifier le rendu des **segments séparés non jointifs** au symbole — probablement sans changement ; voir T034.)*
 - [x] T031 [US1] Créer `src/ui/components/TreeLegend.svelte` (légende symboles/couleurs) et l'insérer **sous la zone arbre** dans `src/ui/views/FicheView.svelte` **et** `src/ui/views/ArbreView.svelte` (FR-003e).
 
 ## Phase 10 : Bugfix BUG-006 (lien de couple 2 segments + familles à > 2 parents)
@@ -92,8 +92,18 @@ Voir `bugs/BUG-005.md`.
 **Bugfix**: 2026-06-10 — BUG-006 Updated from bugfix patch. UI seul ; cœur inchangé. Voir
 `bugs/BUG-006.md`.
 
-- [x] T032 [US1] `src/ui/lib/treeLayout.ts` : (a) **lien de couple en 2 segments** — poly-ligne `[bord A, ⚭, bord B]` (le ⚭ devient un sommet) ; (b) **ascendance à N parents** — disposer tous les parents, placer un **⚭ entre chaque paire consécutive** en union (statut via `ancestors[].unions`), tracer la **filiation en équerre depuis le centre du groupe parental** vers l'enfant de la lignée ; (c) **descendance** — regrouper les enfants par **ensemble de parents** (gérer un enfant à > 2 parents) plutôt que par `conjointId` binaire. (FR-003a/FR-003c/FR-003d)
+- [x] T032 [US1] ✅ Corrigé (BUG-007) `src/ui/lib/treeLayout.ts` : (a) **lien de couple en 2 segments** — poly-ligne `[bord A, ⚭, bord B]` (le ⚭ devient un sommet) ; (b) **ascendance à N parents** — disposer tous les parents, placer un **⚭ entre chaque paire consécutive** en union (statut via `ancestors[].unions`), tracer la **filiation en équerre depuis le centre du groupe parental** vers l'enfant de la lignée ; (c) **descendance** — regrouper les enfants par **ensemble de parents** (gérer un enfant à > 2 parents) plutôt que par `conjointId` binaire. (FR-003a/FR-003c/FR-003d) *(reopened — BUG-007 : remplacer le couple jointif par **2 segments séparés** (GAP), relier les **co-parents non conjoints** par une ligne sans ⚭, ancrer la filiation à l'**index médian** et non au milieu géométrique ; voir T034/T035/T036.)*
 - [x] T033 [P] [US1] Étendre `tests/unit/_genealogyFixture.ts` avec un **enfant à 3 parents** et ajouter une assertion dans `tests/unit/genealogy-tree.test.ts` (les **3 parents** apparaissent en `ancestors`) — valide les données `parents`/`unions` (le rendu reste UI). Seed fixe.
+
+## Phase 11 : Bugfix BUG-007 (géométrie fine des liens de l'arbre)
+
+**Bugfix**: 2026-06-10 — BUG-007 Updated from bugfix patch. UI seul (`treeLayout.ts`) ; cœur
+`genealogy/` **inchangé**. Voir `bugs/BUG-007.md`.
+
+- [x] T034 [US1] `src/ui/lib/treeLayout.ts` : **segments non jointifs au symbole** — introduire une constante **`GAP`** ; scinder le lien de couple en **2 poly-lignes séparées** (`[bord A, ⚭−GAP]` et `[⚭+GAP, bord B]`) au lieu d'une poly-ligne unique passant par le ⚭ ; démarrer la **filiation** à **`GAP` px sous le ⚭** (jamais au contact du symbole). Appliquer côté **ascendance** (couple/groupe parental) **et descendance** (couple node↔conjoint + filiation). Dépend de T029/T032 (même fichier). (FR-003c)
+- [x] T035 [US1] `src/ui/lib/treeLayout.ts` (`placeUp`) : **co-parents non conjoints reliés** — pour chaque paire consécutive de parents **sans union**, tracer un **segment horizontal continu** (sans ⚭) afin de relier toute la ligne de parents ; les paires **en union** conservent le ⚭ + 2 segments non jointifs (T034). Dépend de T034. (FR-003d)
+- [x] T036 [US1] `src/ui/lib/treeLayout.ts` : **filiation à l'index médian** — calculer l'origine X du trait de filiation par index médian des parents : **impair** ⇒ `centers[(n−1)/2]` (sous le parent du milieu) ; **pair** ⇒ milieu de `centers[n/2−1]`/`centers[n/2]` (sous le ⚭/segment central) — **et non** le milieu géométrique des extrêmes. Même règle pour un **enfant de groupe** (> 2 parents) côté descendance. Dépend de T034. (FR-003d)
+- [x] T037 [P] [US1] Étendre `tests/unit/_genealogyFixture.ts` / `tests/unit/genealogy-tree.test.ts` si besoin pour couvrir les **co-parents non conjoints** (≥ 2 parents sans union) — valide les données `parents`/`unions` (la géométrie reste UI, non testée). Seed fixe. *(facultatif si la fixture à 3 parents conjoints suffit ; sinon ajouter une famille à co-parents non conjoints.)*
 
 ## Dependencies & Execution Order
 
@@ -106,6 +116,7 @@ Voir `bugs/BUG-005.md`.
 - **Bugfix BUG-004** : T025 → T026 → T027 (même fichier `GenealogyTree.svelte`, séquentiel ; T026 et T027 réutilisent le mécanisme de mesure DOM de T025). Statut du couple parental déduit de `ancestors[].unions` (option (c)) — pas de `byId`, cœur inchangé.
 - **Bugfix BUG-005** : T028 (cœur `vivant`) → T029 (`treeLayout.ts` : poly-lignes + flags) → T030 (`GenealogyTree.svelte` : `<polyline>` + couleurs cumulables) ; T031 (légende + insertion dans les 2 vues) indépendant.
 - **Bugfix BUG-006** : T032 (`treeLayout.ts` : 2 segments + N parents + regroupement) → vérif. rendu T030 ; T033 (test N parents) indépendant ‖ T032.
+- **Bugfix BUG-007** : T034 (`treeLayout.ts` : GAP segments non jointifs + filiation détachée) → T035 (co-parents non conjoints) ‖ T036 (index médian) → vérif. rendu T030 ; T037 (test co-parents) indépendant. Même fichier `treeLayout.ts` que T029/T032 (séquentiel).
 - **Même fichier (séquentiel, pas de [P])** : `FicheView.svelte` (T008 puis T017) ; `App.svelte`/stores partagés.
 
 ## Parallel Opportunities
@@ -138,5 +149,7 @@ Voir `bugs/BUG-005.md`.
   et **BUG-005** (finitions : membre↔⚭, liens en équerre, conjoints grisés, décédés colorés +
   `vivant` au cœur, légende sur les 2 pages — T028–T031) et **BUG-006** (lien de couple en 2
   segments ; familles à > 2 parents : tous les parents reliés + ⚭ entre chaque paire ; regroupement
-  par ensemble de parents — T032–T033).
+  par ensemble de parents — T032–T033) et **BUG-007** (géométrie fine : segments de couple **non
+  jointifs** au symbole + filiation détachée ; **co-parents non conjoints** reliés sans ⚭ ; trait de
+  filiation à la **position médiane** des parents — T034–T037).
 - Anonymat (Principe X) ; `main` reste déployable ; commit après chaque tâche ou groupe logique.
