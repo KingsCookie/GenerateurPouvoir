@@ -87,6 +87,10 @@ de la Liste et de la Fiche.
 | Tracé des liens (BUG-004) | **Refonte en SVG** : les connecteurs CSS approximatifs sont remplacés par un **overlay `<svg>` enfant du `canvas`** (donc soumis au même `transform` ⇒ suit zoom/pan). Stratégie **mesure-puis-tracé** : on mesure les ancrages (⚭, cases) **relativement au `canvas`** (`getBoundingClientRect`) et on trace des `<path>`/`<line>` ; recalcul au **changement de données** et via `ResizeObserver`, **pas** à chaque pan/zoom. Alignement exact, **sans dépendance** (pas de D3 ni lib ⇒ Constitution VIII préservée). |
 | Ascendants en couples (BUG-004) | Les deux parents (et grands-parents) **groupés en couple** avec **⚭** + **trait de filiation** vers **leur seul enfant de la lignée** (FR-003a/FR-003d). **Statut actuel/ex du couple parental — option (c)** : déduit des **`unions` déjà portées par les nœuds ascendants** du `TreeNode` (pour `[parent1, parent2]`, lire `parent1.unions` → `conjointId === parent2.id`). **Ni cœur modifié, ni `byId`** ; **défaut trait plein** si non trouvé. |
 | Recentrage ⟳ (BUG-004) | Le bouton recentrage ramène le **centre de la case racine** au **centre du viewport** (et plus un simple `tx=ty=0`) : calcul à partir des **positions mesurées** (même mécanisme de mesure DOM que le tracé SVG). FR-002d. |
+| Liens en équerre (BUG-005) | `treeLayout.ts` produit des **poly-lignes** : (a) segments **membre↔⚭** (case → ⚭ → case) ; (b) filiation en **3 segments orthogonaux** (⚭ ↓ jusqu'à une **barre horizontale** par fratrie, puis ↓ vers chaque enfant). Rendu `<polyline>` SVG. Remplace les segments droits. |
+| Codes couleur cumulables (BUG-005) | Dimensions CSS **distinctes** ⇒ combinables : **ex** = `border-style: dashed` ; **conjoint/pièce rapportée** = `background` grisé (flag posé au layout pour les cases `spouse` de la racine/descendance ; ascendants exclus) ; **décédé** = `border-color` dédiée + marqueur « † » ; **racine** = accentuation. |
+| Donnée `vivant` (BUG-005) | **Ajout au cœur** : `vivant: boolean` sur `TreeNodeLite` (donc chaque nœud + conjoint), repris de `Personne.vivant`. Pur, déterministe, lecture seule ; data-model + contrats + test à seed fixe. |
+| Légende (BUG-005) | Composant `TreeLegend.svelte` (UI pur) inséré sous la zone arbre dans `FicheView` **et** `ArbreView` (FR-003e). |
 
 ## Project Structure
 
@@ -122,7 +126,8 @@ src/ui/lib/
 ├── treeViewModel.ts # adapte TreeNode (cœur) → vues fiche (nom+pouvoirs) / page (nom+âge+pouvoirs)
 └── ficheViewModel.ts# existant (buildFicheView/buildListRow) — étendu si besoin
 src/ui/components/
-├── GenealogyTree.svelte    # composant récursif (props : nœud, mode d'affichage des champs)
+├── GenealogyTree.svelte    # viewport pan/zoom + rendu SVG (cf. lib/treeLayout.ts ; BUG-004/005)
+├── TreeLegend.svelte       # légende des symboles/couleurs (fiche + page dédiée ; BUG-005)
 ├── FilterBar.svelte        # recherche + filtres (génération/espèce/trait+portée/pouvoir/statut)
 └── TraitModeSelector.svelte# sélecteur Mode 1/2/3
 src/ui/views/
@@ -164,3 +169,9 @@ fin des traits CSS approximatifs). Statut du couple parental **déduit de `ances
 (option (c) — ni cœur modifié, ni `byId`). **Recentrage ⟳** = racine centrée dans le viewport
 (FR-002d). Impact **UI seul** (`GenealogyTree.svelte`) ; **aucune dépendance ajoutée**
 (Constitution VIII) ; cœur `genealogy/` **inchangé**.
+
+**Bugfix**: 2026-06-10 — BUG-005 Updated from bugfix patch. Finitions visuelles : segments
+**membre↔⚭**, **liens en équerre** (poly-lignes), **conjoints grisés** (pièces rapportées),
+**décédés colorés** (+ « † »), styles **cumulables**, **légende** (`TreeLegend.svelte`) sur les deux
+pages. **Petite addition au cœur** : `vivant` sur `TreeNodeLite` (déterministe, lecture seule,
+testée). Reste **sans dépendance** (Constitution VIII).

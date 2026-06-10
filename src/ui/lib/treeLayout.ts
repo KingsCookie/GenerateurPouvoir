@@ -13,6 +13,7 @@ const H_GAP = 28; // écart horizontal entre sous-arbres frères
 const COUPLE_GAP = 34; // écart entre les deux membres d'un couple (place pour ⚭)
 const V_GAP = 70; // écart vertical entre générations (place pour les liens)
 const PAD = 24; // marge autour de l'arbre
+const BUS = 26; // hauteur de la « barre horizontale » au-dessus des enfants (équerre)
 const LEVEL = CARD_H + V_GAP;
 
 export interface LayoutBox {
@@ -24,6 +25,8 @@ export interface LayoutBox {
   lines: string[];
   isRoot: boolean;
   dashed: boolean; // conjoint « ex » / enfant d'ex / parent d'un couple « ex »
+  marriedIn: boolean; // conjoint « pièce rapportée » (grisé) — pas les ascendants
+  vivant: boolean; // false ⇒ rendu « décédé »
 }
 export interface LayoutMark {
   key: string;
@@ -31,12 +34,10 @@ export interface LayoutMark {
   y: number;
   ex: boolean;
 }
+/** Lien tracé en poly-ligne (suite de points) : segments membre↔⚭ et filiation en équerre. */
 export interface LayoutLink {
   key: string;
-  x1: number;
-  y1: number;
-  x2: number;
-  y2: number;
+  points: { x: number; y: number }[];
   ex: boolean;
 }
 export interface TreeLayout {
@@ -64,12 +65,13 @@ function coupleStatut(a: TreeNode, b: TreeNode): 'actuel' | 'ex' | null {
 
 function pushBox(
   out: Out,
-  src: Pick<TreeNodeLite, 'id' | 'nom' | 'age' | 'pouvoirs'>,
+  src: Pick<TreeNodeLite, 'id' | 'nom' | 'age' | 'vivant' | 'pouvoirs'>,
   x: number,
   y: number,
   showAge: boolean,
   isRoot: boolean,
   dashed: boolean,
+  marriedIn: boolean,
 ): void {
   out.boxes.push({
     key: `${src.id}#${out.seq++}`,
@@ -80,6 +82,8 @@ function pushBox(
     lines: cellLines(src, showAge),
     isRoot,
     dashed,
+    marriedIn,
+    vivant: src.vivant,
   });
 }
 
@@ -136,17 +140,28 @@ function placeDown(
   dashedSelf: boolean,
 ): number {
   const y = depth * LEVEL;
+  const yc = y + CARD_H / 2;
   const clusterLeft = left + (m.width - m.selfWidth) / 2;
   const nodeX = clusterLeft;
-  pushBox(out, m.node, nodeX, y, showAge, isRoot, dashedSelf);
+  pushBox(out, m.node, nodeX, y, showAge, isRoot, dashedSelf, false);
 
   const unionMark = new Map<string, { x: number; y: number }>();
   let cx = nodeX;
   for (const s of m.spouses) {
     const markX = cx + CARD_W + COUPLE_GAP / 2;
     const spouseX = cx + CARD_W + COUPLE_GAP;
-    out.marks.push({ key: `m${out.seq++}`, x: markX, y: y + CARD_H / 2, ex: s.ex });
-    pushBox(out, s.conjoint, spouseX, y, showAge, false, s.ex);
+    out.marks.push({ key: `m${out.seq++}`, x: markX, y: yc, ex: s.ex });
+    // Conjoint = « pièce rapportée » (grisé) ; pointillés si « ex ».
+    pushBox(out, s.conjoint, spouseX, y, showAge, false, s.ex, true);
+    // Segment reliant les deux membres du couple, passant par le ⚭ (BUG-005).
+    out.links.push({
+      key: `c${out.seq++}`,
+      points: [
+        { x: cx + CARD_W, y: yc },
+        { x: spouseX, y: yc },
+      ],
+      ex: s.ex,
+    });
     unionMark.set(s.conjointId, { x: markX, y: y + CARD_H });
     cx = spouseX;
   }
@@ -159,12 +174,17 @@ function placeDown(
       x: nodeX + CARD_W / 2,
       y: y + CARD_H,
     };
+    const childTopY = (depth + 1) * LEVEL;
+    const busY = childTopY - BUS;
+    // Filiation en équerre (3 segments) : ⚭ ↓ barre ↓ enfant (BUG-005).
     out.links.push({
       key: `l${out.seq++}`,
-      x1: from.x,
-      y1: from.y,
-      x2: childCenterX,
-      y2: (depth + 1) * LEVEL,
+      points: [
+        { x: from.x, y: from.y },
+        { x: from.x, y: busY },
+        { x: childCenterX, y: busY },
+        { x: childCenterX, y: childTopY },
+      ],
       ex: c.ex,
     });
     clx += c.m.width + H_GAP;
@@ -210,10 +230,13 @@ function placeUp(
   const ex = parents.length === 2 ? coupleStatut(parents[0].node, parents[1].node) === 'ex' : false;
 
   let px = nodeCenterX - blockWidth / 2;
+  const cardLefts: number[] = [];
   const centers: number[] = [];
   for (const p of parents) {
     const cardLeft = px + (p.width - CARD_W) / 2;
-    pushBox(out, p.node, cardLeft, yUp, showAge, false, ex);
+    // Ascendants = ancêtres directs (jamais grisés) ; pointillés si couple parental « ex ».
+    pushBox(out, p.node, cardLeft, yUp, showAge, false, ex, false);
+    cardLefts.push(cardLeft);
     const center = cardLeft + CARD_W / 2;
     centers.push(center);
     placeUp(p, center, yUp, out, showAge); // grands-parents au-dessus
@@ -223,14 +246,26 @@ function placeUp(
   const markX = parents.length === 2 ? (centers[0] + centers[1]) / 2 : centers[0];
   if (parents.length === 2) {
     out.marks.push({ key: `m${out.seq++}`, x: markX, y: yUp + CARD_H / 2, ex });
+    // Segment reliant les deux parents, passant par le ⚭ (BUG-005).
+    out.links.push({
+      key: `c${out.seq++}`,
+      points: [
+        { x: cardLefts[0] + CARD_W, y: yUp + CARD_H / 2 },
+        { x: cardLefts[1], y: yUp + CARD_H / 2 },
+      ],
+      ex,
+    });
   }
-  // Lien du couple parental vers le seul enfant de la lignée (le nœud).
+  // Filiation en équerre du couple parental vers le seul enfant de la lignée (le nœud).
+  const busY = nodeY - BUS;
   out.links.push({
     key: `l${out.seq++}`,
-    x1: markX,
-    y1: yUp + CARD_H,
-    x2: nodeCenterX,
-    y2: nodeY,
+    points: [
+      { x: markX, y: yUp + CARD_H },
+      { x: markX, y: busY },
+      { x: nodeCenterX, y: busY },
+      { x: nodeCenterX, y: nodeY },
+    ],
     ex,
   });
 }
@@ -261,8 +296,7 @@ export function layoutTree(root: TreeNode, showAge: boolean): TreeLayout {
   }
   for (const mk of out.marks) consider(mk.x, mk.y);
   for (const lk of out.links) {
-    consider(lk.x1, lk.y1);
-    consider(lk.x2, lk.y2);
+    for (const p of lk.points) consider(p.x, p.y);
   }
   if (!Number.isFinite(minX)) {
     minX = 0;
@@ -282,10 +316,10 @@ export function layoutTree(root: TreeNode, showAge: boolean): TreeLayout {
     mk.y += dy;
   }
   for (const lk of out.links) {
-    lk.x1 += dx;
-    lk.y1 += dy;
-    lk.x2 += dx;
-    lk.y2 += dy;
+    for (const p of lk.points) {
+      p.x += dx;
+      p.y += dy;
+    }
   }
 
   return {

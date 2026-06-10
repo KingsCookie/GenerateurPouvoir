@@ -16,6 +16,7 @@
   import { traitMode } from '../stores/ui.js';
   import GenealogyTree from '../components/GenealogyTree.svelte';
   import TraitModeSelector from '../components/TraitModeSelector.svelte';
+  import TreeLegend from '../components/TreeLegend.svelte';
 
   const catalog = getCatalog();
   $: fiche = $selectedPerson ? buildFicheView($selectedPerson, catalog, $currentYear) : null;
@@ -75,6 +76,7 @@
         {#key $selectedPerson?.id}
           <GenealogyTree node={tree} showAge={false} onSelect={selectPerson} />
         {/key}
+        <TreeLegend />
       </div>
     {/if}
 

@@ -11,7 +11,8 @@
   - `depth: number` — profondeur (≥ 1, **sans plafond**).
   - `ctx: { currentYear: number }` — pour calculer l'âge des nœuds.
 - **Sortie** : `TreeNode` (cf. data-model) avec `ancestors` (≤ depth niveaux via `parents`),
-  `descendants` (≤ depth niveaux via `enfants`) et `unions`.
+  `descendants` (≤ depth niveaux via `enfants`) et `unions`. Chaque nœud/conjoint (`TreeNodeLite`)
+  porte `id`, `nom`, `age`, **`vivant`** (BUG-005) et `pouvoirs`.
 - **Contrat** :
   - Borné par `depth` ; **termine** même en présence de parentés partagées (consanguinité).
   - Un individu atteignable par plusieurs chemins est **reconstruit à chaque emplacement** (pas de

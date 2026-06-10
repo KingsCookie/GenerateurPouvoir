@@ -11,6 +11,7 @@
   } from '../stores/appState.js';
   import { buildGenealogyTree } from '../../core/index.js';
   import GenealogyTree from '../components/GenealogyTree.svelte';
+  import TreeLegend from '../components/TreeLegend.svelte';
 
   const catalog = getCatalog();
 
@@ -49,6 +50,7 @@
     {#key $treeRootId}
       <GenealogyTree node={tree} showAge={true} onSelect={recenterTree} />
     {/key}
+    <TreeLegend />
   {/if}
 </section>
 

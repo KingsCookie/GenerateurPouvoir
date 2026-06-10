@@ -16,6 +16,7 @@ export interface TreeNodeLite {
   id: string;
   nom: string;
   age: number;
+  vivant: boolean;
   pouvoirs: string[];
 }
 
@@ -64,6 +65,7 @@ function nodeLite(p: Personne, ctx: TreeContext): TreeNodeLite {
     id: p.id,
     nom: p.nom,
     age: computeAge(yearOf(p.dateNaissance), ctx.currentYear),
+    vivant: p.vivant,
     pouvoirs: p.pouvoirs.map((pw) => powerLabel(pw, ctx.catalog)),
   };
 }
@@ -143,6 +145,7 @@ export function buildGenealogyTree(
       id: rootId,
       nom: '',
       age: 0,
+      vivant: false,
       pouvoirs: [],
       ancestors: [],
       descendants: [],

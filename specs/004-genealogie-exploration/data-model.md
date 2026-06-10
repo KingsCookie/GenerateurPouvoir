@@ -13,6 +13,7 @@
 | `id` | string | id de la personne |
 | `nom` | string | |
 | `age` | number | `currentYear − année de naissance` (réutilise `computeAge`) |
+| `vivant` | boolean | repris de `Personne.vivant` — pour le rendu « décédé » (BUG-005) |
 | `pouvoirs` | string[] | libellés de pouvoir (réutilise `powerLabel`) |
 | `ancestors` | TreeNode[] | parents dépliés (niveau +1…+N) ; `[]` si `depth` atteint ou racine |
 | `descendants` | TreeNode[] | enfants dépliés (niveau −1…−N) ; `[]` si `depth` atteint ou feuille |
@@ -30,7 +31,7 @@
 |---|---|---|
 | `conjointId` | string | id du conjoint (actuel ou ex) |
 | `statut` | 'actuel' \| 'ex' | repris de `Personne.conjoints` |
-| `conjoint` | TreeNodeLite | nom + âge + pouvoirs du conjoint (**non** déplié vers ses ancêtres) |
+| `conjoint` | TreeNodeLite | nom + âge + **vivant** + pouvoirs du conjoint (**non** déplié vers ses ancêtres) |
 | `enfantsCommuns` | string[] | ids des enfants dont `parents` ⊇ {nœud, conjointId} **uniquement** |
 
 - **Règle (INV-G2)** : `enfantsCommuns` exclut les enfants du conjoint avec des tiers ; les

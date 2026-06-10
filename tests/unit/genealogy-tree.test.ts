@@ -63,12 +63,14 @@ describe('buildGenealogyTree — arbre généalogique (US1)', () => {
     expect(uCc.enfantsCommuns).toEqual(['d2']);
   });
 
-  it('expose nom, âge et libellés de pouvoir des nœuds', () => {
+  it('expose nom, âge, statut vivant et libellés de pouvoir des nœuds', () => {
     const { byId } = buildGenealogyFixture();
     const tree = buildGenealogyTree('cc', byId, 1, ctx);
-    // cc a un enfant d3 (avec pouvoir DERIVE) — vérifie âge et libellé.
+    // cc a un enfant d3 (décédé, avec pouvoir DERIVE) — vérifie âge, vivant et libellé.
     const d3 = tree.descendants.find((n) => n.id === 'd3')!;
     expect(d3.age).toBe(100 - 40);
+    expect(d3.vivant).toBe(false); // d3 décédé dans la fixture (BUG-005)
+    expect(tree.vivant).toBe(true); // cc vivant
     expect(d3.pouvoirs).toEqual(['boule de feu']);
   });
 
@@ -79,6 +81,7 @@ describe('buildGenealogyTree — arbre généalogique (US1)', () => {
       id: 'inconnu',
       nom: '',
       age: 0,
+      vivant: false,
       pouvoirs: [],
       ancestors: [],
       descendants: [],

@@ -163,7 +163,11 @@
       viewBox="0 0 {layout.width} {layout.height}"
     >
       {#each layout.links as lk (lk.key)}
-        <line x1={lk.x1} y1={lk.y1} x2={lk.x2} y2={lk.y2} class="link" class:ex={lk.ex} />
+        <polyline
+          points={lk.points.map((p) => `${p.x},${p.y}`).join(' ')}
+          class="link"
+          class:ex={lk.ex}
+        />
       {/each}
       {#each layout.marks as mk (mk.key)}
         <text x={mk.x} y={mk.y} class="mark" text-anchor="middle" dominant-baseline="central">
@@ -178,10 +182,12 @@
         class="card"
         class:root={b.isRoot}
         class:dashed={b.dashed}
+        class:marriedin={b.marriedIn}
+        class:dead={!b.vivant}
         style="left:{b.x}px;top:{b.y}px;width:{CARD_W}px;height:{CARD_H}px;"
         on:click={() => onSelect(b.refId)}
       >
-        <strong class="nom">{b.nom}</strong>
+        <strong class="nom">{b.vivant ? '' : '† '}{b.nom}</strong>
         {#each b.lines as line}
           <span class="line">{line}</span>
         {/each}
@@ -218,6 +224,7 @@
     pointer-events: none;
   }
   .link {
+    fill: none;
     stroke: var(--fg-muted);
     stroke-width: 2;
   }
@@ -265,6 +272,16 @@
   /* Conjoint « ex » / enfant d'ex / parent d'un couple « ex » : pointillés (FR-003c). */
   .card.dashed {
     border-style: dashed;
+  }
+  /* Conjoint « pièce rapportée » : fond grisé (BUG-005) — dimension « background ». */
+  .card.marriedin {
+    background: color-mix(in srgb, var(--fg-muted) 26%, var(--bg));
+  }
+  /* Décédé : couleur de bordure distincte + marqueur « † » (BUG-005) — dimension « border-color ».
+     Cumulable avec ex (border-style), pièce rapportée (background) et racine. */
+  .card.dead {
+    border-color: #c98bdb;
+    color: var(--fg-muted);
   }
   .card .nom {
     font-size: 0.85rem;
