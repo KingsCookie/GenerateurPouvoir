@@ -92,7 +92,8 @@ function pushBox(
 interface DMeasure {
   node: TreeNode;
   spouses: { conjointId: string; conjoint: TreeNodeLite; ex: boolean }[];
-  children: { m: DMeasure; unionId: string | null; ex: boolean }[];
+  // `unionIds` = conjoints dont l'union inclut cet enfant ; > 1 ⇒ enfant d'un groupe de > 2 parents.
+  children: { m: DMeasure; unionIds: string[]; ex: boolean }[];
   selfWidth: number;
   childrenWidth: number;
   width: number;
@@ -105,20 +106,23 @@ function measureDown(node: TreeNode): DMeasure {
     ex: u.statut === 'ex',
   }));
 
-  const claimed = new Set<string>();
-  const children: { m: DMeasure; unionId: string | null; ex: boolean }[] = [];
+  // Regroupe chaque enfant par l'ENSEMBLE des unions qui le revendiquent (BUG-006 : > 2 parents).
+  const byChild = new Map<string, string[]>();
   for (const u of node.unions) {
     for (const cid of u.enfantsCommuns) {
-      const d = node.descendants.find((x) => x.id === cid);
-      if (d) {
-        children.push({ m: measureDown(d), unionId: u.conjointId, ex: u.statut === 'ex' });
-        claimed.add(cid);
-      }
+      const list = byChild.get(cid) ?? [];
+      list.push(u.conjointId);
+      byChild.set(cid, list);
     }
   }
-  for (const d of node.descendants) {
-    if (!claimed.has(d.id)) children.push({ m: measureDown(d), unionId: null, ex: false });
-  }
+  const children = node.descendants.map((d) => {
+    const unionIds = byChild.get(d.id) ?? [];
+    // « ex » seulement pour un enfant rattaché à une SEULE union « ex » (groupe ⇒ trait plein).
+    const ex =
+      unionIds.length === 1 &&
+      node.unions.find((u) => u.conjointId === unionIds[0])?.statut === 'ex';
+    return { m: measureDown(d), unionIds, ex };
+  });
 
   const childrenWidth =
     children.length > 0
@@ -153,11 +157,12 @@ function placeDown(
     out.marks.push({ key: `m${out.seq++}`, x: markX, y: yc, ex: s.ex });
     // Conjoint = « pièce rapportée » (grisé) ; pointillés si « ex ».
     pushBox(out, s.conjoint, spouseX, y, showAge, false, s.ex, true);
-    // Segment reliant les deux membres du couple, passant par le ⚭ (BUG-005).
+    // Lien de couple en 2 segments dont le ⚭ est le sommet (BUG-006).
     out.links.push({
       key: `c${out.seq++}`,
       points: [
         { x: cx + CARD_W, y: yc },
+        { x: markX, y: yc },
         { x: spouseX, y: yc },
       ],
       ex: s.ex,
@@ -170,10 +175,18 @@ function placeDown(
   let clx = childrenLeft;
   for (const c of m.children) {
     const childCenterX = placeDown(c.m, clx, depth + 1, out, showAge, false, c.ex);
-    const from = (c.unionId && unionMark.get(c.unionId)) || {
-      x: nodeX + CARD_W / 2,
-      y: y + CARD_H,
-    };
+    // Origine de la filiation : centre du GROUPE de parents (toutes les unions de l'enfant), sinon
+    // bas de la case du nœud (enfant sans conjoint identifié) — BUG-006.
+    const marks = c.unionIds
+      .map((id) => unionMark.get(id))
+      .filter((v): v is { x: number; y: number } => !!v);
+    const from =
+      marks.length > 0
+        ? {
+            x: marks.reduce((s, p) => s + p.x, 0) / marks.length,
+            y: Math.max(...marks.map((p) => p.y)),
+          }
+        : { x: nodeX + CARD_W / 2, y: y + CARD_H };
     const childTopY = (depth + 1) * LEVEL;
     const busY = childTopY - BUS;
     // Filiation en équerre (3 segments) : ⚭ ↓ barre ↓ enfant (BUG-005).
@@ -225,48 +238,55 @@ function placeUp(
       ? parents.reduce((s, p) => s + p.width, 0) + H_GAP * (parents.length - 1)
       : parents[0].width;
   const yUp = nodeY - LEVEL;
+  const ycUp = yUp + CARD_H / 2;
 
-  // Statut du couple parental (pointillés si « ex »).
-  const ex = parents.length === 2 ? coupleStatut(parents[0].node, parents[1].node) === 'ex' : false;
+  // « ex » du couple parental classique (2 parents) ⇒ pointillés des cases + filiation.
+  const coupleEx =
+    parents.length === 2 ? coupleStatut(parents[0].node, parents[1].node) === 'ex' : false;
 
   let px = nodeCenterX - blockWidth / 2;
   const cardLefts: number[] = [];
   const centers: number[] = [];
   for (const p of parents) {
     const cardLeft = px + (p.width - CARD_W) / 2;
-    // Ascendants = ancêtres directs (jamais grisés) ; pointillés si couple parental « ex ».
-    pushBox(out, p.node, cardLeft, yUp, showAge, false, ex, false);
+    // Ascendants = ancêtres directs (jamais grisés) ; pointillés si couple parental binaire « ex ».
+    pushBox(out, p.node, cardLeft, yUp, showAge, false, coupleEx, false);
     cardLefts.push(cardLeft);
-    const center = cardLeft + CARD_W / 2;
-    centers.push(center);
-    placeUp(p, center, yUp, out, showAge); // grands-parents au-dessus
+    centers.push(cardLeft + CARD_W / 2);
+    placeUp(p, cardLeft + CARD_W / 2, yUp, out, showAge); // grands-parents au-dessus
     px += p.width + H_GAP;
   }
 
-  const markX = parents.length === 2 ? (centers[0] + centers[1]) / 2 : centers[0];
-  if (parents.length === 2) {
-    out.marks.push({ key: `m${out.seq++}`, x: markX, y: yUp + CARD_H / 2, ex });
-    // Segment reliant les deux parents, passant par le ⚭ (BUG-005).
+  // ⚭ entre CHAQUE paire consécutive de parents en union (BUG-006), avec lien en 2 segments.
+  for (let i = 0; i < parents.length - 1; i++) {
+    const st = coupleStatut(parents[i].node, parents[i + 1].node);
+    if (st === null) continue;
+    const pairEx = st === 'ex';
+    const markX = (centers[i] + centers[i + 1]) / 2;
+    out.marks.push({ key: `m${out.seq++}`, x: markX, y: ycUp, ex: pairEx });
     out.links.push({
       key: `c${out.seq++}`,
       points: [
-        { x: cardLefts[0] + CARD_W, y: yUp + CARD_H / 2 },
-        { x: cardLefts[1], y: yUp + CARD_H / 2 },
+        { x: cardLefts[i] + CARD_W, y: ycUp },
+        { x: markX, y: ycUp },
+        { x: cardLefts[i + 1], y: ycUp },
       ],
-      ex,
+      ex: pairEx,
     });
   }
-  // Filiation en équerre du couple parental vers le seul enfant de la lignée (le nœud).
+
+  // Filiation en équerre depuis le centre du GROUPE parental vers le seul enfant de la lignée.
+  const groupX = (centers[0] + centers[centers.length - 1]) / 2;
   const busY = nodeY - BUS;
   out.links.push({
     key: `l${out.seq++}`,
     points: [
-      { x: markX, y: yUp + CARD_H },
-      { x: markX, y: busY },
+      { x: groupX, y: yUp + CARD_H },
+      { x: groupX, y: busY },
       { x: nodeCenterX, y: busY },
       { x: nodeCenterX, y: nodeY },
     ],
-    ex,
+    ex: coupleEx,
   });
 }
 

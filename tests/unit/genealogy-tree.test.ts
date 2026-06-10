@@ -89,6 +89,16 @@ describe('buildGenealogyTree — arbre généalogique (US1)', () => {
     });
   });
 
+  it('familles à plus de 2 parents : tous les parents en ascendance (BUG-006)', () => {
+    const { byId } = buildGenealogyFixture();
+    const tree = buildGenealogyTree('tri', byId, 1, ctx);
+    // tri a 3 parents (pa, pb, pc) — tous présents en ancêtres, triés par date.
+    expect(tree.ancestors.map((n) => n.id)).toEqual(['pa', 'pb', 'pc']);
+    // Chaque parent est en union avec les deux autres (⚭ entre chaque paire côté UI).
+    const pa = tree.ancestors.find((n) => n.id === 'pa')!;
+    expect(pa.unions.map((u) => u.conjointId).sort()).toEqual(['pb', 'pc']);
+  });
+
   it('lecture seule : ne mute pas la population en entrée (INV-G6)', () => {
     const { population, byId } = buildGenealogyFixture();
     const before = JSON.stringify(population);

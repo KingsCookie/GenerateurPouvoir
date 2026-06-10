@@ -83,9 +83,17 @@ dépendance** (Constitution VIII). Voir `bugs/BUG-004.md`.
 Voir `bugs/BUG-005.md`.
 
 - [x] T028 [US1] **Cœur** : ajouter `vivant: boolean` à `TreeNodeLite` (`src/core/genealogy/tree.ts` : `nodeLite` + conjoint des unions), repris de `Personne.vivant`. Mettre à jour `tests/unit/genealogy-tree.test.ts` (assertion `vivant`, seed fixe) ; data-model + contrats déjà à jour. Pur, déterministe, lecture seule.
-- [x] T029 [US1] `src/ui/lib/treeLayout.ts` : modèle de lien en **poly-ligne** — (a) segments **membre↔⚭** ; (b) filiation en **équerre** (du ⚭ vers une **barre horizontale** par fratrie, puis descente vers chaque enfant), ascendants **et** descendants. Poser le flag **« pièce rapportée »** sur les cases conjoint (racine + descendance, pas les ascendants) ; propager **`vivant`** dans les `LayoutBox`. Dépend de T028.
-- [x] T030 [US1] `src/ui/components/GenealogyTree.svelte` : rendre les liens en **`<polyline>`** ; classes CSS **cumulables** — **ex** `border-style: dashed` ; **pièce rapportée** fond grisé ; **décédé** couleur de bordure + marqueur « † » ; **racine** accentuation. Dépend de T029.
+- [x] T029 [US1] ✅ Corrigé (BUG-006) `src/ui/lib/treeLayout.ts` : modèle de lien en **poly-ligne** — (a) segments **membre↔⚭** ; (b) filiation en **équerre** (du ⚭ vers une **barre horizontale** par fratrie, puis descente vers chaque enfant), ascendants **et** descendants. Poser le flag **« pièce rapportée »** sur les cases conjoint (racine + descendance, pas les ascendants) ; propager **`vivant`** dans les `LayoutBox`. Dépend de T028. *(reopened — BUG-006 : lien de couple en **2 segments** (⚭ sommet) + **familles à N parents** ; voir T032.)*
+- [x] T030 [US1] ✅ Corrigé (BUG-006) `src/ui/components/GenealogyTree.svelte` : rendre les liens en **`<polyline>`** ; classes CSS **cumulables** — **ex** `border-style: dashed` ; **pièce rapportée** fond grisé ; **décédé** couleur de bordure + marqueur « † » ; **racine** accentuation. Dépend de T029. *(reopened — BUG-006 : vérifier le rendu des `<polyline>` à sommets multiples / ⚭ multiples (probablement sans changement) ; voir T032.)*
 - [x] T031 [US1] Créer `src/ui/components/TreeLegend.svelte` (légende symboles/couleurs) et l'insérer **sous la zone arbre** dans `src/ui/views/FicheView.svelte` **et** `src/ui/views/ArbreView.svelte` (FR-003e).
+
+## Phase 10 : Bugfix BUG-006 (lien de couple 2 segments + familles à > 2 parents)
+
+**Bugfix**: 2026-06-10 — BUG-006 Updated from bugfix patch. UI seul ; cœur inchangé. Voir
+`bugs/BUG-006.md`.
+
+- [x] T032 [US1] `src/ui/lib/treeLayout.ts` : (a) **lien de couple en 2 segments** — poly-ligne `[bord A, ⚭, bord B]` (le ⚭ devient un sommet) ; (b) **ascendance à N parents** — disposer tous les parents, placer un **⚭ entre chaque paire consécutive** en union (statut via `ancestors[].unions`), tracer la **filiation en équerre depuis le centre du groupe parental** vers l'enfant de la lignée ; (c) **descendance** — regrouper les enfants par **ensemble de parents** (gérer un enfant à > 2 parents) plutôt que par `conjointId` binaire. (FR-003a/FR-003c/FR-003d)
+- [x] T033 [P] [US1] Étendre `tests/unit/_genealogyFixture.ts` avec un **enfant à 3 parents** et ajouter une assertion dans `tests/unit/genealogy-tree.test.ts` (les **3 parents** apparaissent en `ancestors`) — valide les données `parents`/`unions` (le rendu reste UI). Seed fixe.
 
 ## Dependencies & Execution Order
 
@@ -97,6 +105,7 @@ Voir `bugs/BUG-005.md`.
 - **Bugfix BUG-003** : T021 → T022 (même fichier `GenealogyTree.svelte`, séquentiel) ; T023 dépend T021 ; T024 indépendant.
 - **Bugfix BUG-004** : T025 → T026 → T027 (même fichier `GenealogyTree.svelte`, séquentiel ; T026 et T027 réutilisent le mécanisme de mesure DOM de T025). Statut du couple parental déduit de `ancestors[].unions` (option (c)) — pas de `byId`, cœur inchangé.
 - **Bugfix BUG-005** : T028 (cœur `vivant`) → T029 (`treeLayout.ts` : poly-lignes + flags) → T030 (`GenealogyTree.svelte` : `<polyline>` + couleurs cumulables) ; T031 (légende + insertion dans les 2 vues) indépendant.
+- **Bugfix BUG-006** : T032 (`treeLayout.ts` : 2 segments + N parents + regroupement) → vérif. rendu T030 ; T033 (test N parents) indépendant ‖ T032.
 - **Même fichier (séquentiel, pas de [P])** : `FicheView.svelte` (T008 puis T017) ; `App.svelte`/stores partagés.
 
 ## Parallel Opportunities
@@ -127,5 +136,7 @@ Voir `bugs/BUG-005.md`.
   filiation vers le seul enfant de la lignée ; **refonte SVG** des liens ; **recentrage ⟳** vers la
   racine ; statut couple parental via `ancestors[].unions` (option c) — sans dépendance — T025–T027)
   et **BUG-005** (finitions : membre↔⚭, liens en équerre, conjoints grisés, décédés colorés +
-  `vivant` au cœur, légende sur les 2 pages — T028–T031).
+  `vivant` au cœur, légende sur les 2 pages — T028–T031) et **BUG-006** (lien de couple en 2
+  segments ; familles à > 2 parents : tous les parents reliés + ⚭ entre chaque paire ; regroupement
+  par ensemble de parents — T032–T033).
 - Anonymat (Principe X) ; `main` reste déployable ; commit après chaque tâche ou groupe logique.

@@ -91,6 +91,8 @@ de la Liste et de la Fiche.
 | Codes couleur cumulables (BUG-005) | Dimensions CSS **distinctes** ⇒ combinables : **ex** = `border-style: dashed` ; **conjoint/pièce rapportée** = `background` grisé (flag posé au layout pour les cases `spouse` de la racine/descendance ; ascendants exclus) ; **décédé** = `border-color` dédiée + marqueur « † » ; **racine** = accentuation. |
 | Donnée `vivant` (BUG-005) | **Ajout au cœur** : `vivant: boolean` sur `TreeNodeLite` (donc chaque nœud + conjoint), repris de `Personne.vivant`. Pur, déterministe, lecture seule ; data-model + contrats + test à seed fixe. |
 | Légende (BUG-005) | Composant `TreeLegend.svelte` (UI pur) inséré sous la zone arbre dans `FicheView` **et** `ArbreView` (FR-003e). |
+| Lien de couple 2 segments (BUG-006) | `treeLayout.ts` : le lien membre↔membre devient une **poly-ligne passant par le ⚭** (`[bord A, ⚭, bord B]`) ⇒ 2 segments dont le ⚭ est le sommet. |
+| Familles à N parents (BUG-006) | **Ascendance** : `placeUp` gère `parents.length ≥ 1` — tous les parents en ligne, un **⚭ entre chaque paire consécutive** en union (statut via `ancestors[].unions`), filiation en équerre depuis le **centre du groupe parental** vers l'enfant. **Descendance** : regrouper les enfants par **ensemble de parents** (et non par `conjointId` binaire) ; un enfant à > 2 parents est relié au groupe. **Cœur inchangé** (`parents` est déjà `string[]` sans plafond). |
 
 ## Project Structure
 
@@ -175,3 +177,8 @@ fin des traits CSS approximatifs). Statut du couple parental **déduit de `ances
 **décédés colorés** (+ « † »), styles **cumulables**, **légende** (`TreeLegend.svelte`) sur les deux
 pages. **Petite addition au cœur** : `vivant` sur `TreeNodeLite` (déterministe, lecture seule,
 testée). Reste **sans dépendance** (Constitution VIII).
+
+**Bugfix**: 2026-06-10 — BUG-006 Updated from bugfix patch. Lien de couple en **2 segments** (⚭
+sommet) et **familles à > 2 parents** : ascendance à N parents (⚭ entre chaque paire, filiation
+depuis le groupe), descendance regroupée par **ensemble de parents**. Impact **UI seul**
+(`treeLayout.ts`, `GenealogyTree.svelte`) ; cœur `genealogy/` **inchangé**.

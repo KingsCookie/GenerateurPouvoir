@@ -154,6 +154,40 @@ export function buildGenealogyFixture(): { population: Personne[]; byId: Map<str
     }),
 
     mk({ id: 'f1', nom: 'Faye', dateNaissance: '0062-01-01', parents: ['d1', 'e1'] }),
+
+    // Famille à 3 parents (union de groupe, BUG-006) — isolée du reste pour ne pas perturber les
+    // autres assertions. pa, pb, pc sont conjoints entre eux et co-parents de `tri`.
+    mk({
+      id: 'pa',
+      nom: 'Paavo',
+      dateNaissance: '0030-01-01',
+      conjoints: [
+        { id: 'pb', statut: 'actuel' },
+        { id: 'pc', statut: 'actuel' },
+      ],
+      enfants: ['tri'],
+    }),
+    mk({
+      id: 'pb',
+      nom: 'Petra',
+      dateNaissance: '0031-01-01',
+      conjoints: [
+        { id: 'pa', statut: 'actuel' },
+        { id: 'pc', statut: 'actuel' },
+      ],
+      enfants: ['tri'],
+    }),
+    mk({
+      id: 'pc',
+      nom: 'Pirjo',
+      dateNaissance: '0032-01-01',
+      conjoints: [
+        { id: 'pa', statut: 'actuel' },
+        { id: 'pb', statut: 'actuel' },
+      ],
+      enfants: ['tri'],
+    }),
+    mk({ id: 'tri', nom: 'Tristan', dateNaissance: '0033-01-01', parents: ['pa', 'pb', 'pc'] }),
   ];
 
   const byId = new Map(population.map((p) => [p.id, p]));

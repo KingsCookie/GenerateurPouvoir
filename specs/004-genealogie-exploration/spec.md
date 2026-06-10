@@ -235,7 +235,11 @@ les 3 modes et vérifier que le contenu affiché correspond exactement à chaque
   - mettre en évidence la **racine** (l'individu dont on consulte l'arbre) par une **couleur
     distincte** des autres nœuds.
   - relier chaque **membre d'un couple au symbole ⚭** par un **segment** (case ↔ ⚭ ↔ case) ;
-    *(BUG-005)*
+    *(BUG-005)* le lien de couple DOIT être tracé en **2 segments** dont le **⚭ est le sommet**
+    (membre A → ⚭ → membre B), et non un trait droit unique ; *(BUG-006)*
+  - **union à plus de deux** : lorsqu'un groupe compte **> 2 membres** en union, un **symbole ⚭ DOIT
+    figurer entre CHAQUE paire consécutive** de membres (n membres ⇒ n−1 symboles), chacun relié à
+    ses deux voisins par le lien en 2 segments ; *(BUG-006)*
   - tracer les **liens de filiation en équerre** (3 segments orthogonaux) : du **⚭** vers une
     **barre horizontale** commune à la fratrie (un peu au-dessus des enfants), puis **descente
     verticale** vers chaque enfant — **pas** de lignes droites diagonales ; *(BUG-005)*
@@ -247,14 +251,18 @@ les 3 modes et vérifier que le contenu affiché correspond exactement à chaque
   - les **styles sont cumulables** sur une même case (dimensions CSS distinctes) : **ex** =
     bordure **pointillés** ; **pièce rapportée** = **fond grisé** ; **décédé** = **couleur de
     bordure** + « † » ; **racine** = accentuation. *(BUG-005)*
-- **FR-003d** : Le rendu graphique DOIT s'appliquer **symétriquement aux ascendants** : les **deux
-  parents** (et grands-parents…) DOIVENT être **groupés en couple** avec le **symbole ⚭** entre eux
-  et un **trait de filiation** descendant vers **leur enfant de la lignée** (un seul enfant relié,
-  cf. FR-003a) ; un **couple parental « ex »** suit la même distinction visuelle (**pointillés**)
-  que les unions, si le statut est disponible (sinon trait plein). Les **traits de filiation**
-  (ascendants **et** descendants) DOIVENT être tracés de manière **fiable et alignée** sur les cases
-  réelles (tracé **SVG**, **pas** d'approximation CSS) et **suivre le zoom/déplacement** de la zone.
-  *(BUG-004)*
+- **FR-003d** : Le rendu graphique DOIT s'appliquer **symétriquement aux ascendants** : les parents
+  (et grands-parents…) DOIVENT être **groupés** avec le **symbole ⚭** entre eux et un **trait de
+  filiation** descendant vers **leur enfant de la lignée** (un seul enfant relié, cf. FR-003a) ; un
+  **couple parental « ex »** suit la même distinction visuelle (**pointillés**) que les unions, si le
+  statut est disponible (sinon trait plein). Les **traits de filiation** (ascendants **et**
+  descendants) DOIVENT être tracés de manière **fiable et alignée** sur les cases réelles (tracé
+  **SVG**, **pas** d'approximation CSS) et **suivre le zoom/déplacement** de la zone. *(BUG-004)*
+  **Familles à plus de 2 parents** : si l'enfant de la lignée a **> 2 parents**, l'arbre DOIT relier
+  **TOUS** les parents à l'enfant (un lien depuis le **groupe parental** complet), avec un **⚭ entre
+  chaque paire consécutive** de parents en union (cf. FR-003c). Le même principe vaut **côté
+  descendance** pour un enfant issu d'un **groupe de > 2 parents** (regroupement par **ensemble de
+  parents**, et non par union binaire). *(BUG-006)*
 - **FR-003e** : Une **légende** des symboles et couleurs DOIT être affichée **sur la fiche ET sur la
   page dédiée** : ⚭ union / ⚮ ou pointillés = ex, **fond grisé** = conjoint (pièce rapportée),
   accentuation = personne observée (racine), couleur + « † » = décédé. *(BUG-005)*
@@ -331,6 +339,10 @@ ramène la racine au centre du viewport (FR-002d). **Sans dépendance** (Constit
 (3 segments), **conjoints grisés** (pièces rapportées), **décédés colorés** (+ « † »), styles
 **cumulables** (ex pointillés / grisé / décédé / racine) et **légende** sur les deux pages
 (FR-003c/FR-003e). Nécessite l'ajout de **`vivant`** sur `TreeNodeLite` (cœur).
+
+**Bugfix**: 2026-06-10 — BUG-006 Arbre : lien de couple en **2 segments** (⚭ sommet) et support des
+**familles à > 2 parents** — tous les parents reliés à l'enfant, **⚭ entre chaque paire** de membres
+en union ; regroupement des enfants par **ensemble de parents** (FR-003a/FR-003c/FR-003d). UI seul.
 
 **Déterminisme & cohérence**
 - **FR-014** : Toutes ces fonctionnalités sont **en lecture seule** sur la généalogie : elles NE
