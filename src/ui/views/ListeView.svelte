@@ -2,7 +2,7 @@
   import {
     population,
     currentYear,
-    getCatalog,
+    catalog,
     selectPerson,
     selectedIds,
     toggleSelect,
@@ -14,8 +14,6 @@
   import TimeBar from '../components/TimeBar.svelte';
   import FilterBar from '../components/FilterBar.svelte';
 
-  const catalog = getCatalog();
-
   // Défaut dynamique : tant que le filtre génération n'a pas été touché, on affiche la dernière
   // génération recalculée à chaque avancée du temps (FR-011a / INV-G5).
   $: derniere = lastGeneration($population);
@@ -24,7 +22,7 @@
   $: effectiveCriteria = { ...$criteria, generations: effectiveGenerations };
   // Année courante issue de la simulation (Feature 3) ; l'âge en découle.
   $: filtered = filterPopulation($population, effectiveCriteria, { currentYear: $currentYear });
-  $: rows = filtered.map((p) => buildListRow(p, catalog, $currentYear));
+  $: rows = filtered.map((p) => buildListRow(p, $catalog, $currentYear));
 </script>
 
 <section>

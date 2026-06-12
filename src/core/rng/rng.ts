@@ -17,6 +17,11 @@ export interface Rng {
   pick<T>(items: readonly T[]): T;
   /** Tirage pondéré (poids > 0) dans une liste non vide. */
   pickWeighted<T>(items: readonly T[], weightOf: (t: T) => number): T;
+  /**
+   * Tirage pondéré **tolérant** : renvoie `null` si aucun candidat n'a un poids > 0 (au lieu de
+   * jeter). Sert au comportement « type à poids nul ⇒ pas de tirage » (FR-052b).
+   */
+  pickWeightedOrNull<T>(items: readonly T[], weightOf: (t: T) => number): T | null;
   /** Permutation déterministe (Fisher–Yates) ; renvoie une **nouvelle** copie, ne mute pas l'entrée. */
   shuffle<T>(items: readonly T[]): T[];
   /** État courant du générateur (4 mots xoshiro en décimal) — sérialisable (FR-021). */
@@ -103,6 +108,27 @@ function makeRng(s: bigint[]): Rng {
     throw new Error('pickWeighted: aucun élément de poids positif.');
   }
 
+  function pickWeightedOrNull<T>(items: readonly T[], weightOf: (t: T) => number): T | null {
+    let total = 0;
+    for (const it of items) {
+      const w = weightOf(it);
+      if (w > 0) total += w;
+    }
+    if (total <= 0) return null; // aucun candidat tirable ⇒ ne consomme PAS le RNG
+    let target = nextFloat() * total;
+    for (const it of items) {
+      const w = weightOf(it);
+      if (w <= 0) continue;
+      target -= w;
+      if (target < 0) return it;
+    }
+    // Repli numérique : dernier élément de poids > 0.
+    for (let i = items.length - 1; i >= 0; i--) {
+      if (weightOf(items[i]) > 0) return items[i];
+    }
+    return null;
+  }
+
   function shuffle<T>(items: readonly T[]): T[] {
     // Fisher–Yates : du dernier au premier, échange avec un indice tiré sans biais.
     const out = items.slice();
@@ -119,7 +145,17 @@ function makeRng(s: bigint[]): Rng {
     return s.map((x) => x.toString());
   }
 
-  return { nextU64, nextFloat, nextInt, chance, pick, pickWeighted, shuffle, getState };
+  return {
+    nextU64,
+    nextFloat,
+    nextInt,
+    chance,
+    pick,
+    pickWeighted,
+    pickWeightedOrNull,
+    shuffle,
+    getState,
+  };
 }
 
 /** Crée un générateur déterministe à partir d'une seed 64 bits. */

@@ -4,6 +4,7 @@ import { defaultCatalog } from '../../src/core/catalog/defaultCatalog.js';
 import { defaultParameters, type Parameters } from '../../src/core/params/parameters.js';
 import { generateInitialPopulation } from '../../src/core/genesis/genesis.js';
 import { computeAge, computeGeneration } from '../../src/core/genesis/derived.js';
+import { resolveResilience, setResiliencePatch } from '../../src/core/params/resolveResilience.js';
 
 const SEED = 0xc0ffee1234567890n;
 
@@ -93,6 +94,24 @@ describe('Genèse — invariants (data-model INV-1..7)', () => {
       const proportion = (withPower / pop.length) * 100;
       expect(Math.abs(proportion - pct)).toBeLessThan(5);
     }
+  });
+
+  it('§9.2 : résilience initiale EFFECTIVE appliquée aux traits du pouvoir de genèse', () => {
+    let p = params({ powerChancePct: 100, batchSize: 100, initialResilience: 50 });
+    p = setResiliencePatch(p, { level: 'type', type: 'Element' }, { initial: 20 });
+    const pop = generate(p);
+    let sawElement = false;
+    for (const x of pop) {
+      for (const t of x.adn.traits) {
+        const eff = resolveResilience(p, t.traitId);
+        expect(t.resilience).toBe(Math.min(eff.initial, eff.max));
+        if (t.traitId.startsWith('Element:')) {
+          sawElement = true;
+          expect(t.resilience).toBe(20);
+        }
+      }
+    }
+    expect(sawElement).toBe(true); // garantit que le cas Élément a bien été couvert
   });
 
   it('ids séquentiels déterministes et noms non vides', () => {

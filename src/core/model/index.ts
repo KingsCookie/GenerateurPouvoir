@@ -1,4 +1,4 @@
-export { TRAIT_TYPES } from './traitType.js';
+export { TRAIT_TYPES, traitTypeOf } from './traitType.js';
 export type { TraitType } from './traitType.js';
 export type { Trait, Catalog } from './trait.js';
 export type { ResilientTrait, ADN } from './adn.js';

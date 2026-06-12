@@ -2,6 +2,8 @@ import type { Rng } from '../rng/rng.js';
 import type { Catalog, Trait } from '../model/trait.js';
 import type { TraitType } from '../model/traitType.js';
 import type { Parameters } from '../params/parameters.js';
+import { resolveResilience } from '../params/resolveResilience.js';
+import { resolveWeight } from '../params/resolveWeight.js';
 import type { Pouvoir } from '../model/pouvoir.js';
 import type { ADN, ResilientTrait } from '../model/adn.js';
 import { powerLabelFromSublist, type SublistGroups } from './powerLabelTree.js';
@@ -189,7 +191,12 @@ function transformSublist(
 
     const pool = catalog.byType[type];
     if (pool.length === 0) return null; // type vide : génération impossible
-    const generated = rng.pickWeighted(pool, (t) => t.weight);
+    // Poids effectif (surcharge ?? poids du type) ; type à 0 ⇒ pas de génération ⇒ pas de pouvoir
+    // pour cette sous-liste (FR-052b). Tolérant : jamais d'exception.
+    const generated = rng.pickWeightedOrNull(pool, (t) =>
+      resolveWeight(t.id, t.weight, params.traitTypeWeights),
+    );
+    if (generated === null) return null;
 
     inscribeGenerated(generated.id, working, params);
     if (!traitIds.includes(generated.id)) traitIds.push(generated.id);
@@ -207,20 +214,22 @@ function transformSublist(
 }
 
 // Inscrit un trait généré K dans l'ADN : actif ; s'il existait, on le réactive + bonus (clampé).
+// Résilience initiale/plafond **effectifs** par trait (global → type → trait, §9.2).
 function inscribeGenerated(
   traitId: string,
   working: Map<string, ResilientTrait>,
   params: Parameters,
 ): void {
+  const eff = resolveResilience(params, traitId);
   const existing = working.get(traitId);
   if (existing) {
     existing.active = true;
-    existing.resilience = Math.min(existing.resilience + params.bonusPoints, params.resilienceMax);
+    existing.resilience = Math.min(existing.resilience + params.bonusPoints, eff.max);
   } else {
     working.set(traitId, {
       traitId,
       active: true,
-      resilience: Math.min(params.initialResilience, params.resilienceMax),
+      resilience: Math.min(eff.initial, eff.max),
     });
   }
 }

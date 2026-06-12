@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { createRng } from '../../src/core/rng/rng.js';
 import { inheritADN } from '../../src/core/heredity/inherit.js';
 import { defaultParameters, type Parameters } from '../../src/core/params/parameters.js';
+import { setResiliencePatch } from '../../src/core/params/resolveResilience.js';
 import type { Personne } from '../../src/core/model/personne.js';
 import type { ResilientTrait } from '../../src/core/model/adn.js';
 import { fakeRng } from './_fakeRng.js';
@@ -103,6 +104,37 @@ describe('Hérédité §4.2 — Cas 2 (plusieurs porteurs)', () => {
 
   it('plusieurs tirages actifs ⇒ actif, résilience = max + bonus × nbActifs', () => {
     expect(two([true, true])).toEqual({ traitId: 't1', active: true, resilience: 80 });
+  });
+});
+
+describe('Hérédité §9.2 — surcharge de résilience (type / trait)', () => {
+  const ID = 'Element:feu-0';
+  function withTrait(res: number) {
+    return parent([{ traitId: ID, active: true, resilience: res }]);
+  }
+  function effOnly(traits: ResilientTrait[]) {
+    return traits.find((t) => t.traitId === ID);
+  }
+
+  it('plafond effectif par TYPE applique un max plus bas', () => {
+    const p = setResiliencePatch(P, { level: 'type', type: 'Element' }, { max: 80 });
+    // 94 + bonus 5 = 99, plafonné à 80 (et non 95 global).
+    const adn = inheritADN([withTrait(94)], p, fakeRng({ chances: [true] }));
+    expect(effOnly(adn.traits)?.resilience).toBe(80);
+  });
+
+  it('plafond effectif par TRAIT prime sur le type', () => {
+    let p = setResiliencePatch(P, { level: 'type', type: 'Element' }, { max: 80 });
+    p = setResiliencePatch(p, { level: 'trait', traitId: ID }, { max: 70 });
+    const adn = inheritADN([withTrait(94)], p, fakeRng({ chances: [true] }));
+    expect(effOnly(adn.traits)?.resilience).toBe(70);
+  });
+
+  it('seuil de disparition effectif abaissé conserve un trait sous le seuil global', () => {
+    // 3 − malus 5 = −2 → clamp 0. Seuil global 2 ⇒ retiré ; seuil type 0 ⇒ conservé (res 0).
+    const p = setResiliencePatch(P, { level: 'type', type: 'Element' }, { disappearThreshold: 0 });
+    const adn = inheritADN([withTrait(3)], p, fakeRng({ chances: [false] }));
+    expect(effOnly(adn.traits)).toEqual({ traitId: ID, active: false, resilience: 0 });
   });
 });
 

@@ -6,7 +6,10 @@ export interface Trait {
   id: string;
   type: TraitType;
   label: string;
-  weight: number; // poids de tirage (> 0)
+  // Poids de tirage — **surcharge optionnelle** (Feature 5) : `null` (ou absent) ⇒ le trait
+  // hérite du poids de son type (`traitTypeWeights[type]`). Poids effectif résolu par
+  // `resolveWeight(id, weight, traitTypeWeights)` = `weight ?? traitTypeWeights[type]`.
+  weight: number | null;
 }
 
 export interface Catalog {

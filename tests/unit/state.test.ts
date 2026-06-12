@@ -92,6 +92,55 @@ describe('Sérialisation de l’état (US3)', () => {
     expect(res.ok).toBe(false);
   });
 
+  it('M1 : import d’un fichier antérieur à la Feature 5 défaute resilienceOverrides', () => {
+    const parameters = { ...defaultParameters(), seed: '7', batchSize: 3 };
+    // Simule un fichier antérieur : pas de resilienceOverrides dans parameters.
+    delete (parameters as Partial<typeof parameters>).resilienceOverrides;
+    const catalog = defaultCatalog();
+    const population = generateInitialPopulation(
+      { ...defaultParameters(), seed: '7', batchSize: 3 },
+      catalog,
+      createRng(7n),
+    );
+    const json = JSON.stringify({
+      formatVersion: 2,
+      kind: 'full',
+      parameters,
+      catalog,
+      population,
+    });
+    const res = deserializeState(json);
+    expect(res.ok).toBe(true);
+    if (res.ok) {
+      expect(res.value.parameters.resilienceOverrides).toEqual({ byType: {}, byTrait: {} });
+    }
+  });
+
+  it('M1 : tolère un Trait.weight absent dans le catalogue importé (⇒ null = hérite du type)', () => {
+    const parameters = { ...defaultParameters(), seed: '7', batchSize: 0 };
+    // Catalogue dont un trait n’a pas de champ weight (fichier antérieur).
+    const catalog = {
+      byType: {
+        Remplacement: [],
+        PartieCorps: [],
+        Etat: [],
+        Element: [{ id: 'Element:feu-0', type: 'Element', label: 'feu' }],
+        Ajout: [],
+        Action: [],
+      },
+    };
+    const json = JSON.stringify({
+      formatVersion: 2,
+      kind: 'full',
+      parameters,
+      catalog,
+      population: [],
+    });
+    const res = deserializeState(json);
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.value.catalog.byType.Element[0].weight).toBeNull();
+  });
+
   it('INV-11 : importe un fichier v1 (sans currentYear/couples/rngState) avec défauts sûrs', () => {
     const parameters = { ...defaultParameters(), seed: '7', batchSize: 5, birthYear: 1990 };
     const catalog = defaultCatalog();

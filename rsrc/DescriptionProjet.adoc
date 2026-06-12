@@ -715,8 +715,10 @@ Trois modes au choix :
 === 9.1. Paramètres de génération de pouvoir
 
 * **Seed** (cf. §2).
-* Poids de chaque **type de trait** dans les tirages.
-* Poids de chaque **trait individuel** dans les tirages.
+* **Poids par type de trait** : le poids d'un type est le **poids par défaut de tous les traits de ce type** dans les tirages.
+* **Poids par trait individuel** : un trait peut **surcharger** le poids hérité de son type. Le **poids effectif** d'un trait = sa surcharge si elle existe, sinon le poids de son type (priorité **trait → type**).
+* **Bouton « Propager »** (par type) : réapplique le poids du type à **tous ses traits**, ce qui **réinitialise** les traits dont le poids avait été modifié.
+* **Type à poids nul** : si le poids effectif de tous les traits d'un type est nul (p. ex. poids de type 0), ces traits ne sont **jamais tirés**. Un pouvoir qui exige ce type (p. ex. l'Élément d'un gabarit **AE**, §6.1) **n'est pas produit** (`pouvoir = null`, comme un échec de génération `K`, §6.4.2) ; les **traits déjà tirés** pour ce pouvoir **restent actifs** dans l'ADN.
 * Résilience initiale attribuée aux traits d'un pouvoir nouvellement tiré (mutation forte).
 * Constante de **duplication `D`** : pilote la duplication des traits secondaires (§6.4.1).
 * Constante de **génération `K`** : pilote la génération de nouveaux traits `K…` (§6.4.2). **Distincte de `D`.**
@@ -725,9 +727,10 @@ Trois modes au choix :
 
 * Résilience initiale : globale, par type de trait, par trait.
 * Résilience maximale : globale, par type de trait, par trait.
+* **Seuil de disparition** (par défaut 2 %) : global, par type de trait, par trait.
+* Pour ces trois paramètres (résilience initiale, maximale, seuil de disparition) — comme pour les **poids** (§9.1) — la **valeur d'un type** est le **défaut** de ses traits, **surchargeable par trait** (priorité **trait → type → global**) ; un bouton **« Propager »** (par type) réapplique la valeur du type à tous ses traits (réinitialise les surcharges).
 * Facteur de **bonus** (trait tiré actif).
 * Facteur de **malus** (trait tiré inactif).
-* **Seuil de disparition** (par défaut 2 %).
 * Taux de **mutation forte** par naissance.
 * Taux de **naissance sans pouvoir** par naissance.
 * Taux de **mutation faible — gain** d'un trait par naissance.

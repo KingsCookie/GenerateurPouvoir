@@ -1,5 +1,6 @@
 import type { Rng } from '../rng/rng.js';
 import type { Parameters } from '../params/parameters.js';
+import { resolveResilience } from '../params/resolveResilience.js';
 import type { Personne } from '../model/personne.js';
 import type { ADN, ResilientTrait } from '../model/adn.js';
 
@@ -66,12 +67,16 @@ export function inheritADN(parents: Personne[], params: Parameters, rng: Rng): A
 
     resilience += bonusFactor > 0 ? params.bonusPoints * bonusFactor : -params.malusPoints;
 
+    // Plafond/seuil **effectifs** par trait (global → type → trait, §9.2). Bonus/malus restent
+    // globaux (hors périmètre clarification).
+    const eff = resolveResilience(params, traitId);
+
     // Plafond (le bonus ne s'applique plus au-dessus) puis plancher à 0.
-    resilience = Math.min(resilience, params.resilienceMax);
+    resilience = Math.min(resilience, eff.max);
     resilience = Math.max(resilience, 0);
 
     // Sous le seuil de disparition, le trait quitte l'ADN (seule disparition définitive, §4.1).
-    if (resilience < params.disappearThreshold) continue;
+    if (resilience < eff.disappearThreshold) continue;
 
     traits.push({ traitId, active, resilience });
   }

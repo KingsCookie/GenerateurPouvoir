@@ -1,8 +1,9 @@
 import type { Catalog } from '../model/trait.js';
+import { TRAIT_TYPES } from '../model/traitType.js';
 import type { Personne } from '../model/personne.js';
 import type { Couple } from '../model/couple.js';
 import type { Espece } from '../model/espece.js';
-import type { Parameters } from '../params/parameters.js';
+import type { Parameters, ResilienceOverrides } from '../params/parameters.js';
 import { defaultParameters } from '../params/parameters.js';
 import { defaultCatalog, defaultEspeces } from '../catalog/defaultCatalog.js';
 import { createRng } from '../rng/rng.js';
@@ -108,6 +109,25 @@ export function deserializeState(json: string): Result<AppState> {
   }
   if (!Array.isArray(value.rngState) || value.rngState.length !== 4) {
     value.rngState = createRng(BigInt(seed)).getState();
+  }
+
+  // Rétro-compatibilité Feature 5 (M1) : un fichier antérieur ne contient pas
+  // `resilienceOverrides` ⇒ on le défaute pour qu'aucune lecture (`resolveResilience`) ne plante.
+  const params = value.parameters as Parameters & { resilienceOverrides?: ResilienceOverrides };
+  if (!isObject(params.resilienceOverrides)) {
+    params.resilienceOverrides = { byType: {}, byTrait: {} };
+  } else {
+    if (!isObject(params.resilienceOverrides.byType)) params.resilienceOverrides.byType = {};
+    if (!isObject(params.resilienceOverrides.byTrait)) params.resilienceOverrides.byTrait = {};
+  }
+
+  // Tolère un `Trait.weight` absent/undefined (⇒ `null` = hérite du poids du type, §9.1).
+  const catalog = value.catalog as Catalog;
+  for (const type of TRAIT_TYPES) {
+    const list = catalog.byType?.[type];
+    if (Array.isArray(list)) {
+      for (const t of list) if (t.weight === undefined) t.weight = null;
+    }
   }
 
   return { ok: true, value };
