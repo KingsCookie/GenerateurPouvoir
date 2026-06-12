@@ -103,20 +103,48 @@ Points où la résilience globale est lue aujourd'hui (à router vers la valeur 
 - **Rationale** : SC-007 (aucune saisie invalide silencieuse) ; testable à seed fixe ; l'UI affiche/
   corrige.
 
-## D8 — Pondérations de tirage
+## D8 — Pondérations de tirage (modèle héritage type → trait) — *révisé (clarif. 2026-06-12)*
 
 - **Constat** : `templateWeights` est **utilisé** (`strongMutation`) ; `Trait.weight` est **utilisé**
   (tirages dans une liste de type) ; **`traitTypeWeights` est défini mais inexploité** dans le moteur.
-- **Décision** :
-  - Exposer à l'édition `templateWeights`, `traitTypeWeights` et `Trait.weight` (poids individuel,
-    via l'éditeur de catalogue).
-  - **Câbler `traitTypeWeights`** : au point de tirage d'un trait, le **poids effectif** =
-    `traitTypeWeights[type] × Trait.weight` (FR-052). Dans les tirages **mono-type** actuels (gabarit
-    fixant le type), le facteur de type est constant et n'altère pas les probabilités relatives — il
-    devient **déterminant uniquement** si un tirage **multi-types** est introduit. On l'applique
-    néanmoins pour que le paramètre soit réellement actif (Principe VII) et cohérent.
-- **Rationale** : « tout est paramétrable » sans inventer de nouvelle sémantique de tirage ;
-  documente honnêtement la portée limitée du poids de type dans le moteur actuel.
+- **Décision (sémantique fixée par l'auteur)** : le **poids d'un type** est le **poids par défaut de
+  tous ses traits**. Le **poids effectif** d'un trait = **surcharge du trait** sinon **poids du type**
+  (`trait ?? type`, **2 niveaux** — pas de scalaire global pour le poids). Ce n'est **pas** une
+  multiplication `type × individuel` (rejetée : inerte en mono-type, cf. ancienne note).
+  - Représentation : le **poids d'un trait** devient une **surcharge optionnelle** (présente
+    seulement si modifiée) ; sinon il **hérite** du poids du type.
+  - **Bouton « Propager »** (par type) : **efface les surcharges** des traits du type → réhéritage du
+    poids du type.
+  - Exposer à l'édition : `templateWeights` (gabarit AE/PE/PA/PR), `traitTypeWeights` (défaut par
+    type) et la **surcharge** de poids par trait.
+- **Effet « poids de type 0 »** : tous les traits (non surchargés) du type ont un poids effectif nul ⇒
+  **jamais tirés** (US3 AS#1 devient **vrai**). Le cas « liste de candidats toute à 0 » est géré par
+  D11 (tirage tolérant), pas par un plantage.
+- **Rationale** : sémantique intuitive et réellement active (Principe VII) ; **même modèle que la
+  résilience** (type-défaut → surcharge → propagation) ⇒ cohérence et code partageable ; ne touche
+  pas à l'algorithme figé (§6.1/§6.4, Principe IX), seul le **poids des candidats** change.
+
+## D11 — Tirage tolérant aux poids nuls (`pickWeighted`) — *ajouté (clarif. 2026-06-12)*
+
+- **Constat** : `rng.pickWeighted` **jette** `« poids total nul »` si tous les poids sont ≤ 0
+  (`src/core/rng/rng.ts`). Avec D8, un poids de type 0 rend une liste entière non tirable.
+- **Décision** : introduire une variante **tolérante** (ex. `pickWeightedOrNull(items, weightOf): T |
+  null`) **sans modifier** le comportement de `pickWeighted` existant (déterminisme des features
+  livrées préservé). Les appelants gèrent le `null` :
+  - **Mutation forte** (`strongMutation`) : si un trait requis par le gabarit ne peut être tiré
+    (liste à 0) ⇒ **`pouvoir = null`** ; les traits déjà tirés du gabarit (ex. l'Action d'un AE) sont
+    **ajoutés actifs** à l'ADN (FR-052b).
+  - **Génération `K`** (`traitsToPowers`) : déjà un cas « K échoue ⇒ pouvoir null » ; un pool à 0 suit
+    la même issue.
+  - **Mutation faible — gain** (`reproduce`) : si aucun trait tirable (tout à 0) ⇒ **pas de gain**
+    (no-op), sans erreur.
+- **Rationale** : comportement **défini et déterministe** au lieu d'une exception (FR-052b, edge
+  case) ; calque la règle d'échec `K` déjà documentée (§6.4.2) ; n'altère pas le RNG en cas d'échec
+  au-delà du tirage déjà consommé.
+- **Note Principe IX** : le comportement « type à 0 ⇒ pouvoir null + traits déjà tirés actifs » est
+  désormais **documenté au §9.1 de `rsrc/DescriptionProjet.md`** (modifié sur **autorisation
+  explicite** de l'auteur, 2026-06-12). Il est cohérent avec la règle d'échec `K` (§6.4.2) et **sans
+  contradiction** avec l'algorithme figé (§6.1).
 
 ## D9 — % de reproduction par couple
 

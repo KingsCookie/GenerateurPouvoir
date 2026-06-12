@@ -63,12 +63,15 @@ structure indexée par `traitId` / `type`.
 | **V. Tests déterministes** | ✅ Tests cœur à seed fixe : résolution (trait→type→global), hérédité utilisant la valeur effective, validation, mutations de catalogue. |
 | **VI. Persistance explicite** | ✅ Pas d'auto-save ; catalogues/espèces/paramètres déjà dans `AppState` (export en Feature 6). Les surcharges s'ajoutent à `Parameters` (donc exportées avec la config). |
 | **VII. Tout est paramétrable** | ✅ **Cœur de la feature** : on retire les derniers réglages codés en dur de l'UI. |
-| **VIII. Simplicité / YAGNI** | ✅ Réutilise les structures existantes (`Trait.weight`, `Espece`, `Couple.reproPct`). Seule addition : surcharge résilience (justifiée par le §9 + clarification). Pas de nouvelle dépendance. |
-| **IX. Spec source de vérité** | ✅ `rsrc/DescriptionProjet.md` non modifié ; périmètre tracé sur §9/§3/§6.6. |
+| **VIII. Simplicité / YAGNI** | ✅ Réutilise les structures existantes (`Trait.weight`, `Espece`, `Couple.reproPct`). Additions : surcharge **résilience** + modèle **poids type→trait** (même mécanisme de résolution/propagation, mutualisé) + variante `pickWeightedOrNull`. Justifiées par §9 + clarifications. Pas de nouvelle dépendance. |
+| **IX. Spec source de vérité** | ✅ `rsrc/DescriptionProjet.md` (.md + .adoc + PDF) **mis à jour sur autorisation explicite** (2026-06-12, §9.1/§9.2 : héritage poids/résilience type→trait, « Propager », type à 0 ⇒ pouvoir null) ; périmètre tracé sur §9/§3/§6.6. |
 | **X. Anonymat** | ✅ Commits `KingsCookie`, email vide ; aucun nom/email. |
 
-**Verdict** : ✅ PASS. Une seule extension de cœur (surcharge résilience), conforme aux principes et
-explicitement assumée (clarification 2026-06-12). Voir Complexity Tracking.
+**Verdict** : ✅ PASS. Extensions de cœur **pures et déterministes** (surcharge résilience + modèle
+poids type→trait + tirage tolérant `pickWeightedOrNull`), conformes aux principes et explicitement
+assumées (clarifications 2026-06-12). Le comportement « type à 0 ⇒ pouvoir null + traits déjà tirés
+actifs » est **documenté au §9.1 de `DescriptionProjet.md`** (modifié sur **autorisation explicite**
+2026-06-12, Principe IX), cohérent avec §6.4.2. Voir Complexity Tracking.
 
 ## Décisions techniques (détail en research.md)
 
@@ -80,7 +83,8 @@ explicitement assumée (clarification 2026-06-12). Voir Complexity Tracking.
 | **Catalogue éditable** | `defaultCatalog()` reste pur ; l'UI détient un **store** `catalog` (writable). Fonctions **pures** de mutation dans le cœur : `addTrait`, `renameTrait`, `removeTrait` (renvoient un nouveau `Catalog`). Suppression = **futur seulement** (aucune mutation des ADN existants). |
 | **Espèces éditables** | `especes` devient un **store** ; mutations pures `addEspece`/`renameEspece`/`removeEspece`/`addGenre`/`renameGenre`/`removeGenre` (garde « tout » non supprimable) ; validation des params de reproduction. |
 | **Courbe gaussienne** | Composant SVG sur-mesure lisant la fonction de densité déjà utilisée par le tick (réutiliser `gaussian`/repro) ; recalcul réactif. **Aucune dépendance**. |
-| **Poids** | `traitTypeWeights` (aujourd'hui **défini mais inexploité**) appliqué au point de tirage en **facteur** combiné au poids individuel (`type × individuel`) ; `templateWeights` (déjà utilisé) et `Trait.weight` exposés à l'édition. |
+| **Poids (héritage type → trait)** | `traitTypeWeights[type]` = **poids par défaut des traits du type** ; le **poids d'un trait** est une **surcharge optionnelle** (`trait ?? type`, **2 niveaux**, **pas** une multiplication). Bouton **« Propager »** (par type) = efface les surcharges. `templateWeights` (gabarit) exposé. Même modèle que la résilience ⇒ logique de résolution/propagation **partagée**. |
+| **Tirage tolérant aux poids nuls** | `pickWeighted` jette si total ≤ 0. Ajouter `pickWeightedOrNull` (sans toucher l'existant) ; un type à poids effectif nul ⇒ le trait n'est **pas tiré** ⇒ **`pouvoir = null`** (comme un échec `K`) avec les **traits déjà tirés actifs** (FR-052b). Appelants : `strongMutation`, `traitsToPowers` (K), gain de mutation faible. |
 | **% par couple** | `Couple.reproPct` + `setCoupleReproPct` **existent déjà** (Feature 3) ; il reste à **brancher l'UI** sur la fiche. |
 
 ## Project Structure
@@ -104,20 +108,22 @@ specs/005-parametrage-catalogues/
 src/core/
 ├── params/
 │   ├── parameters.ts          # + resilienceOverrides ; helpers statA (existant)
-│   └── resolveResilience.ts   # NOUVEAU — résolution pure trait→type→global (+ type via préfixe id)
+│   ├── resolveResilience.ts   # NOUVEAU — résolution pure trait→type→global (+ type via préfixe id)
+│   └── resolveWeight.ts       # NOUVEAU — poids effectif d'un trait = surcharge ?? poids du type
 ├── catalog/
 │   ├── defaultCatalog.ts      # inchangé (données par défaut)
-│   └── editCatalog.ts         # NOUVEAU — addTrait/renameTrait/removeTrait (purs)
+│   └── editCatalog.ts         # NOUVEAU — addTrait/renameTrait/removeTrait/setTraitWeight + « Propager » (purs)
 ├── model/
 │   ├── espece.ts              # inchangé (structure déjà complète)
-│   └── … (trait, couple, adn : inchangés)
+│   └── … (trait : poids = surcharge optionnelle ; couple, adn : inchangés)
 ├── species/
 │   └── editEspeces.ts         # NOUVEAU — add/rename/remove espèce & genres + validation (purs)
+├── rng/rng.ts                 # MODIFIÉ — ajout pickWeightedOrNull (pickWeighted inchangé)
 ├── heredity/inherit.ts        # MODIFIÉ — utilise la résilience effective résolue
-├── birth/reproduce.ts         # MODIFIÉ — initialResilience/max résolus (mutation faible + powers)
+├── birth/reproduce.ts         # MODIFIÉ — résilience/poids effectifs ; gain de mutation faible tolérant (null)
 ├── genesis/genesis.ts         # MODIFIÉ — initialResilience résolue
-├── powers/traitsToPowers.ts   # MODIFIÉ — initialResilience/max résolus ; poids type×individuel
-└── powers/strongMutation.ts   # MODIFIÉ (option) — poids type×individuel
+├── powers/traitsToPowers.ts   # MODIFIÉ — résilience/poids effectifs ; génération K tolérante (null)
+└── powers/strongMutation.ts   # MODIFIÉ — poids effectif (type→trait) ; type à 0 ⇒ pouvoir null, traits tirés actifs
 
 src/ui/
 ├── stores/
@@ -127,15 +133,17 @@ src/ui/
 │   └── ParametresView.svelte  # MODIFIÉ — sections Espèces, Catalogues, Pondérations, Résilience 3 niveaux
 ├── components/
 │   ├── GaussianCurve.svelte    # NOUVEAU — courbe SVG
-│   ├── TraitCatalogEditor.svelte   # NOUVEAU
+│   ├── TraitCatalogEditor.svelte   # NOUVEAU — poids type + surcharge trait + « Propager »
 │   ├── SpeciesEditor.svelte        # NOUVEAU
-│   └── ResilienceOverrides.svelte  # NOUVEAU (global/type/trait)
+│   └── ResilienceOverrides.svelte  # NOUVEAU (global/type/trait + « Propager »)
 └── views/FicheView.svelte     # MODIFIÉ — contrôle du % de reproduction du couple
 
 tests/unit/
 ├── resolve-resilience.test.ts # NOUVEAU
+├── resolve-weight.test.ts     # NOUVEAU — poids effectif (surcharge ?? type) + « Propager »
 ├── edit-catalog.test.ts       # NOUVEAU
 ├── edit-especes.test.ts       # NOUVEAU
+├── strong-mutation.test.ts    # ÉTENDU — type à poids 0 ⇒ pouvoir null, traits tirés actifs
 ├── heredity.test.ts           # ÉTENDU — surcharge par type/trait
 └── genesis.test.ts            # ÉTENDU — initialResilience par trait
 ```
@@ -149,3 +157,5 @@ fait que détenir les stores réactifs et le rendu. Réutilisation maximale de l
 | Violation / Ajout | Pourquoi nécessaire | Alternative plus simple rejetée car |
 |-------------------|---------------------|--------------------------------------|
 | **Extension du cœur** (surcharge résilience + résolution) | §9.2 + clarification 2026-06-12 : résilience initiale/maximale/seuil déclinables par type/trait | « Résilience globale uniquement » rejetée par l'utilisateur ; impossible de satisfaire le §9.2 sans valeur effective par trait. Maintenu **minimal** : 1 structure + 1 fonction pure, threadée dans les points déjà existants. |
+| **Modèle poids type→trait** (poids du type = défaut, surcharge par trait, « Propager ») | §9.1 + clarification 2026-06-12 : régler le poids d'un type doit réellement biaiser ses traits | « Poids effectif = type × individuel » rejetée : **inerte** dans les tirages mono-type (le facteur de type se simplifie) ⇒ le scénario « type à 0 ⇒ plus de tirage » serait faux. Le modèle héritage/surcharge **réutilise** la même résolution que la résilience (coût marginal). |
+| **`pickWeightedOrNull`** (tirage tolérant aux poids nuls) | FR-052b : un type à poids 0 ne doit pas planter `pickWeighted` (qui jette sur total nul) | « Garder `pickWeighted` qui jette » rejetée : plantage en pleine genèse/naissance dès qu'un poids de type vaut 0. Variante additive **sans** changer `pickWeighted` (déterminisme des features livrées préservé) ; comportement calqué sur l'échec `K` (§6.4.2). |

@@ -71,14 +71,19 @@ function renameTrait(cat: Catalog, traitId: string, label: string): Catalog;
 // Retire un trait du catalogue (FUTUR SEULEMENT : ne touche aucun ADN). Renvoie un nouveau Catalog.
 function removeTrait(cat: Catalog, traitId: string): Catalog;
 
-// Édite le poids individuel d'un trait. Renvoie un nouveau Catalog.
+// Surcharge le poids d'un trait (le distingue du défaut de son type). Renvoie un nouveau Catalog.
 function setTraitWeight(cat: Catalog, traitId: string, weight: number): Catalog;
+
+// « Propager » : applique le poids du type à tous ses traits en EFFAÇANT leurs surcharges. Renvoie
+// un nouveau Catalog.
+function propagateTypeWeight(cat: Catalog, type: TraitType): Catalog;
 ```
 
 **Contrat** :
 - INV-C1 (jamais de mutation d'ADN), INV-C2 (id unique), INV-C3 (types fixes).
 - `removeTrait` d'un id absent : no-op sûr (renvoie un catalogue équivalent).
-- `weight ≥ 0` (validé).
+- Poids : surcharge `≥ 0` (validée) ; **héritage type→trait** (INV-W1) — un trait sans surcharge a
+  pour poids effectif `traitTypeWeights[type]`. `propagateTypeWeight` efface les surcharges du type.
 
 ## 4. Mutations d'espèces & genres (pures)
 
@@ -113,12 +118,27 @@ function validateResiliencePatch(p: ResiliencePatch): ValidationResult; // borne
 
 **Contrat** : aucune saisie invalide acceptée silencieusement (SC-007) ; messages en **français**.
 
-## 6. Pondérations
+## 6. Pondérations (héritage type → trait) + tirage tolérant
 
-- `templateWeights` (déjà utilisé en `strongMutation`) et `traitTypeWeights` exposés à l'édition.
-- **Câblage** `traitTypeWeights` : aux points de tirage de trait, poids effectif =
-  `traitTypeWeights[trait.type] * trait.weight` (FR-052). Inerte dans les tirages mono-type actuels
-  (facteur constant), actif pour tout tirage multi-types futur.
+```ts
+// Poids effectif d'un trait : surcharge du trait sinon poids du type (résolution trait ?? type).
+function resolveWeight(traitId: string, override: number | null, traitTypeWeights: Record<TraitType, number>): number;
+
+// Tirage pondéré TOLÉRANT : renvoie null si aucun candidat de poids > 0 (au lieu de jeter).
+function pickWeightedOrNull<T>(items: readonly T[], weightOf: (t: T) => number): T | null;
+```
+
+**Contrat** :
+- `traitTypeWeights[type]` = **poids par défaut** des traits du type ; un trait peut **surcharger**.
+  Poids effectif = `surcharge ?? traitTypeWeights[type]` (INV-W1). `templateWeights` (gabarit) édité
+  séparément.
+- **Type à poids effectif nul** : `pickWeightedOrNull` renvoie `null` ⇒ l'appelant **n'ajoute aucun
+  trait** ; le **pouvoir concerné n'est pas produit** (`pouvoir = null`) et les **traits déjà tirés
+  restent actifs** dans l'ADN (FR-052b / INV-W2). Calque la règle d'échec `K` (§6.4.2).
+- `pickWeighted` **existant inchangé** (jette toujours sur total nul) ; seuls les nouveaux points
+  d'appel sensibles aux poids-0 utilisent `pickWeightedOrNull`.
+- **Principe IX** : ce comportement (poids de type 0) est **documenté au §9.1 de
+  `DescriptionProjet.md`** (modifié sur **autorisation explicite** 2026-06-12), cohérent avec §6.4.2.
 
 ## 7. Invariants transverses
 

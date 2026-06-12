@@ -45,6 +45,14 @@ bout, sans backend et sans nouvelle dépendance.
   de champ explicite) ? → A : **Au seuil de disparition (§9.2)**. Les **3** paramètres — résilience
   **initiale**, **maximale**, **seuil de disparition** — sont déclinables **global → type → trait**
   (revient sur la décision antérieure « poids seuls » ; modification du cœur assumée).
+- Q : Quelle est la sémantique exacte du **poids d'un type de trait** et que se passe-t-il à 0 ?
+  → A : Le poids du type est le **poids par défaut de tous ses traits** ; un trait peut le
+  **surcharger** ; un bouton **« Propager »** (par type) **réinitialise** les traits à la valeur du
+  type. **Idem pour résilience initiale / maximale / seuil**. Si un type a un **poids effectif nul**,
+  ses traits ne sont **jamais tirés** : un pouvoir qui en dépend (ex. l'Élément d'un AE) **n'est pas
+  produit** (`pouvoir = null`), mais les traits **déjà tirés restent actifs** (pas de plantage). Le
+  poids effectif d'un trait = `surcharge ?? poids du type` (poids = 2 niveaux ; résilience = 3
+  niveaux avec le global).
 
 ## User Scenarios & Testing *(mandatory)*
 
@@ -118,36 +126,51 @@ de reproduction de ce couple.
 
 ### User Story 3 - Décliner finement poids ET résilience (global / type / trait) (Priority: P3)
 
-En tant qu'utilisateur, je veux **décliner sur 3 niveaux** (global → type de trait → trait
-individuel) à la fois les **poids de tirage** (+ le **gabarit de mutation forte** AE/PE/PA/PR) **et**
-la **résilience** (initiale, maximale, seuil de disparition), afin d'orienter finement la nature des
-pouvoirs générés et le comportement héréditaire de chaque trait/type.
+En tant qu'utilisateur, je veux que **chaque type de trait porte une valeur** (poids, résilience
+initiale, résilience maximale, seuil de disparition) qui sert de **défaut** à **tous ses traits**,
+qu'un **trait individuel** puisse **surcharger** cette valeur, et qu'un bouton **« Propager »** par
+type **réinitialise** les traits à la valeur du type — afin d'orienter finement la nature des pouvoirs
+générés et le comportement héréditaire. (Pour le **gabarit de mutation forte** AE/PE/PA/PR, j'édite
+aussi ses poids.)
 
-**Why this priority** : raffinement avancé. Les poids et la résilience globale existent déjà ; il
-s'agit (a) de rendre les poids éditables et (b) d'ajouter la **surcharge par type/trait** de la
-résilience — ce qui **étend le cœur** (résolution de surcharge dans le moteur d'hérédité). Indépendant
-des US1/US2 (mais cohérent avec l'édition de catalogue).
+**Modèle de résolution** : la valeur effective d'un trait = **surcharge du trait** sinon **valeur du
+type** sinon **valeur globale** (cette dernière n'existe que pour la **résilience** ; les **poids**
+n'ont que 2 niveaux : type → trait). Le bouton **« Propager »** (par type, par champ) **efface les
+surcharges** des traits du type concerné, qui réhéritent alors de la valeur du type.
 
-**Independent Test** : régler le poids d'un type à 0 et vérifier qu'aucun trait de ce type n'est tiré ;
-augmenter le poids d'un trait individuel et constater sa sur-représentation (seed fixe) ; définir une
-résilience initiale par trait différente de celle de son type et du global, puis vérifier qu'une
-naissance utilise bien la **valeur effective** résolue (trait → type → global).
+**Why this priority** : raffinement avancé. La résilience globale et les poids existent déjà ; il
+s'agit (a) de faire du **poids de type** le **défaut** des traits du type (héritage + surcharge +
+propagation) et (b) d'ajouter la **surcharge par type/trait** de la résilience — ce qui **étend le
+cœur** (résolution de surcharge + tirage tolérant). Indépendant des US1/US2.
+
+**Independent Test** : mettre le poids du type « Éléments » à 0 et vérifier qu'**aucun Élément** n'est
+tiré (et qu'un AE tiré donne **aucun pouvoir** mais laisse l'Action active) ; surcharger le poids
+d'un trait et constater sa sur-représentation (seed fixe) ; « Propager » et vérifier que les
+surcharges du type sont effacées ; définir une résilience initiale par trait et vérifier qu'une
+naissance utilise la **valeur effective** (trait → type → global).
 
 **Acceptance Scenarios** :
 
-1. **Given** les poids par type, **When** je mets le poids du type « Éléments » à 0, **Then** plus
-   aucun trait « Élément » n'est tiré dans les générations futures.
-2. **Given** les poids du gabarit de mutation forte, **When** j'augmente le poids de « PE »,
+1. **Given** le poids du type « Éléments », **When** je le règle à 0, **Then** **aucun trait
+   « Élément »** (non surchargé) n'est tiré dans les générations futures (le poids du type est le
+   poids par défaut de ses traits).
+2. **Given** un gabarit **AE** tiré alors que le type « Éléments » a un poids effectif nul partout,
+   **When** la naissance construit le pouvoir, **Then** **aucun pouvoir** n'est produit (l'Élément ne
+   peut être tiré) **mais** le trait **Action déjà tiré reste actif** dans l'ADN (pas de plantage).
+3. **Given** les poids du gabarit de mutation forte, **When** j'augmente le poids de « PE »,
    **Then** les pouvoirs de mutation forte produisent plus souvent un gabarit Partie+État.
-3. **Given** le poids d'un trait individuel, **When** je le double, **Then** ce trait est tiré plus
+4. **Given** un trait dont je **surcharge** le poids, **When** je le double, **Then** il est tiré plus
    fréquemment que ses pairs de même type (vérifiable à seed fixe).
-4. **Given** une résilience initiale globale, une surcharge par type et une surcharge par trait,
-   **When** une naissance traite un trait surchargé, **Then** la **valeur par trait** est utilisée
-   (priorité trait → type → global).
-5. **Given** un trait sans surcharge propre mais dont le type en a une, **When** une naissance le
-   traite, **Then** la **valeur du type** s'applique (et non la globale).
-6. **Given** une surcharge par trait, **When** je la supprime, **Then** le trait **réhérite** de la
-   valeur de son type (ou de la globale si le type n'en a pas).
+5. **Given** un type avec une valeur (poids ou résilience) et des traits surchargés, **When** je
+   clique **« Propager »**, **Then** les surcharges de ces traits sont **effacées** et ils réhéritent
+   de la valeur du type.
+6. **Given** une résilience initiale globale, une valeur de type et une surcharge de trait, **When**
+   une naissance traite un trait surchargé, **Then** la **valeur du trait** est utilisée (priorité
+   trait → type → global).
+7. **Given** un trait sans surcharge mais dont le type a une valeur, **When** une naissance le traite,
+   **Then** la **valeur du type** s'applique (et non la globale).
+8. **Given** une surcharge par trait, **When** je la supprime (ou « Propager »), **Then** le trait
+   **réhérite** de la valeur de son type (ou de la globale si le type n'en a pas).
 
 ---
 
@@ -160,8 +183,11 @@ naissance utilise bien la **valeur effective** résolue (trait → type → glob
 - **Genre « tout »** : non supprimable, toujours présent par espèce.
 - **Suppression d'une espèce utilisée** : autorisée ; les individus de cette espèce restent valides
   (l'espèce reste référencée pour eux) mais n'est plus proposée aux nouvelles créations.
-- **Poids tous nuls dans un type / un gabarit** : comportement prévisible (aucun tirage possible dans
-  ce sous-ensemble) sans plantage ni boucle infinie.
+- **Poids effectif nul dans un type** (poids de type 0, ou tous les traits du type surchargés à 0) :
+  le tirage de ce type **ne produit aucun trait** ; tout **pouvoir** qui en dépend **n'est pas
+  produit** (`pouvoir = null`) et les **traits déjà tirés** restent **actifs** dans l'ADN — **jamais
+  de plantage** (FR-052b). Ex. : un gabarit **AE** avec Élément à 0 ⇒ pas de pouvoir, l'Action
+  tirée reste active.
 - **Saisies hors bornes** (pourcentages > 100, âges négatifs, M > N, pente ≤ 0, D ≤ 0) : refusées ou
   ramenées dans les bornes valides avec indication à l'utilisateur.
 - **Édition après genèse** : modifier les paramètres génétiques/poids/catalogues **n'altère pas** les
@@ -175,6 +201,9 @@ naissance utilise bien la **valeur effective** résolue (trait → type → glob
   revient à réhériter du niveau supérieur (jamais d'état « indéfini »).
 - **Surcharge incohérente** : une résilience initiale/maximale/seuil hors [0, 100] ou un seuil
   supérieur au plafond est refusé ou corrigé, à tous les niveaux (global/type/trait).
+- **Import d'un fichier antérieur** (sans `resilienceOverrides`, ou traits sans surcharge de poids) :
+  l'import DOIT **réussir** en **défautant** les surcharges absentes (résolution = valeurs
+  globales/type) — aucun plantage ni état « indéfini ».
 
 ## Requirements *(mandatory)*
 
@@ -241,12 +270,18 @@ naissance utilise bien la **valeur effective** résolue (trait → type → glob
 
 #### Pondérations de tirage (§9.1)
 
-- **FR-050** : L'utilisateur DOIT pouvoir éditer les **poids par type de trait** utilisés dans les
-  tirages.
+- **FR-050** : L'utilisateur DOIT pouvoir éditer le **poids d'un type de trait** ; ce poids est le
+  **poids par défaut de tous les traits de ce type**. Le **poids effectif** d'un trait =
+  **surcharge du trait** sinon **poids du type** (résolution `trait ?? type`).
 - **FR-051** : L'utilisateur DOIT pouvoir éditer les **poids du gabarit de mutation forte**
   (AE / PE / PA / PR).
-- **FR-052** : L'utilisateur DOIT pouvoir éditer le **poids individuel** de chaque trait ; le poids
-  effectif d'un trait dans un tirage combine son **poids de type** et son **poids individuel**.
+- **FR-052** : L'utilisateur DOIT pouvoir **surcharger** le poids d'un **trait individuel** ; un
+  bouton **« Propager »** (par type) DOIT **effacer les surcharges** des traits du type, qui
+  réhéritent du poids du type.
+- **FR-052b** : Un tirage de trait dans un type dont **tous les candidats ont un poids effectif nul**
+  (ex. poids de type 0) NE DOIT **pas planter** : il **ne tire aucun trait**, le **pouvoir concerné
+  n'est pas produit** (`pouvoir = null`, comme un échec de génération `K`), et les **traits déjà
+  tirés** pour ce pouvoir **restent actifs** dans l'ADN.
 
 #### Déclinaison de la résilience par type/trait (§9.2)
 
@@ -263,6 +298,9 @@ naissance utilise bien la **valeur effective** résolue (trait → type → glob
 - **FR-056** : Cette déclinaison PEUT nécessiter une **extension du cœur** (structure de surcharge +
   fonction de résolution) ; elle DOIT rester **pure et déterministe** (Principes IV/I) et être
   couverte par des **tests à seed fixe**.
+- **FR-057** : Un bouton **« Propager »** (par type, pour le **poids** et pour **chaque champ de
+  résilience**) DOIT **effacer les surcharges** des traits du type concerné, qui réhéritent alors de
+  la valeur du type. Le poids et la résilience suivent le **même modèle** type-défaut → surcharge.
 
 #### Déterminisme & intégrité (Principes I/IV/V)
 
@@ -274,8 +312,10 @@ naissance utilise bien la **valeur effective** résolue (trait → type → glob
 
 ### Key Entities *(include if feature involves data)*
 
-- **Trait** : entrée d'un type (libellé + poids individuel). Identité par (type, libellé).
-- **Type de trait** : l'un des **6 types fixes**.
+- **Trait** : entrée d'un type (libellé + **poids = surcharge optionnelle** ; à défaut, hérite du
+  poids du type). Identité par (type, libellé).
+- **Type de trait** : l'un des **6 types fixes** ; porte les **valeurs par défaut** (poids, résilience
+  initiale/max/seuil) de ses traits.
 - **Catalogue de traits** : ensemble des traits regroupés par type ; éditable.
 - **Espèce** : libellé + liste de **genres** + paramètres de reproduction (gaussienne, portée M/N/X,
   taille de groupe, % divorce).

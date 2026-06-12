@@ -5,8 +5,15 @@ détaillés. Les types vivent dans `src/core/**` (purs).
 
 ## Entités existantes réutilisées (rappel)
 
-- **`Trait`** `{ id: "type:slug-i", type: TraitType, label: string, weight: number }` — `weight` =
-  **poids individuel** (déjà présent ; devient éditable).
+- **`Trait`** `{ id: "type:slug-i", type: TraitType, label: string, weight: number | null }` — `weight`
+  devient une **surcharge optionnelle** : `null` (ou absent) ⇒ le trait **hérite du poids de son
+  type** (`traitTypeWeights[type]`). Poids effectif = `weight ?? traitTypeWeights[type]` (résolution
+  `trait ?? type`, **2 niveaux**). *(Représentation alternative équivalente : conserver `weight:
+  number` + un drapeau « surchargé » ; l'important est l'héritage type→trait + « Propager ».)*
+  > **Catalogue par défaut** : `defaultCatalog()` DOIT produire des traits **sans surcharge**
+  > (`weight = null`) afin qu'ils **héritent** du poids de leur type ; `traitTypeWeights` porte la
+  > **base** (défaut **1** par type). Sinon (poids 1 baké sur chaque trait), régler un poids de type
+  > ne se propagerait pas (chaque trait serait « surchargé »).
 - **`Catalog`** `{ byType: Record<TraitType, Trait[]> }` — devient **éditable** (mutations pures).
 - **`TraitType`** : 6 valeurs **fixes** (`Remplacement`, `PartieCorps`, `Etat`, `Element`, `Ajout`,
   `Action`). Non modifiables.
@@ -42,7 +49,11 @@ export interface ResilienceOverrides {
 - **Défaut** : `resilienceOverrides = { byType: {}, byTrait: {} }` (aucune surcharge ⇒ comportement
   identique à aujourd'hui).
 - **Sérialisation** : porté par `Parameters`, donc inclus dans `AppState.parameters` (export config —
-  Feature 6) sans changement de `serializeState`.
+  Feature 6) sans changement de forme.
+- **Rétro-compatibilité import (M1)** : `deserializeState` DOIT **défauter** `resilienceOverrides` à
+  `{ byType: {}, byTrait: {} }` s'il est **absent** (fichier antérieur à la Feature 5) et tolérer un
+  `Trait.weight` **absent/null** (⇒ héritage du type). Garantit qu'aucun import ne fasse lire
+  `undefined.byType` à `resolveResilience`.
 
 ### Valeur effective résolue
 
@@ -83,8 +94,13 @@ type est alors sauté).
   cette espèce.
 - **INV-E3 (cohérence reproduction)** : `reproStartAge ≤ reproPeakAge ≤ reproEndAge` ; `litterMin ≤
   litterMax` ; `reproSlope > 0` ; `groupSize ≥ 1` ; pourcentages ∈ [0, 100].
-- **INV-W1 (poids)** : `Trait.weight ≥ 0`, `traitTypeWeights[t] ≥ 0`, `templateWeights[t] ≥ 0` ;
-  poids effectif d'un trait = `traitTypeWeights[type] × Trait.weight` (FR-052).
+- **INV-W1 (poids héritage)** : `traitTypeWeights[t] ≥ 0`, `templateWeights[t] ≥ 0`, surcharge de
+  trait `≥ 0` si présente ; poids effectif d'un trait = `surcharge ?? traitTypeWeights[type]`
+  (résolution `trait ?? type`). « Propager » (par type) efface les surcharges du type.
+- **INV-W2 (tirage tolérant)** : si tous les candidats d'un tirage ont un poids effectif **nul** (ex.
+  poids de type 0), le tirage **ne renvoie rien** (`pickWeightedOrNull → null`) ⇒ le **pouvoir
+  concerné n'est pas produit** et les **traits déjà tirés restent actifs** ; **jamais d'exception**
+  (FR-052b). `pickWeighted` (qui jette) reste inchangé pour les usages existants.
 - **INV-D1 (déterminisme)** : à seed fixe, catalogue + paramètres + surcharges identiques ⇒ résultats
   identiques (genèse, naissances). Aucune mutation ne consomme le RNG.
 - **INV-D2 (lecture seule sur l'existant)** : éditer un paramètre/catalogue ne recalcule jamais les
@@ -92,12 +108,14 @@ type est alors sauté).
 
 ## Mutations pures (signatures — détail en contracts/core-api.md)
 
-- **Catalogue** : `addTrait`, `renameTrait`, `removeTrait`.
+- **Catalogue** : `addTrait`, `renameTrait`, `removeTrait`, `setTraitWeight` (surcharge),
+  `propagateTypeWeight(catalog, type, poids)` (efface les surcharges du type).
 - **Espèces** : `addEspece`, `renameEspece`, `removeEspece`, `setEspeceParam`, `addGenre`,
   `renameGenre`, `removeGenre`.
-- **Surcharges** : `setResiliencePatch(params, scope, patch)` / `clearResiliencePatch(...)` (helpers
-  purs pour poser/retirer une surcharge global/type/trait) — ou édition directe de la structure côté
-  store + validation.
+- **Surcharges résilience** : `setResiliencePatch(params, scope, patch)` / `clearResiliencePatch(...)`
+  / `propagateResilienceType(params, type)` — poser/retirer/propager global·type·trait.
+- **Résolution** : `resolveResilience(params, traitId)` ; `resolveWeight(traitId, override, traitTypeWeights)`.
+- **Tirage** : `pickWeightedOrNull(items, weightOf)` (tolérant, INV-W2).
 - **Validation** : `validateEspece`, `validateResiliencePatch`, `clampPct`, etc.
 
 ## Couche UI (stores réactifs — `src/ui`, non cœur)
