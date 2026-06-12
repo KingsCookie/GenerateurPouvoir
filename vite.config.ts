@@ -12,7 +12,7 @@ export default defineConfig({
     svelte(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['404.html', 'icons/icon-192.png', 'icons/icon-512.png'],
+      includeAssets: ['404.html', 'favicon.png', 'icons/icon-192.png', 'icons/icon-512.png'],
       manifest: {
         name: 'Générateur de Pouvoir',
         short_name: 'GénPouvoir',
