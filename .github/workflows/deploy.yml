@@ -31,11 +31,12 @@ jobs:
       - name: Tests déterministes du cœur
         run: npm run test
 
-      - name: Build statique (base path Pages)
+      - name: Build statique (domaine personnalisé à la racine)
         run: npm run build
         env:
-          # Servi sous https://<user>.github.io/<repo>/
-          BASE_PATH: /${{ github.event.repository.name }}/
+          # Servi sous https://royalcookie.fr/ (domaine personnalisé) ⇒ base à la racine.
+          # (Pour un déploiement sous https://<user>.github.io/<repo>/, remettre /${{ github.event.repository.name }}/.)
+          BASE_PATH: /
 
       - uses: actions/upload-pages-artifact@v3
         with:
