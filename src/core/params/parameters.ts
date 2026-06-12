@@ -2,6 +2,22 @@ import type { TraitType } from '../model/traitType.js';
 import { TRAIT_TYPES } from '../model/traitType.js';
 import type { PowerTemplate } from '../model/pouvoir.js';
 
+/**
+ * Surcharge de résilience (Feature 5, §9.2) — par champ et indépendante. Un champ absent
+ * (`undefined`) ⇒ réhéritage du niveau supérieur (trait → type → global).
+ */
+export interface ResiliencePatch {
+  initial?: number; // résilience initiale [0..100]
+  max?: number; // plafond [0..100]
+  disappearThreshold?: number; // seuil de disparition (« minimale ») [0..100]
+}
+
+/** Surcharges déclinées par type de trait et par trait (clé = traitId). */
+export interface ResilienceOverrides {
+  byType: Partial<Record<TraitType, ResiliencePatch>>;
+  byTrait: Record<string, ResiliencePatch>;
+}
+
 // Tous les comportements chiffrés sont exposés ici et exportés avec l'état (Principe VII).
 export interface Parameters {
   seed: string; // BigInt 64 bits en décimal (source unique d'aléatoire, éditable)
@@ -29,6 +45,12 @@ export interface Parameters {
 
   // --- Simulation temporelle (Feature 3). ---
   consanguinityAllowed: boolean; // si false, interdit l'appariement entre proches (§6.6.1)
+
+  // --- Paramétrage avancé (Feature 5, §9.2). ---
+  // Déclinaison de la résilience (initiale / maximale / seuil) global → type → trait. Les 3
+  // champs globaux ci-dessus restent la **base** ; ces surcharges priment par champ (résolu
+  // par `resolveResilience`). Défaut : aucune surcharge ⇒ comportement identique aux Features 1-3.
+  resilienceOverrides: ResilienceOverrides;
 }
 
 function defaultTraitTypeWeights(): Record<TraitType, number> {
@@ -68,6 +90,8 @@ export function defaultParameters(): Parameters {
     statC: 30, // ⇒ A = 100 − 2·10 − 30 = 50
 
     consanguinityAllowed: false, // consanguinité interdite par défaut (§6.6.1 / §9.5)
+
+    resilienceOverrides: { byType: {}, byTrait: {} }, // aucune surcharge par défaut (Feature 5)
   };
 }
 

@@ -13,6 +13,21 @@ import {
   serializeState,
   deserializeState,
   FORMAT_VERSION,
+  addTrait as addTraitCore,
+  renameTrait as renameTraitCore,
+  removeTrait as removeTraitCore,
+  setTraitWeight as setTraitWeightCore,
+  propagateTypeWeight as propagateTypeWeightCore,
+  addEspece as addEspeceCore,
+  renameEspece as renameEspeceCore,
+  removeEspece as removeEspeceCore,
+  setEspeceParam as setEspeceParamCore,
+  addGenre as addGenreCore,
+  renameGenre as renameGenreCore,
+  removeGenre as removeGenreCore,
+  setResiliencePatch as setResiliencePatchCore,
+  clearResiliencePatch as clearResiliencePatchCore,
+  propagateResilienceType as propagateResilienceTypeCore,
   type AppState,
   type Catalog,
   type Couple,
@@ -20,12 +35,19 @@ import {
   type Parameters,
   type Personne,
   type Rng,
+  type TraitType,
+  type ResiliencePatch,
+  type ResilienceScope,
 } from '../../core/index.js';
 
 export type View = 'parametres' | 'liste' | 'fiche' | 'arbre';
 
-// Catalogue embarqué (données du cœur, non réactif en Feature 1).
-const catalog: Catalog = defaultCatalog();
+// Catalogue de traits — **store éditable** (Feature 5). Remplace la constante de module de la
+// Feature 1. Défaut = `defaultCatalog()` (traits sans surcharge de poids ⇒ héritent du type).
+export const catalog = writable<Catalog>(defaultCatalog());
+
+// Catalogue d'espèces (paramètres de reproduction, genres) — **store éditable** (Feature 5).
+export const especes = writable<Espece[]>(defaultEspeces());
 
 // Seed initiale tirée via le SEUL point d'entropie (createSeed), côté UI (Principe I).
 function initialParameters(): Parameters {
@@ -54,10 +76,6 @@ export const selectedIds = writable<Set<string>>(new Set());
 // d'actions ⇒ résultat reproductible, Principe I). (Re)créé à chaque génération/import.
 let engineRng: Rng = createRng(0n);
 
-// Catalogue d'espèces (paramètres de reproduction). Non éditable dans l'UI en Feature 3
-// (édition complète en Feature 5) ; inclus dans l'export/import.
-let especesRef: Espece[] = defaultEspeces();
-
 // Individu actuellement sélectionné (US2), dérivé de la population et de l'id sélectionné.
 export const selectedPerson = derived(
   [population, selectedPersonId],
@@ -65,7 +83,7 @@ export const selectedPerson = derived(
 );
 
 export function getCatalog(): Catalog {
-  return catalog;
+  return get(catalog);
 }
 
 /** Tire une nouvelle seed (entropie volontaire) ; la prochaine génération l'utilise. */
@@ -78,12 +96,71 @@ export function setParam<K extends keyof Parameters>(key: K, value: Parameters[K
   parameters.update((p) => ({ ...p, [key]: value }));
 }
 
+// --- Édition du catalogue de traits (Feature 5, US1/US3) — mutations pures du cœur. ---
+
+export function catAddTrait(type: TraitType, label: string): void {
+  catalog.update((c) => addTraitCore(c, type, label));
+}
+export function catRenameTrait(traitId: string, label: string): void {
+  catalog.update((c) => renameTraitCore(c, traitId, label));
+}
+export function catRemoveTrait(traitId: string): void {
+  catalog.update((c) => removeTraitCore(c, traitId));
+}
+export function catSetTraitWeight(traitId: string, weight: number | null): void {
+  catalog.update((c) => setTraitWeightCore(c, traitId, weight));
+}
+export function catPropagateTypeWeight(type: TraitType): void {
+  catalog.update((c) => propagateTypeWeightCore(c, type));
+}
+
+// --- Édition du catalogue d'espèces & genres (Feature 5, US1/US2). ---
+
+export function espAdd(label: string): void {
+  especes.update((l) => addEspeceCore(l, label));
+}
+export function espRename(especeId: string, label: string): void {
+  especes.update((l) => renameEspeceCore(l, especeId, label));
+}
+export function espRemove(especeId: string): void {
+  especes.update((l) => removeEspeceCore(l, especeId));
+}
+export function espSetParam<K extends keyof Espece>(
+  especeId: string,
+  key: K,
+  value: Espece[K],
+): void {
+  especes.update((l) => setEspeceParamCore(l, especeId, key, value));
+}
+export function espAddGenre(especeId: string, label: string): void {
+  especes.update((l) => addGenreCore(l, especeId, label));
+}
+export function espRenameGenre(especeId: string, genreId: string, label: string): void {
+  especes.update((l) => renameGenreCore(l, especeId, genreId, label));
+}
+export function espRemoveGenre(especeId: string, genreId: string): void {
+  especes.update((l) => removeGenreCore(l, especeId, genreId));
+}
+
+// --- Surcharges de résilience (Feature 5, US3) — global → type → trait. ---
+
+export function setResiliencePatch(scope: ResilienceScope, patch: ResiliencePatch): void {
+  parameters.update((p) => setResiliencePatchCore(p, scope, patch));
+}
+export function clearResiliencePatch(scope: ResilienceScope): void {
+  parameters.update((p) => clearResiliencePatchCore(p, scope));
+}
+export function propagateResilienceType(type: TraitType): void {
+  parameters.update((p) => propagateResilienceTypeCore(p, type));
+}
+
 /** Génère la population déterministe à partir des paramètres courants, puis affiche la liste. */
 export function generate(): void {
   const p = get(parameters);
   engineRng = createRng(BigInt(p.seed));
-  especesRef = defaultEspeces();
-  population.set(generateInitialPopulation(p, catalog, engineRng));
+  // Le catalogue & les espèces (config éditable, Feature 5) sont **conservés** : générer une
+  // population n'efface pas les réglages de l'utilisateur.
+  population.set(generateInitialPopulation(p, get(catalog), engineRng));
   currentYear.set(p.birthYear);
   couples.set([]);
   selectedIds.set(new Set());
@@ -96,8 +173,8 @@ function snapshot(): AppState {
     formatVersion: FORMAT_VERSION,
     kind: 'full',
     parameters: get(parameters),
-    catalog,
-    especes: especesRef,
+    catalog: get(catalog),
+    especes: get(especes),
     population: get(population),
     currentYear: get(currentYear),
     couples: get(couples),
@@ -163,7 +240,7 @@ export function reproduceSelected(): string | null {
   if (parents.length === 0) return null;
 
   const childId = nextChildId(pop);
-  const child = reproduce(parents, p, catalog, engineRng, { childId, birthYear: p.birthYear });
+  const child = reproduce(parents, p, get(catalog), engineRng, { childId, birthYear: p.birthYear });
 
   const parentIds = new Set(parents.map((x) => x.id));
   const updated = pop.map((person) =>
@@ -246,7 +323,8 @@ export function applyImport(json: string): boolean {
   }
   importError.set(null);
   parameters.set(res.value.parameters);
-  especesRef = res.value.especes;
+  catalog.set(res.value.catalog);
+  especes.set(res.value.especes);
   population.set(res.value.population);
   currentYear.set(res.value.currentYear);
   couples.set(res.value.couples);

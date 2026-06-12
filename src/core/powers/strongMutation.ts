@@ -2,6 +2,7 @@ import type { Rng } from '../rng/rng.js';
 import type { Catalog, Trait } from '../model/trait.js';
 import type { TraitType } from '../model/traitType.js';
 import type { Parameters } from '../params/parameters.js';
+import { resolveWeight } from '../params/resolveWeight.js';
 import type { Pouvoir, PowerTemplate } from '../model/pouvoir.js';
 import { POWER_TEMPLATES } from '../model/pouvoir.js';
 import { formatPowerLabel } from '../genesis/derived.js';
@@ -17,7 +18,11 @@ const TEMPLATE_TYPES: Record<PowerTemplate, [TraitType, TraitType]> = {
 
 /**
  * Génère un pouvoir de mutation forte (gabarit pondéré + traits pondérés), ou `null`
- * si un type requis est vide dans le catalogue (→ individu sans pouvoir, cf. Edge Cases).
+ * si un type requis est vide **ou de poids effectif nul** (→ individu sans pouvoir, FR-052b ;
+ * les traits déjà inscrits dans l'ADN par l'appelant restent actifs).
+ *
+ * Poids effectif d'un trait = surcharge ?? poids du type (`resolveWeight`, §9.1). Tirage
+ * **tolérant** (`pickWeightedOrNull`) : aucun candidat tirable ⇒ pas de pouvoir, jamais d'exception.
  *
  * Ordre des tirages (fixe, garantit le déterminisme) :
  * gabarit → trait du 1er type → trait du 2e type → puissance → maîtrise.
@@ -27,7 +32,8 @@ export function generateStrongMutationPower(
   params: Parameters,
   rng: Rng,
 ): Pouvoir | null {
-  const template = rng.pickWeighted(POWER_TEMPLATES, (t) => params.templateWeights[t] ?? 0);
+  const template = rng.pickWeightedOrNull(POWER_TEMPLATES, (t) => params.templateWeights[t] ?? 0);
+  if (template === null) return null; // tous les gabarits à poids nul ⇒ aucun pouvoir
   const [typeA, typeB] = TEMPLATE_TYPES[template];
 
   const listA = catalog.byType[typeA];
@@ -36,8 +42,11 @@ export function generateStrongMutationPower(
     return null;
   }
 
-  const traitA = rng.pickWeighted(listA, (t: Trait) => t.weight);
-  const traitB = rng.pickWeighted(listB, (t: Trait) => t.weight);
+  const weightOf = (t: Trait): number => resolveWeight(t.id, t.weight, params.traitTypeWeights);
+  const traitA = rng.pickWeightedOrNull(listA, weightOf);
+  if (traitA === null) return null; // type A à poids effectif nul ⇒ pas de pouvoir (FR-052b)
+  const traitB = rng.pickWeightedOrNull(listB, weightOf);
+  if (traitB === null) return null; // type B à poids effectif nul ⇒ pas de pouvoir (FR-052b)
 
   const puissance = rng.nextInt(10) + 1;
   const maitrise = rng.nextInt(10) + 1;

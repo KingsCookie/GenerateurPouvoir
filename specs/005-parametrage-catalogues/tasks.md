@@ -22,7 +22,7 @@ tests cœur sont écrits **avant** l'implémentation correspondante (TDD).
 
 ## Phase 1 : Setup (infrastructure partagée)
 
-- [ ] T001 Scaffolder les modules cœur vides + ré-exports : créer `src/core/params/resolveResilience.ts`, `src/core/catalog/editCatalog.ts`, `src/core/species/editEspeces.ts` (stubs typés) et les **ré-exporter** via `src/core/index.ts` ; vérifier `npm run test`/`npm run lint` verts (baseline). La garde `core-purity.test.ts` couvre déjà ces dossiers.
+- [X] T001 Scaffolder les modules cœur vides + ré-exports : créer `src/core/params/resolveResilience.ts`, `src/core/catalog/editCatalog.ts`, `src/core/species/editEspeces.ts` (stubs typés) et les **ré-exporter** via `src/core/index.ts` ; vérifier `npm run test`/`npm run lint` verts (baseline). La garde `core-purity.test.ts` couvre déjà ces dossiers.
 
 ---
 
@@ -30,8 +30,8 @@ tests cœur sont écrits **avant** l'implémentation correspondante (TDD).
 
 **⚠️ Bloque US1 et US2 (édition de catalogue/espèces). Refactor à comportement inchangé (défauts).**
 
-- [ ] T002 `src/ui/stores/appState.ts` : convertir le **catalogue** (constante de module `const catalog = defaultCatalog()`) en **store** `writable<Catalog>` ; adapter `getCatalog`, `generate()`, `snapshot()`, `reproduceSelected()`/`advanceYears()` pour lire le store. Comportement inchangé tant qu'aucune édition (défaut = `defaultCatalog()`).
-- [ ] T003 `src/ui/stores/appState.ts` : convertir `especesRef` (`let`) en **store** `writable<Espece[]>` ; adapter `generate()`, `snapshot()`, `advanceYears()`, `applyImport()` pour lire/écrire le store. Comportement inchangé (défaut = `defaultEspeces()`).
+- [X] T002 `src/ui/stores/appState.ts` : convertir le **catalogue** (constante de module `const catalog = defaultCatalog()`) en **store** `writable<Catalog>` ; adapter `getCatalog`, `generate()`, `snapshot()`, `reproduceSelected()`/`advanceYears()` pour lire le store. Comportement inchangé tant qu'aucune édition (défaut = `defaultCatalog()`).
+- [X] T003 `src/ui/stores/appState.ts` : convertir `especesRef` (`let`) en **store** `writable<Espece[]>` ; adapter `generate()`, `snapshot()`, `advanceYears()`, `applyImport()` pour lire/écrire le store. Comportement inchangé (défaut = `defaultEspeces()`).
 
 **Checkpoint** : catalogue & espèces réactifs, prêts à être édités. Aucun changement fonctionnel visible.
 
@@ -48,20 +48,20 @@ cassés (cf. quickstart US1).
 
 ### Tests cœur (écrits AVANT l'implémentation — Principe V)
 
-- [ ] T004 [P] [US1] `tests/unit/edit-catalog.test.ts` : `addTrait` (id unique `type:slug-n`, doublon de libellé toléré), `renameTrait` (id inchangé), `removeTrait` (futur seulement : **ne mute aucun ADN**, no-op si id absent), `setTraitWeight` (≥ 0). Pur, déterministe.
-- [ ] T005 [P] [US1] `tests/unit/edit-especes.test.ts` : `addEspece` (inclut « tout »), `renameEspece`, `removeEspece` (futur seulement), `addGenre`/`renameGenre`/`removeGenre` (refus de supprimer « tout », pas de doublon « tout »), `validateEspece` (INV-E3). Pur, déterministe.
+- [X] T004 [P] [US1] `tests/unit/edit-catalog.test.ts` : `addTrait` (id unique `type:slug-n`, doublon de libellé toléré), `renameTrait` (id inchangé), `removeTrait` (futur seulement : **ne mute aucun ADN**, no-op si id absent), `setTraitWeight` (≥ 0). Pur, déterministe.
+- [X] T005 [P] [US1] `tests/unit/edit-especes.test.ts` : `addEspece` (inclut « tout »), `renameEspece`, `removeEspece` (futur seulement), `addGenre`/`renameGenre`/`removeGenre` (refus de supprimer « tout », pas de doublon « tout »), `validateEspece` (INV-E3). Pur, déterministe.
 
 ### Implémentation cœur (pur)
 
-- [ ] T006 [US1] `src/core/catalog/editCatalog.ts` : implémenter `addTrait`, `renameTrait`, `removeTrait`, `setTraitWeight` (immutables, INV-C1/C2/C3) + ré-export `src/core/index.ts`. Dépend de T004.
-- [ ] T007 [US1] `src/core/species/editEspeces.ts` : implémenter `addEspece`, `renameEspece`, `removeEspece`, `addGenre`, `renameGenre`, `removeGenre`, `setEspeceParam`, `validateEspece` (immutables, INV-E1/E2/E3) + ré-export `src/core/index.ts`. Dépend de T005.
+- [X] T006 [US1] `src/core/catalog/editCatalog.ts` : implémenter `addTrait`, `renameTrait`, `removeTrait`, `setTraitWeight` (immutables, INV-C1/C2/C3) + ré-export `src/core/index.ts`. Dépend de T004.
+- [X] T007 [US1] `src/core/species/editEspeces.ts` : implémenter `addEspece`, `renameEspece`, `removeEspece`, `addGenre`, `renameGenre`, `removeGenre`, `setEspeceParam`, `validateEspece` (immutables, INV-E1/E2/E3) + ré-export `src/core/index.ts`. Dépend de T005.
 
 ### Implémentation UI
 
-- [ ] T008 [P] [US1] `src/ui/components/TraitCatalogEditor.svelte` : par type (6 onglets/sections), liste des traits avec **ajout / renommage / suppression** et **poids individuel** (`setTraitWeight`) ; branché sur le store `catalog` (mutations T006). Dépend de T006.
-- [ ] T009 [P] [US1] `src/ui/components/SpeciesEditor.svelte` : liste des espèces avec **ajout / renommage / suppression** et, par espèce, gestion des **genres** (« tout » affiché non supprimable) ; branché sur le store `especes` (mutations T007). Dépend de T007.
-- [ ] T010 [US1] `src/ui/views/ParametresView.svelte` : ajouter une section **Catalogues** intégrant `TraitCatalogEditor` et `SpeciesEditor`. Dépend de T008, T009 (+ T002, T003).
-- [ ] T011 [US1] Repli d'affichage des **libellés de traits supprimés** : `src/ui/lib/ficheViewModel.ts` / `src/ui/lib/treeViewModel.ts` (et liste) DOIVENT afficher un libellé de repli (libellé connu ou slug de l'id) quand un `traitId` n'est plus au catalogue — garantit qu'aucun individu existant n'est cassé (SC-006).
+- [X] T008 [P] [US1] `src/ui/components/TraitCatalogEditor.svelte` : par type (6 onglets/sections), liste des traits avec **ajout / renommage / suppression** et **poids individuel** (`setTraitWeight`) ; branché sur le store `catalog` (mutations T006). Dépend de T006.
+- [X] T009 [P] [US1] `src/ui/components/SpeciesEditor.svelte` : liste des espèces avec **ajout / renommage / suppression** et, par espèce, gestion des **genres** (« tout » affiché non supprimable) ; branché sur le store `especes` (mutations T007). Dépend de T007.
+- [X] T010 [US1] `src/ui/views/ParametresView.svelte` : ajouter une section **Catalogues** intégrant `TraitCatalogEditor` et `SpeciesEditor`. Dépend de T008, T009 (+ T002, T003).
+- [X] T011 [US1] Repli d'affichage des **libellés de traits supprimés** : `src/ui/lib/ficheViewModel.ts` / `src/ui/lib/treeViewModel.ts` (et liste) DOIVENT afficher un libellé de repli (libellé connu ou slug de l'id) quand un `traitId` n'est plus au catalogue — garantit qu'aucun individu existant n'est cassé (SC-006).
 
 **Checkpoint** : US1 pleinement fonctionnelle et testable seule (catalogues éditables, données existantes intactes).
 
@@ -77,14 +77,14 @@ divorce ; basculer consanguinité ; éditer puis réinitialiser le % d'un couple
 
 ### Tests cœur (Principe V)
 
-- [ ] T012 [P] [US2] `tests/unit/edit-especes.test.ts` (compléter) : cas de **validation des paramètres de reproduction** via `setEspeceParam`/`validateEspece` — `début ≤ pic ≤ fin`, `M ≤ N`, `pente > 0`, `groupSize ≥ 1`, pourcentages ∈ [0,100] (INV-E3). Pur, déterministe.
+- [X] T012 [P] [US2] `tests/unit/edit-especes.test.ts` (compléter) : cas de **validation des paramètres de reproduction** via `setEspeceParam`/`validateEspece` — `début ≤ pic ≤ fin`, `M ≤ N`, `pente > 0`, `groupSize ≥ 1`, pourcentages ∈ [0,100] (INV-E3). Pur, déterministe.
 
 ### Implémentation UI
 
-- [ ] T013 [P] [US2] `src/ui/components/GaussianCurve.svelte` : tracé **SVG sur-mesure** de la densité de reproduction (réutilise la fonction de `src/core/repro/gaussian.ts`), échantillonnée sur [début, fin] ; recalcul réactif (< 1 s, SC-004). **Aucune dépendance.**
-- [ ] T014 [US2] `src/ui/components/SpeciesEditor.svelte` (étendre) : sous-panneau **reproduction** par espèce (âge début/pic/fin, probabilité au pic, pente, portée M/N/X, taille de groupe, % divorce) via `setEspeceParam` + **validation** (messages FR) ; intégrer `GaussianCurve`. Dépend de T009, T013, T007.
-- [ ] T015 [US2] `src/ui/views/ParametresView.svelte` : ajouter le **toggle consanguinité** (`Parameters.consanguinityAllowed`, défaut interdite) dans la section reproduction/espèces. Dépend de T010 (même fichier).
-- [ ] T016 [US2] `src/ui/views/FicheView.svelte` : contrôle d'édition du **% de reproduction du couple** d'un membre (via `coupleOf` + `setCoupleReproPct`, déjà au store) avec **réinitialisation** (vide ⇒ `null` ⇒ dérivé de la gaussienne). FR-040/FR-041.
+- [X] T013 [P] [US2] `src/ui/components/GaussianCurve.svelte` : tracé **SVG sur-mesure** de la densité de reproduction (réutilise la fonction de `src/core/repro/gaussian.ts`), échantillonnée sur [début, fin] ; recalcul réactif (< 1 s, SC-004). **Aucune dépendance.**
+- [X] T014 [US2] `src/ui/components/SpeciesEditor.svelte` (étendre) : sous-panneau **reproduction** par espèce (âge début/pic/fin, probabilité au pic, pente, portée M/N/X, taille de groupe, % divorce) via `setEspeceParam` + **validation** (messages FR) ; intégrer `GaussianCurve`. Dépend de T009, T013, T007.
+- [X] T015 [US2] `src/ui/views/ParametresView.svelte` : ajouter le **toggle consanguinité** (`Parameters.consanguinityAllowed`, défaut interdite) dans la section reproduction/espèces. Dépend de T010 (même fichier).
+- [X] T016 [US2] `src/ui/views/FicheView.svelte` : contrôle d'édition du **% de reproduction du couple** d'un membre (via `coupleOf` + `setCoupleReproPct`, déjà au store) avec **réinitialisation** (vide ⇒ `null` ⇒ dérivé de la gaussienne). FR-040/FR-041.
 
 **Checkpoint** : US1 + US2 fonctionnelles indépendamment.
 
@@ -103,26 +103,26 @@ surcharges de résilience par type/trait et vérifier (seed fixe) la valeur effe
 
 ### Tests cœur (écrits AVANT — Principe V)
 
-- [ ] T017 [P] [US3] `tests/unit/resolve-resilience.test.ts` : `resolveResilience(params, traitId)` — résolution **par champ** (`byTrait → byType → global`), **type via préfixe d'id**, trait **absent du catalogue** (type encore résolu), trait à préfixe inconnu (saut du niveau type), bornes (INV-P1..P4). Seed fixe.
-- [ ] T017b [P] [US3] `tests/unit/resolve-weight.test.ts` : `resolveWeight(catalog/params, traitId)` — poids effectif = **surcharge du trait ?? poids du type** ; « Propager » efface les surcharges du type ; cas **poids de type 0** ⇒ poids effectif nul pour les traits non surchargés (INV-W1).
-- [ ] T018 [P] [US3] Étendre `tests/unit/heredity.test.ts` et `tests/unit/genesis.test.ts` : surcharge par **type** et par **trait** ⇒ `inherit.ts` applique le **plafond** et le **seuil** effectifs ; genèse/`traitsToPowers`/mutation faible appliquent la **résilience initiale** effective. Seed fixe, valeurs exactes.
-- [ ] T018b [P] [US3] Étendre `tests/unit/strong-mutation.test.ts` : un gabarit **AE** avec type « Élément » à poids effectif **nul** ⇒ **`pouvoir = null`** ET le trait **Action déjà tiré reste actif** dans l'ADN (FR-052b) ; aucune exception. Seed fixe.
+- [X] T017 [P] [US3] `tests/unit/resolve-resilience.test.ts` : `resolveResilience(params, traitId)` — résolution **par champ** (`byTrait → byType → global`), **type via préfixe d'id**, trait **absent du catalogue** (type encore résolu), trait à préfixe inconnu (saut du niveau type), bornes (INV-P1..P4). Seed fixe.
+- [X] T017b [P] [US3] `tests/unit/resolve-weight.test.ts` : `resolveWeight(catalog/params, traitId)` — poids effectif = **surcharge du trait ?? poids du type** ; « Propager » efface les surcharges du type ; cas **poids de type 0** ⇒ poids effectif nul pour les traits non surchargés (INV-W1).
+- [X] T018 [P] [US3] Étendre `tests/unit/heredity.test.ts` et `tests/unit/genesis.test.ts` : surcharge par **type** et par **trait** ⇒ `inherit.ts` applique le **plafond** et le **seuil** effectifs ; genèse/`traitsToPowers`/mutation faible appliquent la **résilience initiale** effective. Seed fixe, valeurs exactes.
+- [X] T018b [P] [US3] Étendre `tests/unit/strong-mutation.test.ts` : un gabarit **AE** avec type « Élément » à poids effectif **nul** ⇒ **`pouvoir = null`** ET le trait **Action déjà tiré reste actif** dans l'ADN (FR-052b) ; aucune exception. Seed fixe.
 
 ### Implémentation cœur (pur)
 
-- [ ] T019 [US3] `src/core/params/parameters.ts` : ajouter `resilienceOverrides: ResilienceOverrides` (+ types `ResiliencePatch`/`ResilienceOverrides`) avec défaut `{ byType: {}, byTrait: {} }` ; helpers purs `setResiliencePatch`, `clearResiliencePatch`, `validateResiliencePatch` (bornes, `seuil ≤ max`) **et** `propagateResilienceType(params, type)` (efface les surcharges de trait du type). Ré-export `src/core/index.ts`.
-- [ ] T019b [US3] `src/core/state/serialize.ts` (`deserializeState`) : **rétro-compatibilité** — si un fichier importé **ne contient pas** `resilienceOverrides`, le **défauter** à `{ byType: {}, byTrait: {} }` ; tolérer un `Trait.weight` **absent/null** (⇒ hérite du type). Aucune exception sur un fichier antérieur à la Feature 5. Couvrir par un test (`tests/unit/state.test.ts` étendu, seed fixe). Dépend de T019, T020b. *(Évite que `resolveResilience` lise `undefined.byType`.)*
-- [ ] T020 [US3] `src/core/params/resolveResilience.ts` : implémenter `resolveResilience` (type via préfixe d'id validé contre `TRAIT_TYPES` ; résolution par champ) + `EffectiveResilience`. Dépend de T017, T019.
-- [ ] T020b [US3] `src/core/params/resolveWeight.ts` : `resolveWeight(traitId, override, traitTypeWeights)` (= surcharge ?? poids du type) ; le **poids d'un trait** devient une **surcharge optionnelle** (modèle héritage type→trait). **Migration `src/core/catalog/defaultCatalog.ts`** : les traits par défaut ne portent **aucune surcharge** (`weight = null`/absent) ⇒ ils héritent du poids de leur type ; `traitTypeWeights` (défaut **1** par type) reste la base. Adapter les points de tirage à `weight ?? traitTypeWeights[type]`. Ré-export. Dépend de T017b.
-- [ ] T020c [US3] `src/core/rng/rng.ts` : ajouter `pickWeightedOrNull(items, weightOf): T | null` (renvoie `null` si total ≤ 0) **sans modifier** `pickWeighted`. Couvrir par un test (rng). Dépend de T017b.
-- [ ] T021 [US3] `src/core/heredity/inherit.ts` : remplacer les lectures directes `params.resilienceMax` / `params.disappearThreshold` par la **valeur effective** `resolveResilience(params, traitId)` (plafond + seuil **par trait hérité**). Dépend de T020.
-- [ ] T022 [US3] `src/core/birth/reproduce.ts`, `src/core/genesis/genesis.ts`, `src/core/powers/traitsToPowers.ts` : router `initialResilience`/`resilienceMax` vers la **valeur effective** résolue par `traitId` (mutation faible gain, trait `K…` généré, trait du pouvoir de genèse). Dépend de T020.
-- [ ] T023 [US3] **Modèle de poids type→trait + tolérance** : aux points de tirage (`powers/strongMutation.ts`, `powers/traitsToPowers.ts`, `birth/reproduce.ts`), utiliser le **poids effectif** `resolveWeight` et `pickWeightedOrNull` ; si aucun candidat tirable ⇒ **`pouvoir = null`** en **conservant actifs les traits déjà tirés** (FR-052b) ; gain de mutation faible ⇒ **no-op**. Dépend de T020b, T020c, T022 (mêmes fichiers `reproduce.ts`/`traitsToPowers.ts` — séquentiel).
+- [X] T019 [US3] `src/core/params/parameters.ts` : ajouter `resilienceOverrides: ResilienceOverrides` (+ types `ResiliencePatch`/`ResilienceOverrides`) avec défaut `{ byType: {}, byTrait: {} }` ; helpers purs `setResiliencePatch`, `clearResiliencePatch`, `validateResiliencePatch` (bornes, `seuil ≤ max`) **et** `propagateResilienceType(params, type)` (efface les surcharges de trait du type). Ré-export `src/core/index.ts`.
+- [X] T019b [US3] `src/core/state/serialize.ts` (`deserializeState`) : **rétro-compatibilité** — si un fichier importé **ne contient pas** `resilienceOverrides`, le **défauter** à `{ byType: {}, byTrait: {} }` ; tolérer un `Trait.weight` **absent/null** (⇒ hérite du type). Aucune exception sur un fichier antérieur à la Feature 5. Couvrir par un test (`tests/unit/state.test.ts` étendu, seed fixe). Dépend de T019, T020b. *(Évite que `resolveResilience` lise `undefined.byType`.)*
+- [X] T020 [US3] `src/core/params/resolveResilience.ts` : implémenter `resolveResilience` (type via préfixe d'id validé contre `TRAIT_TYPES` ; résolution par champ) + `EffectiveResilience`. Dépend de T017, T019.
+- [X] T020b [US3] `src/core/params/resolveWeight.ts` : `resolveWeight(traitId, override, traitTypeWeights)` (= surcharge ?? poids du type) ; le **poids d'un trait** devient une **surcharge optionnelle** (modèle héritage type→trait). **Migration `src/core/catalog/defaultCatalog.ts`** : les traits par défaut ne portent **aucune surcharge** (`weight = null`/absent) ⇒ ils héritent du poids de leur type ; `traitTypeWeights` (défaut **1** par type) reste la base. Adapter les points de tirage à `weight ?? traitTypeWeights[type]`. Ré-export. Dépend de T017b.
+- [X] T020c [US3] `src/core/rng/rng.ts` : ajouter `pickWeightedOrNull(items, weightOf): T | null` (renvoie `null` si total ≤ 0) **sans modifier** `pickWeighted`. Couvrir par un test (rng). Dépend de T017b.
+- [X] T021 [US3] `src/core/heredity/inherit.ts` : remplacer les lectures directes `params.resilienceMax` / `params.disappearThreshold` par la **valeur effective** `resolveResilience(params, traitId)` (plafond + seuil **par trait hérité**). Dépend de T020.
+- [X] T022 [US3] `src/core/birth/reproduce.ts`, `src/core/genesis/genesis.ts`, `src/core/powers/traitsToPowers.ts` : router `initialResilience`/`resilienceMax` vers la **valeur effective** résolue par `traitId` (mutation faible gain, trait `K…` généré, trait du pouvoir de genèse). Dépend de T020.
+- [X] T023 [US3] **Modèle de poids type→trait + tolérance** : aux points de tirage (`powers/strongMutation.ts`, `powers/traitsToPowers.ts`, `birth/reproduce.ts`), utiliser le **poids effectif** `resolveWeight` et `pickWeightedOrNull` ; si aucun candidat tirable ⇒ **`pouvoir = null`** en **conservant actifs les traits déjà tirés** (FR-052b) ; gain de mutation faible ⇒ **no-op**. Dépend de T020b, T020c, T022 (mêmes fichiers `reproduce.ts`/`traitsToPowers.ts` — séquentiel).
 
 ### Implémentation UI
 
-- [ ] T024 [US3] `src/ui/views/ParametresView.svelte` + `src/ui/components/TraitCatalogEditor.svelte` : section **Pondérations** — éditer `templateWeights` (AE/PE/PA/PR), le **poids par type** (`traitTypeWeights`) et la **surcharge** de poids par trait, avec bouton **« Propager »** par type. Dépend de T015 (même `ParametresView`), T020b.
-- [ ] T025 [US3] `src/ui/components/ResilienceOverrides.svelte` + intégration dans `ParametresView.svelte` : éditer la résilience (initiale / maximale / seuil) aux **3 niveaux** (global, par type, par trait) via `setResiliencePatch`/`clearResiliencePatch`/`propagateResilienceType` + `validateResiliencePatch` ; **bouton « Propager »** par type/champ ; indiquer la valeur **héritée** quand aucune surcharge. Dépend de T019, T024 (même fichier ParametresView — séquentiel).
+- [X] T024 [US3] `src/ui/views/ParametresView.svelte` + `src/ui/components/TraitCatalogEditor.svelte` : section **Pondérations** — éditer `templateWeights` (AE/PE/PA/PR), le **poids par type** (`traitTypeWeights`) et la **surcharge** de poids par trait, avec bouton **« Propager »** par type. Dépend de T015 (même `ParametresView`), T020b.
+- [X] T025 [US3] `src/ui/components/ResilienceOverrides.svelte` + intégration dans `ParametresView.svelte` : éditer la résilience (initiale / maximale / seuil) aux **3 niveaux** (global, par type, par trait) via `setResiliencePatch`/`clearResiliencePatch`/`propagateResilienceType` + `validateResiliencePatch` ; **bouton « Propager »** par type/champ ; indiquer la valeur **héritée** quand aucune surcharge. Dépend de T019, T024 (même fichier ParametresView — séquentiel).
 
 **Checkpoint** : les 3 user stories sont indépendamment fonctionnelles.
 
@@ -130,10 +130,10 @@ surcharges de résilience par type/trait et vérifier (seed fixe) la valeur effe
 
 ## Phase 6 : Polish & transverse
 
-- [ ] T026 [P] Vérifier que `tests/unit/core-purity.test.ts` couvre les nouveaux modules `params`/`catalog`/`species` (aucun `Math.random`/`Date`/`crypto`/DOM) ; ajouter une assertion si nécessaire.
-- [ ] T027 [P] Styles **responsive** des nouveaux écrans (`ParametresView`, `TraitCatalogEditor`, `SpeciesEditor`, `ResilienceOverrides`, `GaussianCurve`) dans `src/app.css` et composants.
+- [X] T026 [P] Vérifier que `tests/unit/core-purity.test.ts` couvre les nouveaux modules `params`/`catalog`/`species` (aucun `Math.random`/`Date`/`crypto`/DOM) ; ajouter une assertion si nécessaire.
+- [X] T027 [P] Styles **responsive** des nouveaux écrans (`ParametresView`, `TraitCatalogEditor`, `SpeciesEditor`, `ResilienceOverrides`, `GaussianCurve`) dans `src/app.css` et composants.
 - [ ] T028 Dérouler `specs/005-parametrage-catalogues/quickstart.md` (validation manuelle US1/US2/US3 + déterminisme).
-- [ ] T029 Portes de qualité : `npm run test` + `npm run lint` + `npm run build` **verts** ; bundle déployable (Principe II).
+- [X] T029 Portes de qualité : `npm run test` + `npm run lint` + `npm run build` **verts** ; bundle déployable (Principe II).
 
 ---
 

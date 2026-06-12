@@ -2,9 +2,36 @@
 export * from './model/index.js';
 export { createRng, createRngFromState, createSeed } from './rng/index.js';
 export type { Rng } from './rng/index.js';
-export { defaultCatalog, defaultEspece, defaultEspeces } from './catalog/defaultCatalog.js';
+export { defaultCatalog, defaultEspece, defaultEspeces, slug } from './catalog/defaultCatalog.js';
+export {
+  addTrait,
+  renameTrait,
+  removeTrait,
+  setTraitWeight,
+  propagateTypeWeight,
+} from './catalog/editCatalog.js';
+export {
+  addEspece,
+  renameEspece,
+  removeEspece,
+  setEspeceParam,
+  addGenre,
+  renameGenre,
+  removeGenre,
+  validateEspece,
+} from './species/editEspeces.js';
 export { defaultParameters, statA } from './params/parameters.js';
-export type { Parameters } from './params/parameters.js';
+export type { Parameters, ResiliencePatch, ResilienceOverrides } from './params/parameters.js';
+export {
+  resolveResilience,
+  setResiliencePatch,
+  clearResiliencePatch,
+  propagateResilienceType,
+  validateResiliencePatch,
+  clampPct,
+} from './params/resolveResilience.js';
+export type { EffectiveResilience, ResilienceScope } from './params/resolveResilience.js';
+export { resolveWeight } from './params/resolveWeight.js';
 export { generateInitialPopulation } from './genesis/genesis.js';
 export { generateName, NAME_LIST_SIZES } from './genesis/names.js';
 export {

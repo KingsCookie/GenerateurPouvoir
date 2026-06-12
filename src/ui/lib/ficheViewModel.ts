@@ -50,6 +50,19 @@ function labelIndex(catalog: Catalog): Map<string, string> {
   return idx;
 }
 
+/**
+ * Libellé de repli pour un trait **supprimé du catalogue** (FR / SC-006) : libellé connu si présent,
+ * sinon le **slug** lisible extrait de l'id (`Element:feu-0` → « feu »). Garantit qu'aucun individu
+ * existant n'est cassé par une suppression de catalogue (effet futur seulement).
+ */
+export function traitLabelOf(idx: Map<string, string>, traitId: string): string {
+  const known = idx.get(traitId);
+  if (known !== undefined) return known;
+  const slugPart = traitId.includes(':') ? traitId.slice(traitId.indexOf(':') + 1) : traitId;
+  const human = slugPart.replace(/-\d+$/, '').replace(/-/g, ' ').trim();
+  return human.length > 0 ? human : traitId;
+}
+
 /** Résumé pour une ligne de liste : nom, date, âge, libellés de pouvoir(s). */
 export function buildListRow(person: Personne, catalog: Catalog, currentYear: number) {
   return {
@@ -68,7 +81,7 @@ export function buildFicheView(person: Personne, catalog: Catalog, currentYear: 
 
   const toView = (t: { traitId: string; resilience: number }): TraitView => ({
     traitId: t.traitId,
-    label: idx.get(t.traitId) ?? t.traitId,
+    label: traitLabelOf(idx, t.traitId),
     resilience: t.resilience,
   });
 
@@ -83,7 +96,7 @@ export function buildFicheView(person: Personne, catalog: Catalog, currentYear: 
     maitrise: p.maitrise,
     traits: p.traitIds.map((id) => ({
       traitId: id,
-      label: idx.get(id) ?? id,
+      label: traitLabelOf(idx, id),
       resilience: resilById.get(id) ?? 0,
     })),
   }));

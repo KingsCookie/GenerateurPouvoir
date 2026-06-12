@@ -7,19 +7,20 @@
     arbreToFiche,
     population,
     currentYear,
-    getCatalog,
+    catalog,
   } from '../stores/appState.js';
   import { buildGenealogyTree } from '../../core/index.js';
   import GenealogyTree from '../components/GenealogyTree.svelte';
   import TreeLegend from '../components/TreeLegend.svelte';
 
-  const catalog = getCatalog();
-
   $: byId = new Map($population.map((p) => [p.id, p]));
   // Page dédiée : profondeur N réglable (≥ 1, sans plafond) ; cases nom + âge + pouvoirs (FR-003b).
   $: tree =
     $treeRootId != null
-      ? buildGenealogyTree($treeRootId, byId, $treeDepth, { currentYear: $currentYear, catalog })
+      ? buildGenealogyTree($treeRootId, byId, $treeDepth, {
+          currentYear: $currentYear,
+          catalog: $catalog,
+        })
       : null;
   $: centre = $treeRootId != null ? (byId.get($treeRootId) ?? null) : null;
 </script>

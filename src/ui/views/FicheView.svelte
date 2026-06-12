@@ -4,7 +4,7 @@
     currentYear,
     population,
     couples,
-    getCatalog,
+    catalog,
     backToList,
     killPerson,
     setCoupleReproPct,
@@ -18,13 +18,16 @@
   import TraitModeSelector from '../components/TraitModeSelector.svelte';
   import TreeLegend from '../components/TreeLegend.svelte';
 
-  const catalog = getCatalog();
-  $: fiche = $selectedPerson ? buildFicheView($selectedPerson, catalog, $currentYear) : null;
+  // Réactif au catalogue éditable (Feature 5) : un trait renommé/supprimé se reflète aussitôt.
+  $: fiche = $selectedPerson ? buildFicheView($selectedPerson, $catalog, $currentYear) : null;
 
   // Arbre de la fiche : profondeur FIXE 2 (FR-002a), cases nom + pouvoirs (showAge masqué, FR-003b).
   $: byId = new Map($population.map((p) => [p.id, p]));
   $: tree = $selectedPerson
-    ? buildGenealogyTree($selectedPerson.id, byId, 2, { currentYear: $currentYear, catalog })
+    ? buildGenealogyTree($selectedPerson.id, byId, 2, {
+        currentYear: $currentYear,
+        catalog: $catalog,
+      })
     : null;
 
   // Couple actuel de l'individu (réactif sur la liste des couples).

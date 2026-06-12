@@ -1,6 +1,9 @@
 <script lang="ts">
   import { parameters, regenerateSeed, setParam, generate } from '../stores/appState.js';
-  import { statA, type Parameters } from '../../core/index.js';
+  import { statA, POWER_TEMPLATES, type Parameters, type PowerTemplate } from '../../core/index.js';
+  import TraitCatalogEditor from '../components/TraitCatalogEditor.svelte';
+  import SpeciesEditor from '../components/SpeciesEditor.svelte';
+  import ResilienceOverrides from '../components/ResilienceOverrides.svelte';
 
   // Clés numériques éditables des paramètres (toutes sauf A, calculée).
   type NumKey = {
@@ -14,8 +17,23 @@
     const v = Number((e.target as HTMLInputElement).value);
     setParam(key, Number.isFinite(v) ? v : 0);
   }
-  function onBool(key: 'genomeMalusEnabled', e: Event) {
+  function onBool(key: 'genomeMalusEnabled' | 'consanguinityAllowed', e: Event) {
     setParam(key, (e.target as HTMLInputElement).checked);
+  }
+
+  // Libellés des gabarits de pouvoir (§6.1) pour les pondérations.
+  const TEMPLATE_LABELS: Record<PowerTemplate, string> = {
+    AE: 'AE — Action + Élément',
+    PE: 'PE — Partie + État',
+    PA: 'PA — Partie + Ajout',
+    PR: 'PR — Partie + Remplacement',
+  };
+  function onTemplateWeight(t: PowerTemplate, e: Event) {
+    const v = Number((e.target as HTMLInputElement).value);
+    setParam('templateWeights', {
+      ...$parameters.templateWeights,
+      [t]: Number.isFinite(v) ? Math.max(0, v) : 0,
+    });
   }
 
   // A = 100 − 2·B − C (FR-030) : affichée en lecture seule.
@@ -315,6 +333,67 @@
         />
       </div>
     </div>
+  </fieldset>
+
+  <!-- §9.4 — Espèces & reproduction (Feature 5) -->
+  <fieldset>
+    <legend>Espèces &amp; reproduction</legend>
+    <p class="desc">
+      Ajoutez/éditez des espèces, leurs genres (« Tout » toujours présent) et leurs paramètres de
+      reproduction ; la courbe se met à jour en direct.
+    </p>
+
+    <label class="check">
+      <input
+        type="checkbox"
+        checked={$parameters.consanguinityAllowed}
+        on:change={(e) => onBool('consanguinityAllowed', e)}
+      />
+      <span>
+        Autoriser la consanguinité
+        <span class="desc inline">
+          (si décochée — défaut — l'appariement entre proches est interdit, §6.6.1)
+        </span>
+      </span>
+    </label>
+
+    <SpeciesEditor />
+  </fieldset>
+
+  <!-- §9.1 — Catalogues de traits (Feature 5) -->
+  <fieldset>
+    <legend>Catalogues de traits</legend>
+    <TraitCatalogEditor />
+  </fieldset>
+
+  <!-- §9.1 — Pondérations des gabarits de pouvoir (Feature 5) -->
+  <fieldset>
+    <legend>Pondérations des gabarits</legend>
+    <p class="desc">
+      Poids relatif de chaque gabarit lors d'une mutation forte / d'un pouvoir de genèse (les poids
+      par type et par trait s'éditent dans « Catalogues de traits »).
+    </p>
+    <div class="grid">
+      {#each POWER_TEMPLATES as t (t)}
+        <div class="field">
+          <label for={`tw-${t}`}>{TEMPLATE_LABELS[t]}</label>
+          <input
+            id={`tw-${t}`}
+            type="number"
+            min="0"
+            step="0.1"
+            value={$parameters.templateWeights[t]}
+            on:input={(e) => onTemplateWeight(t, e)}
+          />
+        </div>
+      {/each}
+    </div>
+  </fieldset>
+
+  <!-- §9.2 — Résilience déclinée global → type → trait (Feature 5) -->
+  <fieldset>
+    <legend>Résilience (global → type → trait)</legend>
+    <ResilienceOverrides />
   </fieldset>
 
   <button class="primary generate" type="button" on:click={generate}>Générer la population</button>

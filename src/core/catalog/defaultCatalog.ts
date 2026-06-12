@@ -169,7 +169,7 @@ const RAW: Record<TraitType, string[]> = {
 
 // Slug stable et déterministe pour l'id de trait (sans dépendre de la casse/accents
 // pour l'unicité fonctionnelle, mais en conservant un identifiant lisible).
-function slug(label: string): string {
+export function slug(label: string): string {
   return label
     .normalize('NFD')
     .replace(/[̀-ͯ]/g, '')
@@ -178,7 +178,12 @@ function slug(label: string): string {
     .replace(/^-+|-+$/g, '');
 }
 
-/** Catalogue par défaut : 6 types, poids 1, ids stables `type:slug`. */
+/**
+ * Catalogue par défaut : 6 types, ids stables `type:slug-i`. Les traits ne portent **aucune
+ * surcharge de poids** (`weight = null`) ⇒ ils héritent du poids de leur type
+ * (`traitTypeWeights`, défaut 1 — Feature 5). Régler le poids d'un type biaise donc bien tous
+ * ses traits non surchargés.
+ */
 export function defaultCatalog(): Catalog {
   const byType = {} as Record<TraitType, Trait[]>;
   for (const type of TRAIT_TYPES) {
@@ -186,7 +191,7 @@ export function defaultCatalog(): Catalog {
       id: `${type}:${slug(label)}-${i}`,
       type,
       label,
-      weight: 1,
+      weight: null,
     }));
   }
   return { byType };

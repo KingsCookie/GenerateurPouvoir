@@ -1,6 +1,7 @@
 import type { Rng } from '../rng/rng.js';
 import type { Catalog } from '../model/trait.js';
 import type { Parameters } from '../params/parameters.js';
+import { resolveResilience } from '../params/resolveResilience.js';
 import type { Personne } from '../model/personne.js';
 import { GENRE_TOUT } from '../model/espece.js';
 import { defaultEspece } from '../catalog/defaultCatalog.js';
@@ -57,11 +58,15 @@ export function generateInitialPopulation(
       if (power) {
         personne.pouvoirs = [power];
         personne.adn = {
-          traits: power.traitIds.map((traitId) => ({
-            traitId,
-            active: true,
-            resilience: params.initialResilience,
-          })),
+          traits: power.traitIds.map((traitId) => {
+            // Résilience initiale **effective** (global → type → trait), plafonnée (§9.2).
+            const eff = resolveResilience(params, traitId);
+            return {
+              traitId,
+              active: true,
+              resilience: Math.min(eff.initial, eff.max),
+            };
+          }),
         };
       }
     }

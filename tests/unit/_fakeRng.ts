@@ -26,6 +26,7 @@ export function fakeRng(opts: FakeOpts = {}): Rng {
     chance: () => need(chances, 'chances'),
     pick: <T>(items: readonly T[]) => items[0],
     pickWeighted: <T>(items: readonly T[]) => items[0],
+    pickWeightedOrNull: <T>(items: readonly T[]) => (items.length > 0 ? items[0] : null),
     shuffle: <T>(items: readonly T[]) => items.slice(), // identité
     getState: () => ['0', '0', '0', '0'],
   };

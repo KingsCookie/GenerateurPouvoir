@@ -97,4 +97,29 @@ describe('RNG déterministe (xoshiro256** / SplitMix64)', () => {
       expect(r3.pickWeighted(weighted, (t) => t.w).k).toBe('y');
     }
   });
+
+  it('pickWeightedOrNull : renvoie null si tous les poids sont nuls (sans exception, FR-052b)', () => {
+    const r = createRng(SEED);
+    const items = [
+      { k: 'a', w: 0 },
+      { k: 'b', w: 0 },
+    ];
+    expect(r.pickWeightedOrNull(items, (t) => t.w)).toBeNull();
+  });
+
+  it('pickWeightedOrNull : tire un élément de poids > 0 comme pickWeighted', () => {
+    const items = [
+      { k: 'x', w: 0 },
+      { k: 'y', w: 10 },
+    ];
+    const r = createRng(SEED);
+    for (let i = 0; i < 100; i++) {
+      expect(r.pickWeightedOrNull(items, (t) => t.w)?.k).toBe('y');
+    }
+  });
+
+  it('pickWeightedOrNull : liste vide ⇒ null', () => {
+    const r = createRng(SEED);
+    expect(r.pickWeightedOrNull([], () => 1)).toBeNull();
+  });
 });

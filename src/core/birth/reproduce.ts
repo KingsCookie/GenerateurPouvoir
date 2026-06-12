@@ -2,6 +2,8 @@ import type { Rng } from '../rng/rng.js';
 import type { Catalog, Trait } from '../model/trait.js';
 import { TRAIT_TYPES } from '../model/traitType.js';
 import type { Parameters } from '../params/parameters.js';
+import { resolveResilience } from '../params/resolveResilience.js';
+import { resolveWeight } from '../params/resolveWeight.js';
 import type { Personne } from '../model/personne.js';
 import type { ADN, ResilientTrait } from '../model/adn.js';
 import type { Pouvoir } from '../model/pouvoir.js';
@@ -101,20 +103,27 @@ export function reproduce(
 function applyWeakMutation(adn: ADN, catalog: Catalog, params: Parameters, rng: Rng): ADN {
   const traits = adn.traits.map((t) => ({ ...t }));
 
-  // Gain d'un trait.
+  // Gain d'un trait. Poids effectif (surcharge ?? poids du type) ; tirage **tolérant** : si aucun
+  // candidat tirable (tous poids 0) ⇒ **no-op** (pas de gain, FR-052b), jamais d'exception.
   if (rng.chance(params.weakMutationGainPct)) {
     const flat = flattenCatalog(catalog);
     if (flat.length > 0) {
-      const gained = rng.pickWeighted(flat, (t) => t.weight);
-      const existing = traits.find((t) => t.traitId === gained.id);
-      if (existing) {
-        existing.active = true;
-        existing.resilience = Math.min(
-          existing.resilience + params.bonusPoints,
-          params.resilienceMax,
-        );
-      } else {
-        traits.push({ traitId: gained.id, active: true, resilience: params.initialResilience });
+      const gained = rng.pickWeightedOrNull(flat, (t) =>
+        resolveWeight(t.id, t.weight, params.traitTypeWeights),
+      );
+      if (gained !== null) {
+        const eff = resolveResilience(params, gained.id);
+        const existing = traits.find((t) => t.traitId === gained.id);
+        if (existing) {
+          existing.active = true;
+          existing.resilience = Math.min(existing.resilience + params.bonusPoints, eff.max);
+        } else {
+          traits.push({
+            traitId: gained.id,
+            active: true,
+            resilience: Math.min(eff.initial, eff.max),
+          });
+        }
       }
     }
   }
@@ -140,20 +149,23 @@ function inheritInactiveADN(parents: Personne[], params: Parameters): ADN {
 
   const traits: ResilientTrait[] = [];
   for (const traitId of [...maxResById.keys()].sort()) {
+    // Plafond/seuil **effectifs** par trait (global → type → trait, §9.2).
+    const eff = resolveResilience(params, traitId);
     let resilience = maxResById.get(traitId)!;
     if (params.genomeMalusEnabled) resilience -= params.malusPoints;
-    resilience = Math.min(Math.max(resilience, 0), params.resilienceMax);
-    if (resilience < params.disappearThreshold) continue;
+    resilience = Math.min(Math.max(resilience, 0), eff.max);
+    if (resilience < eff.disappearThreshold) continue;
     traits.push({ traitId, active: false, resilience });
   }
   return { traits };
 }
 
-/** Active (ou ajoute) les traits d'un pouvoir gabarit dans l'ADN, à la résilience initiale. */
+/** Active (ou ajoute) les traits d'un pouvoir gabarit dans l'ADN, à la résilience initiale effective. */
 function activateTraits(adn: ADN, traitIds: string[], params: Parameters): ADN {
   const byId = new Map(adn.traits.map((t) => [t.traitId, { ...t }]));
   for (const traitId of traitIds) {
-    byId.set(traitId, { traitId, active: true, resilience: params.initialResilience });
+    const eff = resolveResilience(params, traitId);
+    byId.set(traitId, { traitId, active: true, resilience: Math.min(eff.initial, eff.max) });
   }
   return { traits: [...byId.values()] };
 }
