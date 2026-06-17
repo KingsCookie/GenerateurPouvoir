@@ -73,6 +73,7 @@ boutons UI. Population jusqu'à ~1 000+ individus dans `data`/`full`.
 |-------|----------|
 | **Sous-états typés** | `ConfigState { kind:'config', formatVersion, parameters, catalog, especes }` et `DataState { kind:'data', formatVersion, population, currentYear, couples, rngState }`. `FullState` = `AppState` actuel (`kind:'full'`). |
 | **Extraction pure** | `extractConfig(state): ConfigState` et `extractData(state): DataState` (sélection de champs, immutables). |
+| **Fusion pure (non destructive)** | `mergeConfig(state, config): AppState` et `mergeData(state, data): AppState` portent la **sémantique des clarifications** (config conserve les données ; data conserve la config — INV-K7) **dans le cœur** ⇒ testables à seed fixe. L'UI `applyConfig`/`applyData` ne fait que **déléguer** + maj des stores (et restaurer le RNG pour `data`). |
 | **Sérialiseurs** | `serializeConfig` / `serializeData` / `serializeFull` (= `serializeState`, conservé). Réutilisent la **canonicalisation** existante (clés triées ⇒ fichiers stables, SC-001). |
 | **Détection à l'import** | `parseImport(json): Result<ParsedImport>` parse le JSON, lit `kind`, valide la structure **par type** + la version, et renvoie une **union étiquetée** `{kind:'config'\|'data'\|'full', …}`. `deserializeState` (full) conservé pour la rétro-compat des tests. |
 | **Application partielle** | Côté store : `config` ⇒ remplace `parameters`/`catalog`/`especes`, **conserve** population/couples/année/RNG (Clarification) ; `data` ⇒ remplace population/couples/année + **restaure l'état RNG**, **conserve** la config ; `full` ⇒ remplace tout (comportement actuel). |
@@ -101,8 +102,9 @@ specs/006-persistance-compl-partage/
 ```text
 src/core/state/
 └── serialize.ts          # MODIFIÉ — types ConfigState/DataState/ParsedImport ;
-                          #   extractConfig/extractData ; serializeConfig/serializeData
-                          #   (serializeFull = serializeState, conservé) ; parseImport (détection kind)
+                          #   extractConfig/extractData ; mergeConfig/mergeData (fusion pure, INV-K7) ;
+                          #   serializeConfig/serializeData (serializeFull = serializeState, conservé) ;
+                          #   parseImport (détection kind)
 
 src/core/
 └── index.ts              # MODIFIÉ — ré-exports des nouveaux types & fonctions

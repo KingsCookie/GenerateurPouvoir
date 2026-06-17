@@ -19,7 +19,7 @@ type ParsedImport =
 type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 ```
 
-## 2. Extraction (pure)
+## 2. Extraction & fusion (pure)
 
 ```ts
 // Sélectionne la configuration depuis un état complet (immutables).
@@ -27,10 +27,26 @@ function extractConfig(state: AppState): ConfigState;
 
 // Sélectionne les données générées depuis un état complet (immutables).
 function extractData(state: AppState): DataState;
+
+// Fusionne une CONFIG dans un état : remplace parameters/catalog/especes, CONSERVE les données
+// (population/currentYear/couples/rngState). Renvoie un NOUVEL AppState. (Clarification 2026-06-17)
+function mergeConfig(state: AppState, config: ConfigState): AppState;
+
+// Fusionne des DONNÉES dans un état : remplace population/currentYear/couples/rngState, CONSERVE la
+// config (parameters/catalog/especes). Renvoie un NOUVEL AppState.
+function mergeData(state: AppState, data: DataState): AppState;
 ```
 
-**Contrat** : ne mutent pas `state` ; `extractConfig` ne lit que parameters/catalog/especes,
-`extractData` que population/currentYear/couples/rngState (INV-K4).
+**Contrat** :
+- `extract*` ne mutent pas `state` ; `extractConfig` ne lit que parameters/catalog/especes,
+  `extractData` que population/currentYear/couples/rngState (INV-K4).
+- `mergeConfig`/`mergeData` sont **purs** (nouvel objet) et **non destructifs** (INV-K7) :
+  `mergeConfig` ne touche **aucun** champ de données ; `mergeData` ne touche **aucun** champ de
+  config. Ce sont eux qui portent la sémantique des clarifications 2026-06-17 et qui sont
+  **testables à seed fixe** (au lieu de la logique de store UI).
+- L'UI : `applyConfig(c)` = `state = mergeConfig(state, c)` puis maj des stores ; `applyData(d)` =
+  `state = mergeData(state, d)` puis maj des stores **et** `engineRng = createRngFromState(d.rngState)`
+  (restauration RNG, INV-K8).
 
 ## 3. Sérialisation (pure, canonique)
 
@@ -74,7 +90,8 @@ function parseImport(json: string): Result<ParsedImport>;
 > Pour mémoire ; ces points **ne sont pas** dans le cœur (Principe IV).
 
 - `buildConfigJson()` / `buildDataJson()` / `buildFullJson()` : `serialize*` sur `snapshot()`.
-- `applyConfig` / `applyData` / dispatcher `applyImport` : appliquent `ParsedImport` aux stores,
-  **partiellement** (INV-K7) et **sans** toucher l'état en cas d'échec (INV-K9).
+- `applyConfig` / `applyData` / dispatcher `applyImport` : **délèguent la fusion** aux helpers purs
+  `mergeConfig`/`mergeData` (cœur, INV-K7), puis mettent à jour les stores ; **sans** toucher l'état
+  en cas d'échec (INV-K9). La logique non-destructive n'est **pas** dupliquée dans l'UI.
 - Génération du **nom de fichier horodaté** (`royalcookie-<kind>-YYYYMMDD-HHMMSS.json`) : utilise
   l'horloge ⇒ **UI uniquement**.

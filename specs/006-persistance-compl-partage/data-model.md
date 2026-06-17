@@ -57,9 +57,13 @@ export type ParsedImport =
   défaut, `currentYear → birthYear`.
 - **INV-K6 (round-trip)** : `parseImport(serializeFull(s))` redonne un état **égal** à `s` ; idem
   pour `config`/`data` sur leurs champs respectifs (déterminisme + canonicalisation).
-- **INV-K7 (application partielle — non destructive)** :
-  - appliquer un `config` **ne modifie pas** `population`/`couples`/`currentYear`/`rngState` ;
-  - appliquer un `data` **ne modifie pas** `parameters`/`catalog`/`especes`.
+- **INV-K7 (application partielle — non destructive)** : portée par les helpers **purs**
+  `mergeConfig(state, config)` / `mergeData(state, data)` (cœur, **testables à seed fixe**) :
+  - `mergeConfig` remplace `parameters`/`catalog`/`especes` et **ne modifie pas**
+    `population`/`couples`/`currentYear`/`rngState` (Clarification 2026-06-17) ;
+  - `mergeData` remplace `population`/`couples`/`currentYear`/`rngState` et **ne modifie pas**
+    `parameters`/`catalog`/`especes`.
+  - L'UI ne duplique pas cette logique : `applyConfig`/`applyData` appellent ces helpers.
 - **INV-K8 (déterminisme de reprise)** : après application d'un `data`/`full`, l'état RNG restauré +
   la seed garantissent une suite de tirages **identique** (continuation au tirage près).
 - **INV-K9 (rejet sûr)** : tout import invalide (JSON illisible, `kind` inconnu, version trop
@@ -71,7 +75,8 @@ export type ParsedImport =
 
 - `buildConfigJson()` / `buildDataJson()` / `buildFullJson()` : sérialisent l'instantané courant
   (`snapshot()`) via les extracteurs/sérialiseurs purs.
-- `applyConfig(c)` / `applyData(d)` : appliquent un sous-état au store (INV-K7).
+- `applyConfig(c)` / `applyData(d)` : **délèguent** à `mergeConfig`/`mergeData` (cœur, INV-K7) puis
+  mettent à jour les stores ; `applyData` restaure en plus `engineRng = createRngFromState(d.rngState)`.
 - `applyImport(json)` : **dispatcher** — `parseImport` puis `applyConfig`/`applyData`/(full) ;
   renseigne `importError` en cas d'échec, **sans** toucher l'état courant (INV-K9).
 - Nom de fichier horodaté généré côté UI (`royalcookie-<kind>-YYYYMMDD-HHMMSS.json`).
