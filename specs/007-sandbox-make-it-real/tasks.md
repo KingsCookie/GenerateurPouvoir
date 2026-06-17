@@ -109,14 +109,14 @@ quickstart US3).
 ### Tests cœur (écrits AVANT — Principe V)
 
 - [ ] T013 [US3] `tests/unit/history.test.ts` (nouveau) : `generateInitialPopulation` émet un `birth{year:birthYear}` par individu ; `tick` émet `birth`/`couple`/`divorce` à `currentYear` ; `kill` émet `death` à `currentYear`. Seed fixe.
-- [ ] T014 [US3] `tests/unit/reconstruct.test.ts` (nouveau) : `reconstructAtYear(state, Y)` — individus nés ≤ Y seulement ; un individu mort en D apparaît **vivant** pour Y < D et **décédé** pour Y ≥ D ; couple formé en F absent pour Y < F, présent si non dissous ≤ Y ; repli sans journal (INV-S8) ; **pure** (ne mute pas l'entrée, INV-S9). Seed fixe.
+- [ ] T014 [US3] `tests/unit/reconstruct.test.ts` (nouveau) : `reconstructAtYear(state, Y)` — individus nés ≤ Y seulement ; un individu mort en D apparaît **vivant** pour Y < D et **décédé** pour Y ≥ D ; couple formé en F absent pour Y < F, présent si non dissous ≤ Y ; **couple dont un membre meurt en D : actif pour Y < D, dissous (conjoints « ex ») pour Y ≥ D** (le décès dissout le couple sans `divorce` — C1) ; repli sans journal (INV-S8) ; **pure** (ne mute pas l'entrée, INV-S9). Seed fixe.
 
 ### Implémentation cœur (pur)
 
 - [ ] T015 [US3] `src/core/genesis/genesis.ts` : émettre les événements `birth` (année de genèse) pour le batch initial ; renvoyer/peupler `history`. Dépend de T013.
 - [ ] T016 [US3] `src/core/time/tick.ts` : émettre `birth` (naissances), `couple` (formations), `divorce` (dissolutions) à `currentYear`, en étendant `history`. Dépend de T013.
 - [ ] T017 [US3] `src/core/life/death.ts` : émettre `death{year:currentYear}` ; étendre `history`. Dépend de T013.
-- [ ] T018 [US3] `src/core/sandbox/reconstruct.ts` (nouveau) : `reconstructAtYear(state, year): AppState` (projection pure depuis `history` ; repli `yearOf(dateNaissance)` sans journal). Ré-export. Dépend de T014.
+- [ ] T018 [US3] `src/core/sandbox/reconstruct.ts` (nouveau) : `reconstructAtYear(state, year): AppState` (projection pure depuis `history` ; un couple est actif à `year` seulement si formé ≤ year, non `divorce ≤ year`, **et aucun membre mort ≤ year** — C1, conjoints « ex » sinon ; repli `yearOf(dateNaissance)` sans journal). Ré-export. Dépend de T014.
 
 ### Implémentation UI
 

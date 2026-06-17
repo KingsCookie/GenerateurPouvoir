@@ -66,9 +66,11 @@ function reconstructAtYear(state: AppState, year: number): AppState;
 ```
 
 **Contrat** : renvoie un `AppState` où `population`/`couples`/`conjoints`/`enfants` reflètent l'état **à
-`year`** (INV-S9) : naissances ≤ year, décès ≤ year ⇒ décédé, couples formés ≤ year non dissous ≤ year.
-`history` n'est pas altéré. Données sans journal ⇒ repli sur `yearOf(dateNaissance)` pour la présence,
-état courant pour le reste (INV-S8). **Pure**, sans RNG.
+`year`** (INV-S9) : naissances ≤ year, décès ≤ year ⇒ décédé, couples formés ≤ year non dissous ≤ year
+**et dont aucun membre n'est mort ≤ year** (un décès dissout le couple — §6.7 — sans émettre de
+`divorce` ; les conjoints concernés apparaissent alors « ex »). `history` n'est pas altéré. Données sans
+journal ⇒ repli sur `yearOf(dateNaissance)` pour la présence, état courant pour le reste (INV-S8).
+**Pure**, sans RNG.
 
 ## 4. Invariants transverses
 

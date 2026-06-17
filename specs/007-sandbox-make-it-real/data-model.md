@@ -71,8 +71,9 @@ export type PersonPatch = Partial<PersonDraft>;
   reconstruction d'années passées **dégrade** alors (l'état courant reste exact).
 - **INV-S9 (reconstruction)** : `reconstructAtYear(state, Y)` est **pure** et renvoie un `AppState` projeté :
   individus avec `birth.year ≤ Y` (vivant ⇔ aucun `death.year ≤ Y`), couples `couple.year ≤ Y` sans
-  `divorce.year ≤ Y`, `enfants`/`conjoints` filtrés sur les individus/relations visibles à `Y`. Ne mute pas
-  l'entrée ; n'altère pas `history`.
+  `divorce.year ≤ Y` **et dont aucun membre n'a `death.year ≤ Y`** (un décès dissout le couple — §6.7 —
+  sans émettre de `divorce`), `enfants`/`conjoints` filtrés sur les individus/relations visibles à `Y`. Ne
+  mute pas l'entrée ; n'altère pas `history`.
 - **INV-S10 (déterminisme)** : à seed fixe + mêmes actions sandbox, l'état résultant (et après « make it
   real ») est strictement reproductible (Principe I).
 - **INV-S11 (année)** : `selectedYear` est borné à `[birthYear, currentYear]` ; un enfant de reproduction
@@ -84,7 +85,9 @@ export type PersonPatch = Partial<PersonDraft>;
 - **Individu visible** ⇔ il existe un `birth(year ≤ Y)` pour lui (les individus sans événement `birth` —
   données héritées sans journal — sont considérés présents si `yearOf(dateNaissance) ≤ Y`, repli INV-S8).
 - **Vivant à `Y`** ⇔ aucun `death(year ≤ Y)`. Sinon décédé (avec `raisonDeces` courant).
-- **Couple actif à `Y`** ⇔ `couple(year ≤ Y)` sans `divorce(year ≤ Y)` pour ce `coupleId`.
+- **Couple actif à `Y`** ⇔ `couple(year ≤ Y)`, **sans** `divorce(year ≤ Y)` pour ce `coupleId`, **et**
+  aucun de ses membres n'a `death(year ≤ Y)` (le décès d'un membre dissout le couple, §6.7 — `kill`
+  n'émet pas de `divorce`). Les conjoints d'un couple ainsi dissous par décès apparaissent **« ex »** à `Y`.
 - **`enfants` d'un individu à `Y`** = enfants dont l'événement `birth.year ≤ Y`.
 - **`conjoints` à `Y`** : reconstruits depuis les événements `couple`/`divorce` (actuel si couple actif à
   `Y`, ex si dissous avant `Y`).
