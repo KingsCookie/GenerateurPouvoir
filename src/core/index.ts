@@ -64,11 +64,19 @@ export { kill } from './life/death.js';
 export type { KillResult } from './life/death.js';
 export {
   serializeState,
+  serializeFull,
+  serializeConfig,
+  serializeData,
   deserializeState,
+  parseImport,
+  extractConfig,
+  extractData,
+  mergeConfig,
+  mergeData,
   createInitialState,
   FORMAT_VERSION,
 } from './state/serialize.js';
-export type { AppState, Result } from './state/serialize.js';
+export type { AppState, ConfigState, DataState, ParsedImport, Result } from './state/serialize.js';
 
 // Généalogie & exploration (Feature 4 : arbre généalogique, filtres, dernière génération).
 export { buildGenealogyTree, filterPopulation, lastGeneration } from './genealogy/index.js';

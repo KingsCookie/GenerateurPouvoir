@@ -9,6 +9,7 @@ import { defaultCatalog, defaultEspeces } from '../catalog/defaultCatalog.js';
 import { createRng } from '../rng/rng.js';
 
 // v1 (Features 1-2) → v2 (Feature 3 : currentYear, couples, état du RNG). Compatibilité ascendante.
+// Constante UNIQUE partagée par les trois types de fichiers (config/data/full) — Feature 6.
 export const FORMAT_VERSION = 2;
 
 export interface AppState {
@@ -22,6 +23,35 @@ export interface AppState {
   couples: Couple[]; // couples actuels
   rngState: string[]; // état sérialisé du RNG (continuation déterministe, FR-021)
 }
+
+// --- Sous-états typés (Feature 6) : config (réglages) / data (monde généré). ---
+
+/** Configuration seule : ce qui définit *comment* la simulation se comporte (seed incluse). */
+export interface ConfigState {
+  formatVersion: number;
+  kind: 'config';
+  parameters: Parameters;
+  catalog: Catalog;
+  especes: Espece[];
+}
+
+/** Données générées seules : ce qui a été *produit* (avec la position exacte du RNG). */
+export interface DataState {
+  formatVersion: number;
+  kind: 'data';
+  population: Personne[];
+  currentYear: number;
+  couples: Couple[];
+  rngState: string[]; // position exacte du RNG (reprise au tirage près)
+}
+
+// `full` reste AppState (kind:'full').
+
+/** Union étiquetée renvoyée par la détection automatique à l'import (Feature 6). */
+export type ParsedImport =
+  | { kind: 'config'; config: ConfigState }
+  | { kind: 'data'; data: DataState }
+  | { kind: 'full'; state: AppState };
 
 export type Result<T> = { ok: true; value: T } | { ok: false; error: string };
 
@@ -55,16 +85,143 @@ function canonicalize(value: unknown): unknown {
   return value;
 }
 
-/** Sérialise l'état en JSON déterministe (kind:"full", formatVersion). */
-export function serializeState(state: AppState): string {
-  return JSON.stringify(canonicalize(state), null, 2);
-}
-
 function isObject(v: unknown): v is Record<string, unknown> {
   return typeof v === 'object' && v !== null && !Array.isArray(v);
 }
 
-/** Désérialise et valide (kind/version/structure) ; sinon Err sans altérer l'état courant. */
+// --- Extraction pure des sous-états (Feature 6, INV-K4 : ne mutent pas `state`). ---
+
+/** Sélectionne la configuration depuis un état complet (seed + catalogues + espèces). */
+export function extractConfig(state: AppState): ConfigState {
+  return {
+    formatVersion: FORMAT_VERSION,
+    kind: 'config',
+    parameters: state.parameters,
+    catalog: state.catalog,
+    especes: state.especes,
+  };
+}
+
+/** Sélectionne les données générées depuis un état complet (avec la position exacte du RNG). */
+export function extractData(state: AppState): DataState {
+  return {
+    formatVersion: FORMAT_VERSION,
+    kind: 'data',
+    population: state.population,
+    currentYear: state.currentYear,
+    couples: state.couples,
+    rngState: state.rngState,
+  };
+}
+
+// --- Fusion pure & non destructive (Feature 6, INV-K7 : porte la sémantique des clarifications). ---
+
+/**
+ * Fusionne une CONFIG dans un état : remplace parameters/catalog/especes et **conserve** les
+ * données (population/currentYear/couples/rngState). Renvoie un NOUVEL AppState, ne mute pas
+ * l'entrée (Clarification 2026-06-17 : un import de config conserve la population).
+ */
+export function mergeConfig(state: AppState, config: ConfigState): AppState {
+  return {
+    ...state,
+    parameters: config.parameters,
+    catalog: config.catalog,
+    especes: config.especes,
+  };
+}
+
+/**
+ * Fusionne des DONNÉES dans un état : remplace population/currentYear/couples/rngState et
+ * **conserve** la config (parameters/catalog/especes). Renvoie un NOUVEL AppState, ne mute pas
+ * l'entrée. Si `data.rngState` est absent/invalide (fichier antérieur), reconstruit l'état RNG
+ * à partir de la **seed de la config courante** (rétro-compatibilité, INV-K5).
+ */
+export function mergeData(state: AppState, data: DataState): AppState {
+  const rngState =
+    Array.isArray(data.rngState) && data.rngState.length === 4
+      ? data.rngState
+      : createRng(BigInt(state.parameters.seed)).getState();
+  return {
+    ...state,
+    population: data.population,
+    currentYear: data.currentYear,
+    couples: data.couples,
+    rngState,
+  };
+}
+
+// --- Sérialisation par type (Feature 6) — réutilise la canonicalisation partagée. ---
+
+/** Sérialise la CONFIG seule en JSON canonique (kind:"config"). */
+export function serializeConfig(state: AppState): string {
+  return JSON.stringify(canonicalize(extractConfig(state)), null, 2);
+}
+
+/** Sérialise les DONNÉES seules en JSON canonique (kind:"data", inclut rngState). */
+export function serializeData(state: AppState): string {
+  return JSON.stringify(canonicalize(extractData(state)), null, 2);
+}
+
+/** Sérialise l'état complet en JSON déterministe (kind:"full", formatVersion). */
+export function serializeState(state: AppState): string {
+  return JSON.stringify(canonicalize(state), null, 2);
+}
+
+/** Alias explicite du type `full` (= serializeState, conservé pour la symétrie de l'API). */
+export const serializeFull = serializeState;
+
+// --- Défauts de rétro-compatibilité (INV-K5) — mutent l'objet fourni (déjà cloné par JSON.parse). ---
+
+/** Défaut `resilienceOverrides` (Feature 5) : un fichier antérieur ne le contient pas. */
+function defaultResilience(parameters: Parameters): void {
+  const params = parameters as Parameters & { resilienceOverrides?: ResilienceOverrides };
+  if (!isObject(params.resilienceOverrides)) {
+    params.resilienceOverrides = { byType: {}, byTrait: {} };
+  } else {
+    if (!isObject(params.resilienceOverrides.byType)) params.resilienceOverrides.byType = {};
+    if (!isObject(params.resilienceOverrides.byTrait)) params.resilienceOverrides.byTrait = {};
+  }
+}
+
+/** Tolère un `Trait.weight` absent/undefined (⇒ `null` = hérite du poids du type, §9.1). */
+function defaultTraitWeights(catalog: Catalog): void {
+  for (const type of TRAIT_TYPES) {
+    const list = catalog.byType?.[type];
+    if (Array.isArray(list)) {
+      for (const t of list) if (t.weight === undefined) t.weight = null;
+    }
+  }
+}
+
+// --- Validation par type, mutualisée par deserializeState (full) et parseImport (3 types). ---
+
+/** Valide + défaute la partie CONFIG (parameters/catalog/especes). Renvoie un message ou null. */
+function validateConfigInto(parsed: Record<string, unknown>): string | null {
+  if (!isObject(parsed.parameters) || !isObject(parsed.catalog)) {
+    return 'Structure de la configuration incomplète (parameters/catalog).';
+  }
+  defaultResilience(parsed.parameters as unknown as Parameters);
+  defaultTraitWeights(parsed.catalog as unknown as Catalog);
+  if (!Array.isArray(parsed.especes) || parsed.especes.length === 0) {
+    parsed.especes = defaultEspeces();
+  }
+  return null;
+}
+
+/** Valide + défaute la partie DATA (population/currentYear/couples/rngState). Renvoie un message ou null. */
+function validateDataInto(parsed: Record<string, unknown>, seedFallback: string): string | null {
+  if (!Array.isArray(parsed.population)) {
+    return 'Structure des données incomplète (population).';
+  }
+  if (typeof parsed.currentYear !== 'number') parsed.currentYear = 0;
+  if (!Array.isArray(parsed.couples)) parsed.couples = [];
+  if (!Array.isArray(parsed.rngState) || parsed.rngState.length !== 4) {
+    parsed.rngState = createRng(BigInt(seedFallback)).getState();
+  }
+  return null;
+}
+
+/** Désérialise et valide un fichier `full` ; sinon Err sans altérer l'état courant. */
 export function deserializeState(json: string): Result<AppState> {
   let parsed: unknown;
   try {
@@ -88,47 +245,70 @@ export function deserializeState(json: string): Result<AppState> {
       error: `Version de format non prise en charge (${String(parsed.formatVersion)} ; max ${FORMAT_VERSION}).`,
     };
   }
-  if (
-    !isObject(parsed.parameters) ||
-    !isObject(parsed.catalog) ||
-    !Array.isArray(parsed.population)
-  ) {
-    return { ok: false, error: 'Structure de l’état incomplète (parameters/catalog/population).' };
-  }
+  const configErr = validateConfigInto(parsed);
+  if (configErr) return { ok: false, error: configErr };
 
+  const seed = String((parsed.parameters as Parameters).seed ?? '0');
   // Compatibilité ascendante (INV-11) : un fichier v1 (sans currentYear/couples/rngState) est
   // accepté en complétant des valeurs par défaut sûres.
-  const value = parsed as unknown as AppState;
-  const seed = String((value.parameters as Parameters).seed ?? '0');
-  if (typeof value.currentYear !== 'number') {
-    value.currentYear = (value.parameters as Parameters).birthYear ?? 0;
+  if (typeof parsed.currentYear !== 'number') {
+    parsed.currentYear = (parsed.parameters as Parameters).birthYear ?? 0;
   }
-  if (!Array.isArray(value.couples)) value.couples = [];
-  if (!Array.isArray(value.especes) || value.especes.length === 0) {
-    value.especes = defaultEspeces();
-  }
-  if (!Array.isArray(value.rngState) || value.rngState.length !== 4) {
-    value.rngState = createRng(BigInt(seed)).getState();
+  const dataErr = validateDataInto(parsed, seed);
+  if (dataErr) return { ok: false, error: dataErr };
+
+  return { ok: true, value: parsed as unknown as AppState };
+}
+
+/**
+ * Détecte automatiquement le type d'un fichier importé (`config` | `data` | `full`), valide la
+ * structure du type et la version, défaute les champs récents absents (rétro-compat), et renvoie
+ * l'union étiquetée correspondante. Pure ; n'altère jamais l'état appelant (INV-K9).
+ */
+export function parseImport(json: string): Result<ParsedImport> {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(json);
+  } catch {
+    return { ok: false, error: 'Fichier illisible : JSON invalide.' };
   }
 
-  // Rétro-compatibilité Feature 5 (M1) : un fichier antérieur ne contient pas
-  // `resilienceOverrides` ⇒ on le défaute pour qu'aucune lecture (`resolveResilience`) ne plante.
-  const params = value.parameters as Parameters & { resilienceOverrides?: ResilienceOverrides };
-  if (!isObject(params.resilienceOverrides)) {
-    params.resilienceOverrides = { byType: {}, byTrait: {} };
-  } else {
-    if (!isObject(params.resilienceOverrides.byType)) params.resilienceOverrides.byType = {};
-    if (!isObject(params.resilienceOverrides.byTrait)) params.resilienceOverrides.byTrait = {};
+  if (!isObject(parsed)) {
+    return { ok: false, error: 'Format inattendu : objet attendu.' };
+  }
+  const kind = parsed.kind;
+  if (kind !== 'config' && kind !== 'data' && kind !== 'full') {
+    return {
+      ok: false,
+      error: `Type de fichier non reconnu (kind="${String(kind)}"). Attendu : "config", "data" ou "full".`,
+    };
+  }
+  if (typeof parsed.formatVersion !== 'number' || parsed.formatVersion > FORMAT_VERSION) {
+    return {
+      ok: false,
+      error: `Version de format non prise en charge (${String(parsed.formatVersion)} ; max ${FORMAT_VERSION}).`,
+    };
   }
 
-  // Tolère un `Trait.weight` absent/undefined (⇒ `null` = hérite du poids du type, §9.1).
-  const catalog = value.catalog as Catalog;
-  for (const type of TRAIT_TYPES) {
-    const list = catalog.byType?.[type];
-    if (Array.isArray(list)) {
-      for (const t of list) if (t.weight === undefined) t.weight = null;
-    }
+  if (kind === 'full') {
+    const res = deserializeState(json);
+    return res.ok ? { ok: true, value: { kind: 'full', state: res.value } } : res;
   }
 
-  return { ok: true, value };
+  if (kind === 'config') {
+    const err = validateConfigInto(parsed);
+    if (err) return { ok: false, error: err };
+    return { ok: true, value: { kind: 'config', config: parsed as unknown as ConfigState } };
+  }
+
+  // kind === 'data' : aucune seed dans le fichier ⇒ un rngState absent sera reconstruit à la
+  // fusion (mergeData) depuis la seed de la config courante ; ici on défaute à [] si invalide.
+  const data = parsed as Record<string, unknown>;
+  if (!Array.isArray(data.population)) {
+    return { ok: false, error: 'Structure des données incomplète (population).' };
+  }
+  if (typeof data.currentYear !== 'number') data.currentYear = 0;
+  if (!Array.isArray(data.couples)) data.couples = [];
+  if (!Array.isArray(data.rngState) || data.rngState.length !== 4) data.rngState = [];
+  return { ok: true, value: { kind: 'data', data: parsed as unknown as DataState } };
 }
