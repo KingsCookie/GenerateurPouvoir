@@ -15,6 +15,37 @@ TOUTE MODIFICATION DANS LA SANDBOX EST ISOLÉE ; elle n'affecte la population r�
 > (écran sandbox), §6.6 (couples/divorce), §6.7 (mort). **NE PAS modifier sans accord explicite**
 > (Constitution Principe IX). Périmètre tracé sur le plan général (Feature 7).
 
+## Clarifications
+
+### Session 2026-06-17
+
+- Q: Que fait précisément « make it real » lors de la promotion du bac à sable ? → A: L'**état du bac
+  à sable devient l'état réel** — remplacement **complet** de la population réelle par l'état du sandbox
+  (ajouts, suppressions, naissances inclus).
+- Q: Que montre « voir l'état de la population à une année » sélectionnée ? → A: **Reconstruction
+  historique complète** — couples, divorces et décès **tels qu'ils étaient** à l'année choisie ; cela
+  **nécessite un historique daté** des événements (année de décès, années de formation/dissolution des
+  couples), donc une **extension du cœur**.
+- Q: Comment « make it real » gère-t-il le générateur aléatoire (déterminisme) ? → A: **Transfert** des
+  résultats déjà produits par la sandbox (individus + **position du RNG**) ; **aucun rejeu** des actions.
+- Q: Une reproduction manuelle produit combien d'enfants ? → A: **Le nombre est choisi** par l'utilisateur
+  avant de valider (entier **≥ 1**, **sans plafond**) — *révise la réponse initiale « un seul enfant par
+  déclenchement »*.
+- Q: Peut-on éditer directement les champs d'un individu existant dans la sandbox (au-delà de
+  créer/cloner/supprimer) ? → A: **Oui, édition directe libre** des attributs de **n'importe quel** individu
+  (réel copié ou temporaire), sans avoir à cloner.
+- Q: Comment rattache-t-on un individu créé/cloné à la généalogie ? → A: **Via reproduction uniquement** —
+  un individu créé/cloné est **autonome** (sans liens de parenté) ; parents/enfants ne s'obtiennent que par
+  la reproduction manuelle.
+- Q: Quel est le flux UX de la reproduction manuelle ? → A: Un **bouton** fait entrer en **mode
+  reproduction manuelle** ; en mode, **cliquer un individu le (dé)sélectionne** ; on **choisit le nombre
+  d'enfants** ; puis **« valider »** lance la reproduction (puis **sort du mode** et **vide la sélection**)
+  ou **« annuler »** vide la sélection et sort du mode **sans** reproduire.
+- Q: Après « valider », que devient le mode ? → A: On **quitte** le mode reproduction manuelle et la
+  **sélection est vidée** (après création des enfants).
+- Q: Aide à la re-sélection ? → A: En mode reproduction manuelle, un **bouton** re-sélectionne
+  automatiquement tous les individus ayant été **parents de la dernière reproduction manuelle**.
+
 ## User Scenarios & Testing *(mandatory)*
 
 Jusqu'ici, la **reproduction manuelle** d'individus se déclenchait depuis la **page principale** : c'était
@@ -36,18 +67,22 @@ l'**isolation** (Principe d'isolement du §10.3) et la **promotion explicite**, 
 de la reproduction manuelle de la page principale vers la sandbox. Sans elle, les autres histoires n'ont
 pas de contenant.
 
-**Independent Test**: Ouvrir la sandbox sur une population existante, reproduire manuellement deux
-individus → un enfant apparaît **dans la sandbox** ; vérifier que la **population principale est
-inchangée** ; cliquer **« make it real »** → l'enfant est désormais présent dans la population réelle.
-Vérifier aussi que la page principale **ne propose plus** de reproduction manuelle.
+**Independent Test**: Ouvrir la sandbox sur une population existante, entrer en mode reproduction manuelle,
+sélectionner deux individus, choisir un nombre d'enfants et **valider** → le(s) enfant(s) demandé(s)
+apparaissent **dans la sandbox** ; vérifier que la **population principale est inchangée** ; cliquer
+**« make it real »** → ces enfants sont désormais présents dans la population réelle. Vérifier aussi que la
+page principale **ne propose plus** de reproduction manuelle.
 
 **Acceptance Scenarios**:
 
 1. **Given** une population réelle générée, **When** j'ouvre la sandbox, **Then** elle affiche une **copie
    fidèle** de la population, de la généalogie, des couples et de l'année courante.
-2. **Given** la sandbox ouverte, **When** je sélectionne 1, 2 ou plusieurs individus et déclenche une
-   reproduction manuelle, **Then** un (ou des) enfant(s) sont créés **dans la sandbox** via le moteur
-   génétique existant (déterministe), **sans** modifier la population réelle.
+2. **Given** la sandbox ouverte, **When** j'entre en mode reproduction manuelle, sélectionne 1, 2 ou
+   plusieurs individus, choisis un nombre d'enfants (≥ 1) et clique **« valider »**, **Then** ce nombre
+   d'enfants est créé **dans la sandbox** via le moteur génétique existant (déterministe), le mode est
+   quitté et la sélection vidée, **sans** modifier la population réelle.
+2b. **Given** le mode reproduction manuelle avec des individus sélectionnés, **When** je clique
+   **« annuler »**, **Then** la sélection est vidée et je sors du mode **sans** qu'aucun enfant soit créé.
 3. **Given** des modifications faites en sandbox, **When** je clique **« make it real »**, **Then** la
    population réelle est mise à jour pour refléter l'état du bac à sable (validation explicite).
 4. **Given** des modifications faites en sandbox, **When** je clique **« reset »**, **Then** la sandbox
@@ -60,8 +95,9 @@ Vérifier aussi que la page principale **ne propose plus** de reproduction manue
 ### User Story 2 - Création, clonage et suppression d'individus en sandbox (Priority: P2)
 
 En tant qu'utilisateur, je veux, **dans la sandbox**, **créer un nouvel individu entièrement personnalisé**
-(en choisissant tous les paramètres qui le caractérisent), **cloner** un individu existant en copie
-éditable, et **supprimer** des individus — afin de construire des scénarios sur mesure.
+(en choisissant tous les attributs qui le caractérisent), **cloner** un individu existant en copie autonome
+éditable, **éditer directement** les attributs de n'importe quel individu, et **supprimer** des individus —
+afin de construire des scénarios sur mesure.
 
 **Why this priority**: Complète la palette d'édition du bac à sable (§6.8). Dépend du contenant (US1) mais
 apporte une valeur distincte et testable indépendamment.
@@ -77,7 +113,10 @@ correctement mis à jour. Tout cela **sans** toucher la population réelle avant
    (espèce, genre, ADN, pouvoirs avec puissance/maîtrise, notes…), **Then** il est ajouté à la population
    de la sandbox.
 2. **Given** un individu existant, **When** je le **clone**, **Then** une copie **éditable** et
-   indépendante est créée dans la sandbox.
+   **autonome** (attributs repris, **sans** liens de parenté) est créée dans la sandbox.
+2b. **Given** un individu (réel copié ou temporaire), **When** j'édite directement ses attributs (genre,
+   ADN, pouvoirs, notes, statut…), **Then** les modifications s'appliquent **dans la sandbox uniquement** ;
+   les **liens de parenté** ne sont pas modifiables directement (réservés à la reproduction manuelle).
 3. **Given** un individu **sans descendant**, **When** je le supprime, **Then** il **disparaît de partout**
    (population, liens des autres) dans la sandbox.
 4. **Given** un individu **avec au moins un descendant**, **When** je tente de le supprimer, **Then** la
@@ -128,6 +167,12 @@ une **date de naissance tirée aléatoirement** dans l'année sélectionnée.
 - **Création/clonage référençant un trait ou une espèce absent du catalogue courant** : affichage via le
   **libellé de repli** (acquis Feature 5), sans blocage.
 - **Tentative de reproduction manuelle depuis la page principale** : impossible (fonction retirée).
+- **Clonage** : la copie reprend les attributs mais **aucun** lien de parenté (individu autonome).
+- **Édition directe d'un individu réel copié en sandbox** : n'affecte l'original réel qu'au « make it real ».
+- **« Valider » avec 0 parent sélectionné** : impossible (bouton désactivé / sans effet).
+- **Nombre d'enfants < 1** : refusé (le minimum est 1).
+- **Re-sélection des derniers parents alors que certains ont été supprimés depuis** : les individus absents
+  sont **ignorés**, seuls les survivants sont re-sélectionnés.
 
 ## Requirements *(mandatory)*
 
@@ -148,27 +193,44 @@ une **date de naissance tirée aléatoirement** dans l'année sélectionnée.
   suppression, navigation temporelle) DOIT être **isolée** : elle NE DOIT PAS affecter la population
   réelle tant que **« make it real »** n'a pas été validé.
 - **FR-005**: Le système DOIT fournir un bouton **« make it real »** qui **promeut** l'état du bac à sable
-  dans la population réelle (validation explicite).
+  dans la population réelle : l'**état du bac à sable devient l'état réel** (remplacement **complet** —
+  ajouts, suppressions et naissances inclus), via une **validation explicite** (Clarification 2026-06-17).
 - **FR-006**: Le système DOIT fournir un bouton **« reset »** qui restaure la sandbox à l'**état actuel de
   la population réelle** (les modifications de sandbox sont abandonnées).
 
 #### Reproduction manuelle (en sandbox)
 
-- **FR-007**: Dans la sandbox, l'utilisateur DOIT pouvoir sélectionner **1, 2 ou plusieurs** individus et
-  déclencher une **reproduction manuelle** produisant un ou des enfants via le **pipeline de naissance**
-  et le **moteur génétique existants** (déterministe — Feature 2/§5).
-- **FR-008**: Un enfant né par reproduction manuelle DOIT naître à un **moment aléatoire** (jour tiré
-  aléatoirement) de l'**année sélectionnée** dans la sandbox (§6.5).
+- **FR-007**: Dans la sandbox, l'utilisateur DOIT pouvoir entrer en **mode reproduction manuelle** via un
+  **bouton dédié** ; en mode, **cliquer un individu le sélectionne/désélectionne** (1, 2 ou plusieurs
+  parents) ; l'utilisateur **choisit le nombre d'enfants** souhaité (entier **≥ 1**, **sans plafond** —
+  Clarification 2026-06-17).
+- **FR-007a**: Le bouton **« valider »** DOIT produire le **nombre d'enfants choisi** à partir des parents
+  sélectionnés via le **pipeline de naissance** et le **moteur génétique existants** (déterministe —
+  Feature 2/§5), puis **quitter** le mode reproduction manuelle et **vider** la sélection.
+- **FR-007b**: Le bouton **« annuler »** DOIT **vider** la sélection et **quitter** le mode reproduction
+  manuelle **sans** produire d'enfant.
+- **FR-007c**: En mode reproduction manuelle, un **bouton** DOIT permettre de **re-sélectionner
+  automatiquement** tous les individus ayant été **parents de la dernière reproduction manuelle** (les
+  individus entre-temps absents/supprimés sont ignorés).
+- **FR-008**: **Chaque** enfant né par reproduction manuelle DOIT naître à un **moment aléatoire** (jour
+  tiré aléatoirement) de l'**année sélectionnée** dans la sandbox (§6.5).
 - **FR-009**: La reproduction manuelle DOIT pouvoir combiner des individus **temporaires** (créés en
   sandbox) et des individus **réels** (copiés en sandbox).
 
 #### Création / édition manuelle d'individus (en sandbox)
 
 - **FR-010**: Dans la sandbox, l'utilisateur DOIT pouvoir **créer un nouvel individu personnalisé** en
-  renseignant librement **tous les champs qui le caractérisent** (espèce, genre, ADN, pouvoirs avec
-  puissance/maîtrise, notes, etc. — §6.8).
+  renseignant librement **tous les attributs qui le caractérisent** (espèce, genre, ADN, pouvoirs avec
+  puissance/maîtrise, notes, etc. — §6.8). L'individu créé est **autonome** (sans liens de parenté).
 - **FR-011**: Dans la sandbox, l'utilisateur DOIT pouvoir **cloner** un individu existant en une **copie
-  éditable** et indépendante (§6.8).
+  éditable** et indépendante reprenant ses **attributs** (sans copier ses **liens de parenté** : la copie
+  est **autonome**) (§6.8).
+- **FR-011a**: Dans la sandbox, l'utilisateur DOIT pouvoir **éditer directement** les **attributs** de
+  **n'importe quel** individu (réel copié ou temporaire), **sans** avoir à le cloner (Clarification
+  2026-06-17). Les **liens de parenté** ne sont **pas** modifiables directement (cf. FR-011b).
+- **FR-011b**: Le **rattachement généalogique** (parents/enfants) NE PEUT se faire **que** par la
+  **reproduction manuelle** (FR-007) ; un individu créé/cloné reste **autonome** tant qu'il n'a pas été
+  impliqué dans une reproduction (Clarification 2026-06-17).
 
 #### Suppression d'individus (en sandbox)
 
@@ -186,15 +248,23 @@ une **date de naissance tirée aléatoirement** dans l'année sélectionnée.
 
 - **FR-016**: Dans la sandbox, l'utilisateur DOIT pouvoir **choisir une année** comprise entre l'**année de
   départ** et l'**année courante** (bornes **incluses**).
-- **FR-017**: La sélection d'une année DOIT afficher l'**état de la population à cette année** (les
-  individus non encore nés à cette année ne sont pas affichés).
+- **FR-017**: La sélection d'une année DOIT afficher l'**état historique complet** de la population à
+  cette année (Clarification 2026-06-17) : individus déjà nés, **couples, divorces et décès tels qu'ils
+  étaient** à cette année (les individus non encore nés ne sont pas affichés).
+- **FR-017a**: Pour permettre FR-017, le système DOIT conserver un **historique daté** des événements de
+  population suffisant pour reconstruire l'état à toute année entre l'année de départ et l'année courante,
+  au minimum : **année de naissance** (déjà présente), **année de décès**, **années de formation et de
+  dissolution des couples**. *(Extension du cœur — détail au `/speckit-plan`.)*
 
 #### Déterminisme & persistance
 
 - **FR-018**: Les opérations de sandbox (reproduction, créations, suppressions) DOIVENT rester
   **déterministes** (issues de la seed unique) ; l'isolation NE DOIT PAS perturber l'état aléatoire de la
   population réelle tant que « make it real » n'a pas eu lieu.
-- **FR-019**: La persistance reste **exclusivement** par export/import de fichier (Principe VI) : l'entrée
+- **FR-019**: « make it real » DOIT **transférer** l'état déjà produit par la sandbox (individus,
+  généalogie, couples, **position de l'état aléatoire**) **sans rejouer** les actions : ce qui a été
+  observé en sandbox est **exactement** ce qui devient réel (Clarification 2026-06-17).
+- **FR-020**: La persistance reste **exclusivement** par export/import de fichier (Principe VI) : l'entrée
   en sandbox et le « make it real » ne déclenchent **aucune** sauvegarde automatique.
 
 ### Key Entities *(include if feature involves data)*
@@ -204,8 +274,15 @@ une **date de naissance tirée aléatoirement** dans l'année sélectionnée.
 - **Individu temporaire** : individu créé ou cloné dans la sandbox, n'existant pas (encore) dans la
   population réelle.
 - **Année sélectionnée** : repère temporel de la sandbox (entre année de départ et année courante) servant
-  à la fois de **lentille d'affichage** et d'**année de naissance** des enfants issus de reproduction
-  manuelle.
+  à la fois de **lentille d'affichage** (reconstruction historique, FR-017) et d'**année de naissance** des
+  enfants issus de reproduction manuelle.
+- **Historique daté des événements** : données temporelles attachées aux individus/couples (année de
+  naissance, **année de décès**, **années de formation/dissolution des couples**) permettant de
+  **reconstruire l'état exact** de la population à toute année (support de FR-017/FR-017a). Extension du
+  modèle existant.
+- **Session de reproduction manuelle** (état d'interface, sandbox) : mode actif ou non, **ensemble des
+  parents sélectionnés**, **nombre d'enfants** choisi, et mémoire des **parents de la dernière
+  reproduction manuelle** (pour le bouton de re-sélection, FR-007c).
 
 ## Success Criteria *(mandatory)*
 
@@ -226,19 +303,23 @@ une **date de naissance tirée aléatoirement** dans l'année sélectionnée.
   (vérifiable sur un jeu de test).
 - **SC-008**: Deux sessions de sandbox identiques (même seed, mêmes actions) produisent des résultats
   **identiques** (déterminisme).
+- **SC-009**: Une reproduction manuelle (« valider ») produit **exactement le nombre d'enfants choisi**
+  (≥ 1) à partir des parents sélectionnés (100 % des cas) ; « annuler » n'en produit **aucun**.
+- **SC-010**: Un individu **créé ou cloné** est **autonome** (0 lien de parenté) tant qu'aucune
+  reproduction manuelle ne l'implique.
 
 ## Assumptions
 
-- **Sémantique de « make it real »** : la promotion fait que l'**état du bac à sable devient l'état réel**
-  (ajouts, suppressions et naissances inclus). L'année éventuellement sélectionnée pour l'affichage est une
-  **lentille** et ne modifie pas à elle seule l'« année courante » réelle. *(À confirmer en clarification.)*
-- **Isolation & RNG** : la sandbox travaille sur une **copie** de l'état (y compris la position du RNG) ;
-  la décision « rejouer vs transférer » les tirages lors de « make it real » est un **détail
-  d'implémentation** tranché au `/speckit-plan` (point d'attention du plan général, sans changer le
-  comportement observable d'isolation).
-- **État à une année** : « voir l'état à l'année *Y* » = afficher les individus **nés au plus tard en *Y***,
-  âges recalculés à *Y* ; les décès (manuels, sans date — §6.7) sont affichés selon leur statut courant.
-  *(À préciser en clarification si besoin.)*
+- **Sémantique de « make it real »** (tranchée 2026-06-17) : la promotion fait que l'**état du bac à sable
+  devient l'état réel** (remplacement complet : ajouts, suppressions et naissances inclus). L'année
+  sélectionnée pour l'affichage est une **lentille** et ne modifie pas à elle seule l'« année courante »
+  réelle.
+- **Isolation & RNG** (tranchée 2026-06-17) : la sandbox travaille sur une **copie** de l'état (y compris la
+  position du RNG) ; « make it real » **transfère** les résultats déjà produits (aucun rejeu, FR-019).
+- **État à une année** (tranchée 2026-06-17) : « voir l'état à l'année *Y* » = **reconstruction historique
+  complète** (individus nés ≤ *Y*, couples/divorces/décès tels qu'à *Y*). Cela **impose un historique daté**
+  des événements (FR-017a) — **extension du cœur** dont le mécanisme précis (champs datés vs journal
+  d'événements rejoué) est tranché au `/speckit-plan`.
 - **Réutilisation de l'existant** : la reproduction manuelle réutilise le **moteur de reproduction**
   (Feature 2) ; seul son **point d'entrée UI** est déplacé de la page principale vers la sandbox. La
   suppression réutilise les règles de couples/conjoints (§6.6) et la mort manuelle (§6.7) reste inchangée.
