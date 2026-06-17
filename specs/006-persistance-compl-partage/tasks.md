@@ -125,7 +125,7 @@ quickstart US3).
 
 - [X] T016 [P] `tests/unit/core-purity.test.ts` : vérifier que `src/core/state/serialize.ts` reste **pur** (aucun `Date`/`Math.random`/DOM) ; la garde scanne déjà `src/core` — ajouter une assertion ciblée si nécessaire. *(Couvert par la garde existante : elle scanne récursivement `src/core` ⇒ `serialize.ts` inclus ; l'horloge du nom de fichier vit dans `StateIO.svelte`, côté UI. Aucune assertion ajoutée nécessaire.)*
 - [X] T017 [P] `src/ui/components/StateIO.svelte` (+ `src/app.css` si besoin) : styles **responsive** des 3 boutons d'export + import (mobile → desktop), libellés clairs.
-- [ ] T018 Dérouler `specs/006-persistance-compl-partage/quickstart.md` (validation manuelle US1/US2/US3 + déterminisme/partage).
+- [X] T018 Dérouler `specs/006-persistance-compl-partage/quickstart.md` (validation manuelle US1/US2/US3 + déterminisme/partage).
 - [X] T019 Portes de qualité : `npm run test` + `npm run lint` + `npm run build` **verts** ; bundle déployable (Principe II).
 
 ---
