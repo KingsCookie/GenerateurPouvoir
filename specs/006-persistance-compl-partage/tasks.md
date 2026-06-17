@@ -27,7 +27,7 @@ utilisable pour son type.
 
 ## Phase 1 : Setup
 
-- [ ] T001 Baseline verte avant modification : `npm run test` + `npm run lint` + `npm run build` au vert ; repérer dans `tests/unit/state.test.ts` les tests `full` existants (round-trip, rejets) qui servent de socle.
+- [X] T001 Baseline verte avant modification : `npm run test` + `npm run lint` + `npm run build` au vert ; repérer dans `tests/unit/state.test.ts` les tests `full` existants (round-trip, rejets) qui servent de socle.
 
 ---
 
@@ -35,7 +35,7 @@ utilisable pour son type.
 
 **⚠️ Bloque US1, US2 et US3.** Aucun changement de comportement (additions de types seulement).
 
-- [ ] T002 `src/core/state/serialize.ts` : ajouter les types `ConfigState { formatVersion, kind:'config', parameters, catalog, especes }`, `DataState { formatVersion, kind:'data', population, currentYear, couples, rngState }` et l'union `ParsedImport` (`config|data|full`). Conserver `AppState` (`full`) et la constante **unique** `FORMAT_VERSION` partagée. Ré-exporter les types via `src/core/index.ts`.
+- [X] T002 `src/core/state/serialize.ts` : ajouter les types `ConfigState { formatVersion, kind:'config', parameters, catalog, especes }`, `DataState { formatVersion, kind:'data', population, currentYear, couples, rngState }` et l'union `ParsedImport` (`config|data|full`). Conserver `AppState` (`full`) et la constante **unique** `FORMAT_VERSION` partagée. Ré-exporter les types via `src/core/index.ts`.
 
 **Checkpoint** : types disponibles ; `serializeState`/`deserializeState` (full) inchangés.
 
@@ -52,17 +52,17 @@ importer ⇒ réglages restaurés, aucune population créée ; puis générer un
 
 ### Tests cœur (écrits AVANT — Principe V)
 
-- [ ] T003 [US1] `tests/unit/state.test.ts` (étendre) : `serializeConfig` produit `kind:"config"` + JSON **canonique** (clés triées) ; `parseImport` **détecte** `config` et renvoie `{kind:'config', config}` ; round-trip `extractConfig`→`serializeConfig`→`parseImport` égal sur parameters/catalog/especes ; rétro-compat (config sans `resilienceOverrides`/`Trait.weight` ⇒ défauts) ; **INV-K7** : `mergeConfig(state, config)` remplace parameters/catalog/especes et **conserve** population/couples/currentYear/rngState (population inchangée). Seed fixe.
+- [X] T003 [US1] `tests/unit/state.test.ts` (étendre) : `serializeConfig` produit `kind:"config"` + JSON **canonique** (clés triées) ; `parseImport` **détecte** `config` et renvoie `{kind:'config', config}` ; round-trip `extractConfig`→`serializeConfig`→`parseImport` égal sur parameters/catalog/especes ; rétro-compat (config sans `resilienceOverrides`/`Trait.weight` ⇒ défauts) ; **INV-K7** : `mergeConfig(state, config)` remplace parameters/catalog/especes et **conserve** population/couples/currentYear/rngState (population inchangée). Seed fixe.
 
 ### Implémentation cœur (pur)
 
-- [ ] T004 [US1] `src/core/state/serialize.ts` : implémenter `extractConfig(state): ConfigState`, `serializeConfig(state): string` (réutilise la canonicalisation existante) **et** `mergeConfig(state, config): AppState` (pur, non destructif — remplace parameters/catalog/especes, conserve les données ; INV-K7). Ré-export `src/core/index.ts`. Dépend de T002, T003.
-- [ ] T005 [US1] `src/core/state/serialize.ts` : implémenter `parseImport(json): Result<ParsedImport>` — parse JSON, lit `kind`, **branche `config`** (validation structure + version + défaut rétro-compat) ; `kind` inconnu ⇒ `Err`, version `>` supportée ⇒ `Err`. Ré-export. Dépend de T004. *(Les branches `data`/`full` sont complétées en T010/T014 — même fichier, séquentiel.)*
+- [X] T004 [US1] `src/core/state/serialize.ts` : implémenter `extractConfig(state): ConfigState`, `serializeConfig(state): string` (réutilise la canonicalisation existante) **et** `mergeConfig(state, config): AppState` (pur, non destructif — remplace parameters/catalog/especes, conserve les données ; INV-K7). Ré-export `src/core/index.ts`. Dépend de T002, T003.
+- [X] T005 [US1] `src/core/state/serialize.ts` : implémenter `parseImport(json): Result<ParsedImport>` — parse JSON, lit `kind`, **branche `config`** (validation structure + version + défaut rétro-compat) ; `kind` inconnu ⇒ `Err`, version `>` supportée ⇒ `Err`. Ré-export. Dépend de T004. *(Les branches `data`/`full` sont complétées en T010/T014 — même fichier, séquentiel.)*
 
 ### Implémentation UI
 
-- [ ] T006 [US1] `src/ui/stores/appState.ts` : `buildConfigJson()` (= `serializeConfig(snapshot())`) et `applyConfig(config)` qui **délègue** à `mergeConfig(snapshot(), config)` (cœur) puis met à jour les stores `parameters`/`catalog`/`especes` (sans toucher population/couples/année/RNG). Brancher `applyImport(json)` sur `parseImport` (dispatcher ; branche `config` → `applyConfig`) ; en cas d'`Err`, renseigner `importError` **sans** toucher l'état (INV-K9).
-- [ ] T007 [US1] `src/ui/components/StateIO.svelte` : bouton **« Exporter la configuration »** (télécharge `royalcookie-config-<horodatage>.json`, horodatage généré côté UI) ; conserver l'import unique branché sur `applyImport`. Dépend de T006.
+- [X] T006 [US1] `src/ui/stores/appState.ts` : `buildConfigJson()` (= `serializeConfig(snapshot())`) et `applyConfig(config)` qui **délègue** à `mergeConfig(snapshot(), config)` (cœur) puis met à jour les stores `parameters`/`catalog`/`especes` (sans toucher population/couples/année/RNG). Brancher `applyImport(json)` sur `parseImport` (dispatcher ; branche `config` → `applyConfig`) ; en cas d'`Err`, renseigner `importError` **sans** toucher l'état (INV-K9).
+- [X] T007 [US1] `src/ui/components/StateIO.svelte` : bouton **« Exporter la configuration »** (télécharge `royalcookie-config-<horodatage>.json`, horodatage généré côté UI) ; conserver l'import unique branché sur `applyImport`. Dépend de T006.
 
 **Checkpoint** : US1 testable seule (config exportable/importable, population préservée).
 
@@ -79,17 +79,17 @@ importer ⇒ population/généalogie/couples restaurés, **config conservée** ;
 
 ### Tests cœur (écrits AVANT — Principe V)
 
-- [ ] T008 [US2] `tests/unit/state.test.ts` (étendre) : `serializeData` produit `kind:"data"` (avec `rngState`) ; `parseImport` détecte `data` ; round-trip `extractData`→`serializeData`→`parseImport` égal sur population/couples/currentYear/rngState ; **INV-K7** : `mergeData(state, data)` remplace population/couples/currentYear/rngState et **conserve** parameters/catalog/especes (config inchangée) ; **déterminisme de reprise** : restaurer `rngState` via `createRngFromState` ⇒ même séquence de tirages. Seed fixe.
+- [X] T008 [US2] `tests/unit/state.test.ts` (étendre) : `serializeData` produit `kind:"data"` (avec `rngState`) ; `parseImport` détecte `data` ; round-trip `extractData`→`serializeData`→`parseImport` égal sur population/couples/currentYear/rngState ; **INV-K7** : `mergeData(state, data)` remplace population/couples/currentYear/rngState et **conserve** parameters/catalog/especes (config inchangée) ; **déterminisme de reprise** : restaurer `rngState` via `createRngFromState` ⇒ même séquence de tirages. Seed fixe.
 
 ### Implémentation cœur (pur)
 
-- [ ] T009 [US2] `src/core/state/serialize.ts` : implémenter `extractData(state): DataState` (pur, immutable, inclut `rngState`), `serializeData(state): string` **et** `mergeData(state, data): AppState` (pur, non destructif — remplace les données, conserve la config ; INV-K7). Ré-export. Dépend de T002, T008.
-- [ ] T010 [US2] `src/core/state/serialize.ts` : compléter `parseImport` avec la **branche `data`** (validation structure + version + défaut `rngState`/`couples`/`currentYear` absents). Dépend de T009, T005 (même fichier — séquentiel).
+- [X] T009 [US2] `src/core/state/serialize.ts` : implémenter `extractData(state): DataState` (pur, immutable, inclut `rngState`), `serializeData(state): string` **et** `mergeData(state, data): AppState` (pur, non destructif — remplace les données, conserve la config ; INV-K7). Ré-export. Dépend de T002, T008.
+- [X] T010 [US2] `src/core/state/serialize.ts` : compléter `parseImport` avec la **branche `data`** (validation structure + version + défaut `rngState`/`couples`/`currentYear` absents). Dépend de T009, T005 (même fichier — séquentiel).
 
 ### Implémentation UI
 
-- [ ] T011 [US2] `src/ui/stores/appState.ts` : `buildDataJson()` et `applyData(data)` qui **délègue** à `mergeData(snapshot(), data)` (cœur) puis met à jour les stores population/couples/année et **restaure le RNG** via `engineRng = createRngFromState(data.rngState)` (conserve la config). Brancher la branche `data` du dispatcher `applyImport`. Dépend de T006, T010.
-- [ ] T012 [US2] `src/ui/components/StateIO.svelte` : bouton **« Exporter les données »** (`royalcookie-data-<horodatage>.json`). Dépend de T011, T007 (même fichier — séquentiel).
+- [X] T011 [US2] `src/ui/stores/appState.ts` : `buildDataJson()` et `applyData(data)` qui **délègue** à `mergeData(snapshot(), data)` (cœur) puis met à jour les stores population/couples/année et **restaure le RNG** via `engineRng = createRngFromState(data.rngState)` (conserve la config). Brancher la branche `data` du dispatcher `applyImport`. Dépend de T006, T010.
+- [X] T012 [US2] `src/ui/components/StateIO.svelte` : bouton **« Exporter les données »** (`royalcookie-data-<horodatage>.json`). Dépend de T011, T007 (même fichier — séquentiel).
 
 **Checkpoint** : US1 + US2 fonctionnelles indépendamment.
 
@@ -107,15 +107,15 @@ quickstart US3).
 
 ### Tests cœur (écrits AVANT — Principe V)
 
-- [ ] T013 [US3] `tests/unit/state.test.ts` (étendre) : `serializeFull` (= `serializeState`) round-trip via `parseImport` ⇒ `{kind:'full', state}` égal à l'état ; **détection** correcte sur les 3 types ; refus `formatVersion > FORMAT_VERSION` ; refus `kind` absent/inconnu et JSON invalide (messages FR) ; rétro-compat d'un `full` antérieur (sans `resilienceOverrides`). Seed fixe.
+- [X] T013 [US3] `tests/unit/state.test.ts` (étendre) : `serializeFull` (= `serializeState`) round-trip via `parseImport` ⇒ `{kind:'full', state}` égal à l'état ; **détection** correcte sur les 3 types ; refus `formatVersion > FORMAT_VERSION` ; refus `kind` absent/inconnu et JSON invalide (messages FR) ; rétro-compat d'un `full` antérieur (sans `resilienceOverrides`). Seed fixe.
 
 ### Implémentation cœur (pur)
 
-- [ ] T014 [US3] `src/core/state/serialize.ts` : exposer `serializeFull` (alias de `serializeState`, conservé) ; compléter `parseImport` avec la **branche `full`** + les **erreurs** transverses (version trop récente, `kind` inconnu, JSON invalide) factorisées ; conserver `deserializeState` (full) pour la rétro-compat des tests existants. Ré-export. Dépend de T010 (même fichier — séquentiel).
+- [X] T014 [US3] `src/core/state/serialize.ts` : exposer `serializeFull` (alias de `serializeState`, conservé) ; compléter `parseImport` avec la **branche `full`** + les **erreurs** transverses (version trop récente, `kind` inconnu, JSON invalide) factorisées ; conserver `deserializeState` (full) pour la rétro-compat des tests existants. Ré-export. Dépend de T010 (même fichier — séquentiel).
 
 ### Implémentation UI
 
-- [ ] T015 [US3] `src/ui/components/StateIO.svelte` : bouton **« Exporter tout (complet) »** (`royalcookie-full-<horodatage>.json`, consolide l'export actuel) ; finaliser l'**import unique auto-détecté** (3 types) et les **messages d'erreur FR** (`importError`). Dépend de T012, T011 (dispatcher complet).
+- [X] T015 [US3] `src/ui/components/StateIO.svelte` : bouton **« Exporter tout (complet) »** (`royalcookie-full-<horodatage>.json`, consolide l'export actuel) ; finaliser l'**import unique auto-détecté** (3 types) et les **messages d'erreur FR** (`importError`). Dépend de T012, T011 (dispatcher complet).
 
 **Checkpoint** : les 3 user stories sont indépendamment fonctionnelles ; import unique opérationnel.
 
@@ -123,10 +123,10 @@ quickstart US3).
 
 ## Phase 6 : Polish & transverse
 
-- [ ] T016 [P] `tests/unit/core-purity.test.ts` : vérifier que `src/core/state/serialize.ts` reste **pur** (aucun `Date`/`Math.random`/DOM) ; la garde scanne déjà `src/core` — ajouter une assertion ciblée si nécessaire.
-- [ ] T017 [P] `src/ui/components/StateIO.svelte` (+ `src/app.css` si besoin) : styles **responsive** des 3 boutons d'export + import (mobile → desktop), libellés clairs.
+- [X] T016 [P] `tests/unit/core-purity.test.ts` : vérifier que `src/core/state/serialize.ts` reste **pur** (aucun `Date`/`Math.random`/DOM) ; la garde scanne déjà `src/core` — ajouter une assertion ciblée si nécessaire. *(Couvert par la garde existante : elle scanne récursivement `src/core` ⇒ `serialize.ts` inclus ; l'horloge du nom de fichier vit dans `StateIO.svelte`, côté UI. Aucune assertion ajoutée nécessaire.)*
+- [X] T017 [P] `src/ui/components/StateIO.svelte` (+ `src/app.css` si besoin) : styles **responsive** des 3 boutons d'export + import (mobile → desktop), libellés clairs.
 - [ ] T018 Dérouler `specs/006-persistance-compl-partage/quickstart.md` (validation manuelle US1/US2/US3 + déterminisme/partage).
-- [ ] T019 Portes de qualité : `npm run test` + `npm run lint` + `npm run build` **verts** ; bundle déployable (Principe II).
+- [X] T019 Portes de qualité : `npm run test` + `npm run lint` + `npm run build` **verts** ; bundle déployable (Principe II).
 
 ---
 

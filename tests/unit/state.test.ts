@@ -3,12 +3,23 @@ import { createRng } from '../../src/core/rng/rng.js';
 import { defaultCatalog, defaultEspeces } from '../../src/core/catalog/defaultCatalog.js';
 import { defaultParameters } from '../../src/core/params/parameters.js';
 import { generateInitialPopulation } from '../../src/core/genesis/genesis.js';
+import { createRngFromState } from '../../src/core/rng/rng.js';
 import {
   serializeState,
+  serializeFull,
+  serializeConfig,
+  serializeData,
   deserializeState,
+  parseImport,
+  extractConfig,
+  extractData,
+  mergeConfig,
+  mergeData,
   createInitialState,
   FORMAT_VERSION,
   type AppState,
+  type ConfigState,
+  type DataState,
 } from '../../src/core/state/serialize.js';
 
 function sampleState(seed: bigint): AppState {
@@ -153,6 +164,220 @@ describe('Sérialisation de l’état (US3)', () => {
       expect(res.value.currentYear).toBe(1990); // = birthYear
       expect(res.value.couples).toEqual([]);
       expect(res.value.rngState).toEqual(createRng(7n).getState());
+    }
+  });
+});
+
+// --- Feature 6 : persistance complète & partage (config / data / full). ---
+
+describe('US1 — Configuration seule (Feature 6)', () => {
+  it('serializeConfig produit kind:"config" + JSON canonique (clés triées), sans population', () => {
+    const json = serializeConfig(sampleState(0xc0n));
+    const parsed = JSON.parse(json);
+    expect(parsed.kind).toBe('config');
+    expect(parsed.formatVersion).toBe(FORMAT_VERSION);
+    expect(parsed.parameters).toBeDefined();
+    expect(parsed.catalog).toBeDefined();
+    expect(parsed.especes).toBeDefined();
+    expect(parsed.population).toBeUndefined();
+    // Canonicité : un second export identique est octet pour octet identique.
+    expect(serializeConfig(sampleState(0xc0n))).toBe(json);
+  });
+
+  it('parseImport détecte le kind "config" et round-trip sur parameters/catalog/especes', () => {
+    const state = sampleState(0xc1n);
+    const res = parseImport(serializeConfig(state));
+    expect(res.ok).toBe(true);
+    if (res.ok && res.value.kind === 'config') {
+      expect(res.value.config.parameters).toEqual(state.parameters);
+      expect(res.value.config.catalog).toEqual(state.catalog);
+      expect(res.value.config.especes).toEqual(state.especes);
+    } else {
+      throw new Error('attendu kind config');
+    }
+  });
+
+  it('rétro-compat : une config sans resilienceOverrides/Trait.weight est défautée', () => {
+    const parameters = { ...defaultParameters(), seed: '7' };
+    delete (parameters as Partial<typeof parameters>).resilienceOverrides;
+    const catalog = {
+      byType: {
+        Remplacement: [],
+        PartieCorps: [],
+        Etat: [],
+        Element: [{ id: 'Element:feu-0', type: 'Element', label: 'feu' }],
+        Ajout: [],
+        Action: [],
+      },
+    };
+    const json = JSON.stringify({ formatVersion: 2, kind: 'config', parameters, catalog });
+    const res = parseImport(json);
+    expect(res.ok).toBe(true);
+    if (res.ok && res.value.kind === 'config') {
+      expect(res.value.config.parameters.resilienceOverrides).toEqual({ byType: {}, byTrait: {} });
+      expect(res.value.config.catalog.byType.Element[0].weight).toBeNull();
+      expect(res.value.config.especes.length).toBeGreaterThan(0); // défaut espèces
+    }
+  });
+
+  it('INV-K7 : mergeConfig remplace la config et CONSERVE la population/couples/année/RNG', () => {
+    const world = sampleState(0xaaa1n); // monde existant (population non vide)
+    expect(world.population.length).toBeGreaterThan(0);
+    const config: ConfigState = extractConfig(sampleState(0xbbb2n)); // config différente
+    const merged = mergeConfig(world, config);
+    // Config remplacée…
+    expect(merged.parameters).toEqual(config.parameters);
+    expect(merged.catalog).toEqual(config.catalog);
+    expect(merged.especes).toEqual(config.especes);
+    // …données strictement conservées (mêmes individus, mêmes ids).
+    expect(merged.population).toBe(world.population);
+    expect(merged.couples).toBe(world.couples);
+    expect(merged.currentYear).toBe(world.currentYear);
+    expect(merged.rngState).toBe(world.rngState);
+    expect(merged.kind).toBe('full');
+    // Pureté : l'entrée n'est pas mutée.
+    expect(world.parameters).not.toEqual(config.parameters);
+  });
+});
+
+describe('US2 — Données générées seules (Feature 6)', () => {
+  it('serializeData produit kind:"data" avec rngState, sans parameters/catalog', () => {
+    const json = serializeData(sampleState(0xd0n));
+    const parsed = JSON.parse(json);
+    expect(parsed.kind).toBe('data');
+    expect(parsed.population).toBeDefined();
+    expect(parsed.couples).toBeDefined();
+    expect(parsed.currentYear).toBeDefined();
+    expect(Array.isArray(parsed.rngState)).toBe(true);
+    expect(parsed.rngState.length).toBe(4);
+    expect(parsed.parameters).toBeUndefined();
+    expect(parsed.catalog).toBeUndefined();
+  });
+
+  it('parseImport détecte le kind "data" et round-trip sur population/couples/année/rngState', () => {
+    const state = sampleState(0xd1n);
+    const res = parseImport(serializeData(state));
+    expect(res.ok).toBe(true);
+    if (res.ok && res.value.kind === 'data') {
+      expect(res.value.data.population).toEqual(state.population);
+      expect(res.value.data.couples).toEqual(state.couples);
+      expect(res.value.data.currentYear).toEqual(state.currentYear);
+      expect(res.value.data.rngState).toEqual(state.rngState);
+    } else {
+      throw new Error('attendu kind data');
+    }
+  });
+
+  it('INV-K7 : mergeData remplace les données et CONSERVE la config courante', () => {
+    const world = sampleState(0xaaa3n);
+    const data: DataState = extractData(sampleState(0xbbb4n)); // données différentes
+    const merged = mergeData(world, data);
+    // Données remplacées…
+    expect(merged.population).toBe(data.population);
+    expect(merged.couples).toBe(data.couples);
+    expect(merged.currentYear).toBe(data.currentYear);
+    expect(merged.rngState).toBe(data.rngState);
+    // …config strictement conservée.
+    expect(merged.parameters).toBe(world.parameters);
+    expect(merged.catalog).toBe(world.catalog);
+    expect(merged.especes).toBe(world.especes);
+    expect(merged.kind).toBe('full');
+  });
+
+  it('déterminisme de reprise : restaurer rngState via createRngFromState ⇒ même séquence', () => {
+    const state = sampleState(0xd2n);
+    // Avance le RNG pour obtenir une position non triviale, puis capture l'état.
+    const live = createRngFromState(state.rngState);
+    live.nextInt(1000);
+    live.nextInt(1000);
+    const captured = live.getState();
+    const expected = [live.nextInt(1000), live.nextInt(1000), live.nextInt(1000)];
+
+    // Round-trip via data : sérialiser l'état capturé, réimporter, reprendre.
+    const dataState: AppState = { ...state, rngState: captured };
+    const res = parseImport(serializeData(dataState));
+    expect(res.ok).toBe(true);
+    if (res.ok && res.value.kind === 'data') {
+      const resumed = createRngFromState(res.value.data.rngState);
+      const got = [resumed.nextInt(1000), resumed.nextInt(1000), resumed.nextInt(1000)];
+      expect(got).toEqual(expected);
+    }
+  });
+
+  it('rétro-compat : un data sans rngState laisse [] (reconstruit à la fusion via la seed)', () => {
+    const json = JSON.stringify({ formatVersion: 2, kind: 'data', population: [], couples: [] });
+    const res = parseImport(json);
+    expect(res.ok).toBe(true);
+    if (res.ok && res.value.kind === 'data') {
+      expect(res.value.data.rngState).toEqual([]);
+      // mergeData reconstruit depuis la seed de la config courante.
+      const host = createInitialState({ seed: '42' });
+      const merged = mergeData(host, res.value.data);
+      expect(merged.rngState).toEqual(createRng(42n).getState());
+    }
+  });
+});
+
+describe('US3 — Complet, détection automatique & versionnage (Feature 6)', () => {
+  it('serializeFull = serializeState ; parseImport détecte "full" et round-trip égal', () => {
+    const state = sampleState(0xf0n);
+    expect(serializeFull(state)).toBe(serializeState(state));
+    const res = parseImport(serializeFull(state));
+    expect(res.ok).toBe(true);
+    if (res.ok && res.value.kind === 'full') {
+      expect(res.value.state).toEqual(state);
+    } else {
+      throw new Error('attendu kind full');
+    }
+  });
+
+  it('détection correcte des trois types via le même point d’entrée', () => {
+    const state = sampleState(0xf1n);
+    const c = parseImport(serializeConfig(state));
+    const d = parseImport(serializeData(state));
+    const f = parseImport(serializeFull(state));
+    expect(c.ok && c.value.kind).toBe('config');
+    expect(d.ok && d.value.kind).toBe('data');
+    expect(f.ok && f.value.kind).toBe('full');
+  });
+
+  it('refuse une version de format supérieure (message clair, sans exception)', () => {
+    const state = sampleState(0xf2n);
+    const tooNew = JSON.stringify({ ...extractConfig(state), formatVersion: FORMAT_VERSION + 1 });
+    const res = parseImport(tooNew);
+    expect(res.ok).toBe(false);
+    if (!res.ok) expect(res.error).toMatch(/version/i);
+  });
+
+  it('refuse un kind absent/inconnu et un JSON invalide (messages FR)', () => {
+    expect(parseImport('{ pas du json').ok).toBe(false);
+    const noKind = parseImport(JSON.stringify({ formatVersion: 2, population: [] }));
+    expect(noKind.ok).toBe(false);
+    if (!noKind.ok) expect(noKind.error).toMatch(/non reconnu/i);
+    const unknown = parseImport(JSON.stringify({ kind: 'bidule', formatVersion: 2 }));
+    expect(unknown.ok).toBe(false);
+  });
+
+  it('rétro-compat : un full antérieur (sans resilienceOverrides) s’importe en défautant', () => {
+    const parameters = { ...defaultParameters(), seed: '7', batchSize: 3 };
+    delete (parameters as Partial<typeof parameters>).resilienceOverrides;
+    const catalog = defaultCatalog();
+    const population = generateInitialPopulation(
+      { ...defaultParameters(), seed: '7', batchSize: 3 },
+      catalog,
+      createRng(7n),
+    );
+    const json = JSON.stringify({
+      formatVersion: 2,
+      kind: 'full',
+      parameters,
+      catalog,
+      population,
+    });
+    const res = parseImport(json);
+    expect(res.ok).toBe(true);
+    if (res.ok && res.value.kind === 'full') {
+      expect(res.value.state.parameters.resilienceOverrides).toEqual({ byType: {}, byTrait: {} });
     }
   });
 });

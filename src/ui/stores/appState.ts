@@ -10,8 +10,12 @@ import {
   reproduce,
   advanceYears as advanceYearsCore,
   kill as killCore,
-  serializeState,
-  deserializeState,
+  serializeConfig,
+  serializeData,
+  serializeFull,
+  parseImport,
+  mergeConfig,
+  mergeData,
   FORMAT_VERSION,
   addTrait as addTraitCore,
   renameTrait as renameTraitCore,
@@ -30,7 +34,9 @@ import {
   propagateResilienceType as propagateResilienceTypeCore,
   type AppState,
   type Catalog,
+  type ConfigState,
   type Couple,
+  type DataState,
   type Espece,
   type Parameters,
   type Personne,
@@ -302,36 +308,86 @@ export function goToParametres(): void {
   currentView.set('parametres');
 }
 
-// --- Persistance par fichier (US3) — aucune sauvegarde automatique (Principe VI). ---
+// --- Persistance par fichier (Feature 6) — 3 types + détection ; aucune sauvegarde auto (Principe VI). ---
 
 export const importError = writable<string | null>(null);
 
-/** Construit le JSON de l'état courant (paramètres, catalogue, population, année, couples, état RNG). */
-export function buildStateJson(): string {
-  return serializeState(snapshot());
+/** JSON de la **configuration** seule (seed + paramètres + catalogues + espèces) — kind:"config". */
+export function buildConfigJson(): string {
+  return serializeConfig(snapshot());
+}
+
+/** JSON des **données** seules (population, généalogie, couples, année, état RNG) — kind:"data". */
+export function buildDataJson(): string {
+  return serializeData(snapshot());
+}
+
+/** JSON **complet** (config + data) — kind:"full". */
+export function buildFullJson(): string {
+  return serializeFull(snapshot());
 }
 
 /**
- * Applique un état importé. En cas d'échec, renseigne `importError` et NE modifie PAS
- * l'état courant (rejet propre, FR-023). Retourne true si l'import a réussi.
+ * Applique une CONFIG importée : remplace paramètres/catalogue/espèces et **conserve** la
+ * population (Clarification 2026-06-17). Délègue la fusion non destructive au cœur (mergeConfig).
+ */
+export function applyConfig(config: ConfigState): void {
+  const merged = mergeConfig(snapshot(), config);
+  parameters.set(merged.parameters);
+  catalog.set(merged.catalog);
+  especes.set(merged.especes);
+}
+
+/**
+ * Applique des DONNÉES importées : remplace population/couples/année + **restaure l'état RNG**
+ * (reprise au tirage près) et **conserve** la config. Délègue la fusion au cœur (mergeData) ;
+ * `engineRng` est restauré depuis l'état fusionné (rngState reconstruit si le fichier en manquait).
+ */
+export function applyData(data: DataState): void {
+  const merged = mergeData(snapshot(), data);
+  population.set(merged.population);
+  couples.set(merged.couples);
+  currentYear.set(merged.currentYear);
+  selectedPersonId.set(null);
+  selectedIds.set(new Set());
+  engineRng = createRngFromState(merged.rngState);
+}
+
+/** Applique un état COMPLET : remplace tout (config + data) et restaure l'état RNG exact. */
+function applyFull(state: AppState): void {
+  parameters.set(state.parameters);
+  catalog.set(state.catalog);
+  especes.set(state.especes);
+  population.set(state.population);
+  currentYear.set(state.currentYear);
+  couples.set(state.couples);
+  selectedPersonId.set(null);
+  selectedIds.set(new Set());
+  engineRng = createRngFromState(state.rngState);
+}
+
+/**
+ * Importe un fichier en **détectant automatiquement** son type (config/data/full) et en appliquant
+ * le traitement correspondant. En cas d'échec, renseigne `importError` et NE modifie PAS l'état
+ * courant (rejet propre, INV-K9/FR-010). Retourne true si l'import a réussi.
  */
 export function applyImport(json: string): boolean {
-  const res = deserializeState(json);
+  const res = parseImport(json);
   if (!res.ok) {
     importError.set(res.error);
     return false;
   }
   importError.set(null);
-  parameters.set(res.value.parameters);
-  catalog.set(res.value.catalog);
-  especes.set(res.value.especes);
-  population.set(res.value.population);
-  currentYear.set(res.value.currentYear);
-  couples.set(res.value.couples);
-  selectedPersonId.set(null);
-  selectedIds.set(new Set());
-  // Restitue l'état EXACT du RNG (continuation strictement déterministe après import, FR-021).
-  engineRng = createRngFromState(res.value.rngState);
-  currentView.set('liste');
+  if (res.value.kind === 'config') {
+    applyConfig(res.value.config);
+    // L'import de config conserve la population : ne change pas de vue si aucune population.
+    currentView.set(get(population).length > 0 ? 'liste' : 'parametres');
+  } else if (res.value.kind === 'data') {
+    applyData(res.value.data);
+    currentView.set('liste');
+  } else {
+    applyFull(res.value.state);
+    currentView.set('liste');
+  }
   return true;
 }
