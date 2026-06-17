@@ -1,16 +1,8 @@
 <script lang="ts">
-  import {
-    population,
-    currentYear,
-    catalog,
-    selectPerson,
-    selectedIds,
-    toggleSelect,
-  } from '../stores/appState.js';
+  import { population, currentYear, catalog, selectPerson } from '../stores/appState.js';
   import { criteria, generationTouched } from '../stores/filters.js';
   import { buildListRow } from '../lib/ficheViewModel.js';
   import { filterPopulation, lastGeneration } from '../../core/index.js';
-  import ReproduceBar from '../components/ReproduceBar.svelte';
   import TimeBar from '../components/TimeBar.svelte';
   import FilterBar from '../components/FilterBar.svelte';
 
@@ -32,7 +24,6 @@
     <p class="empty">Aucune population générée. Rendez-vous dans les paramètres pour générer.</p>
   {:else}
     <TimeBar />
-    <ReproduceBar />
     <FilterBar />
     {#if rows.length === 0}
       <p class="empty">Aucun individu ne correspond aux filtres.</p>
@@ -40,7 +31,6 @@
     <table>
       <thead>
         <tr>
-          <th class="sel" aria-label="Sélection"></th>
           <th>Nom</th>
           <th>Date de naissance</th>
           <th>Âge</th>
@@ -50,22 +40,11 @@
       <tbody>
         {#each rows as row (row.id)}
           <tr
-            class:selected={$selectedIds.has(row.id)}
             on:click={() => selectPerson(row.id)}
             on:keydown={(e) => (e.key === 'Enter' || e.key === ' ') && selectPerson(row.id)}
             tabindex="0"
             role="button"
           >
-            <td class="sel">
-              <!-- Le clic sur la case ne doit pas ouvrir la fiche. -->
-              <input
-                type="checkbox"
-                checked={$selectedIds.has(row.id)}
-                on:click|stopPropagation
-                on:change={() => toggleSelect(row.id)}
-                aria-label={`Sélectionner ${row.nom}`}
-              />
-            </td>
             <td>{row.nom}</td>
             <td class="mono">{row.dateNaissance}</td>
             <td>{row.age}</td>
@@ -105,18 +84,6 @@
   }
   tbody tr:hover {
     background: var(--bg-elev);
-  }
-  tbody tr.selected {
-    background: color-mix(in srgb, var(--accent) 18%, transparent);
-  }
-  .sel {
-    width: 2.2rem;
-    text-align: center;
-  }
-  .sel input {
-    width: 1.1rem;
-    height: 1.1rem;
-    cursor: pointer;
   }
   .mono {
     font-family: ui-monospace, monospace;

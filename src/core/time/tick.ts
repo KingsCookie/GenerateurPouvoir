@@ -3,6 +3,8 @@ import type { AppState } from '../state/serialize.js';
 import type { Personne } from '../model/personne.js';
 import type { Espece } from '../model/espece.js';
 import type { Couple } from '../model/couple.js';
+import type { PopulationEvent } from '../model/event.js';
+import { birthEvent, coupleEvent, divorceEvent } from '../model/event.js';
 import { reproduce } from '../birth/reproduce.js';
 import { reproProbability } from '../repro/gaussian.js';
 import { litterSize } from '../repro/litter.js';
@@ -50,6 +52,9 @@ export function tick(state: AppState, rng: Rng): AppState {
   const nextChildId = (): string => `p-${String(++childCounter).padStart(6, '0')}`;
   const nextCoupleId = (): string => `c-${String(++coupleCounter).padStart(6, '0')}`;
 
+  // Journal d'événements daté (Feature 7) : naissances/couples/divorces de l'année courante.
+  const events: PopulationEvent[] = [];
+
   const especeOfCouple = (couple: Couple): Espece | undefined =>
     especeById.get(byId.get(couple.memberIds[0])?.especeId ?? '');
 
@@ -67,6 +72,7 @@ export function tick(state: AppState, rng: Rng): AppState {
           if (c.statut === 'actuel' && couple.memberIds.includes(c.id)) c.statut = 'ex';
         }
       }
+      events.push(divorceEvent(couple.id, currentYear));
     } else {
       survivingCouples.push(couple);
     }
@@ -95,6 +101,7 @@ export function tick(state: AppState, rng: Rng): AppState {
         if (otherId !== memberId) m.conjoints.push({ id: otherId, statut: 'actuel' });
       }
     }
+    events.push(coupleEvent(couple.id, couple.memberIds, currentYear));
   }
 
   // 4. Reproduction. Helper : produit une portée pour un couple donné.
@@ -112,6 +119,7 @@ export function tick(state: AppState, rng: Rng): AppState {
       for (const parent of parents) parent.enfants.push(childId);
       byId.set(childId, child);
       newChildren.push(child);
+      events.push(birthEvent(childId, currentYear));
     }
   };
 
@@ -139,6 +147,7 @@ export function tick(state: AppState, rng: Rng): AppState {
     couples: [...survivingCouples, ...newCouples],
     currentYear: currentYear + 1,
     rngState: rng.getState(),
+    history: [...state.history, ...events],
   };
 }
 

@@ -1,4 +1,5 @@
 import type { AppState } from '../state/serialize.js';
+import { deathEvent } from '../model/event.js';
 
 export type KillResult = { ok: true; state: AppState } | { ok: false; error: string };
 
@@ -36,5 +37,7 @@ export function kill(state: AppState, personId: string, cause: string): KillResu
   });
 
   const couples = couple ? state.couples.filter((c) => c.id !== couple.id) : state.couples;
-  return { ok: true, state: { ...state, population, couples } };
+  // Journal d'événements daté (Feature 7) : décès à l'année courante (source de l'« année de décès »).
+  const history = [...state.history, deathEvent(personId, state.currentYear)];
+  return { ok: true, state: { ...state, population, couples, history } };
 }

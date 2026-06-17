@@ -8,3 +8,5 @@ export { GENRE_TOUT } from './espece.js';
 export type { Genre, Espece } from './espece.js';
 export type { Personne, Conjoint } from './personne.js';
 export type { Couple } from './couple.js';
+export type { PopulationEvent } from './event.js';
+export { birthEvent, deathEvent, coupleEvent, divorceEvent } from './event.js';

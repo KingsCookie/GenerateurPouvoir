@@ -1,10 +1,12 @@
 <script lang="ts">
   import { tick } from 'svelte';
   import { currentView, goToParametres, backToList, population } from './stores/appState.js';
+  import { enterSandbox } from './stores/sandboxStore.js';
   import ParametresView from './views/ParametresView.svelte';
   import ListeView from './views/ListeView.svelte';
   import FicheView from './views/FicheView.svelte';
   import ArbreView from './views/ArbreView.svelte';
+  import SandboxView from './views/SandboxView.svelte';
   import StateIO from './components/StateIO.svelte';
 
   // À l'ouverture d'une fiche (ou de la page arbre), remettre le défilement en haut (FR-016).
@@ -32,6 +34,14 @@
     >
       Population
     </button>
+    <button
+      type="button"
+      class:active={$currentView === 'sandbox'}
+      on:click={enterSandbox}
+      disabled={$population.length === 0}
+    >
+      Sandbox
+    </button>
   </nav>
 </header>
 
@@ -46,6 +56,8 @@
     <FicheView />
   {:else if $currentView === 'arbre'}
     <ArbreView />
+  {:else if $currentView === 'sandbox'}
+    <SandboxView />
   {:else}
     <ListeView />
   {/if}

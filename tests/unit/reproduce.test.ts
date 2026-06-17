@@ -124,6 +124,7 @@ describe('reproduce — round-trip export/import (INV-10 / SC-007 / T025)', () =
       currentYear: P.birthYear,
       couples: [],
       rngState: createRng(0x5eedn).getState(),
+      history: [],
     };
     const json = serializeState(state);
     const res = deserializeState(json);

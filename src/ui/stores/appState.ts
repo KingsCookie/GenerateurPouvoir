@@ -7,7 +7,7 @@ import {
   defaultEspeces,
   defaultParameters,
   generateInitialPopulation,
-  reproduce,
+  birthEvent,
   advanceYears as advanceYearsCore,
   kill as killCore,
   serializeConfig,
@@ -40,13 +40,14 @@ import {
   type Espece,
   type Parameters,
   type Personne,
+  type PopulationEvent,
   type Rng,
   type TraitType,
   type ResiliencePatch,
   type ResilienceScope,
 } from '../../core/index.js';
 
-export type View = 'parametres' | 'liste' | 'fiche' | 'arbre';
+export type View = 'parametres' | 'liste' | 'fiche' | 'arbre' | 'sandbox';
 
 // Catalogue de traits — **store éditable** (Feature 5). Remplace la constante de module de la
 // Feature 1. Défaut = `defaultCatalog()` (traits sans surcharge de poids ⇒ héritent du type).
@@ -73,6 +74,9 @@ export const treeDepth = writable<number>(2);
 // Simulation temporelle (Feature 3) : année courante + couples actuels.
 export const currentYear = writable<number>(0);
 export const couples = writable<Couple[]>([]);
+
+// Journal d'événements daté (Feature 7) : alimente la reconstruction historique de la sandbox.
+export const history = writable<PopulationEvent[]>([]);
 
 // Sélection multiple pour la reproduction (US1). Set d'ids ; l'ordre de reproduction suit
 // l'ordre de la population (déterminisme).
@@ -166,9 +170,12 @@ export function generate(): void {
   engineRng = createRng(BigInt(p.seed));
   // Le catalogue & les espèces (config éditable, Feature 5) sont **conservés** : générer une
   // population n'efface pas les réglages de l'utilisateur.
-  population.set(generateInitialPopulation(p, get(catalog), engineRng));
+  const pop = generateInitialPopulation(p, get(catalog), engineRng);
+  population.set(pop);
   currentYear.set(p.birthYear);
   couples.set([]);
+  // Journal d'événements (Feature 7) : une naissance datée par individu du batch initial.
+  history.set(pop.map((person) => birthEvent(person.id, p.birthYear)));
   selectedIds.set(new Set());
   currentView.set('liste');
 }
@@ -185,6 +192,7 @@ function snapshot(): AppState {
     currentYear: get(currentYear),
     couples: get(couples),
     rngState: engineRng.getState(),
+    history: get(history),
   };
 }
 
@@ -198,6 +206,7 @@ export function advanceYears(years: number): void {
   population.set(result.population);
   couples.set(result.couples);
   currentYear.set(result.currentYear);
+  history.set(result.history);
 }
 
 /**
@@ -209,6 +218,7 @@ export function killPerson(personId: string, cause: string): string | null {
   if (!res.ok) return res.error;
   population.set(res.state.population);
   couples.set(res.state.couples);
+  history.set(res.state.history);
   return null;
 }
 
@@ -222,40 +232,8 @@ export function toggleSelect(id: string): void {
   });
 }
 
-/** Calcule le prochain id séquentiel `p-NNNNNN` à partir de la population existante. */
-function nextChildId(pop: Personne[]): string {
-  let max = 0;
-  for (const person of pop) {
-    const m = /^p-(\d+)$/.exec(person.id);
-    if (m) max = Math.max(max, Number(m[1]));
-  }
-  return `p-${String(max + 1).padStart(6, '0')}`;
-}
-
-/**
- * Reproduit les individus sélectionnés (≥ 1) → **un enfant** ajouté à la population, parenté posée
- * des deux côtés (INV-9). Continue le flux déterministe `engineRng`. Renvoie l'id de l'enfant ou null.
- */
-export function reproduceSelected(): string | null {
-  const ids = get(selectedIds);
-  if (ids.size === 0) return null;
-  const pop = get(population);
-  const p = get(parameters);
-
-  const parents = pop.filter((person) => ids.has(person.id)); // ordre = ordre population
-  if (parents.length === 0) return null;
-
-  const childId = nextChildId(pop);
-  const child = reproduce(parents, p, get(catalog), engineRng, { childId, birthYear: p.birthYear });
-
-  const parentIds = new Set(parents.map((x) => x.id));
-  const updated = pop.map((person) =>
-    parentIds.has(person.id) ? { ...person, enfants: [...person.enfants, childId] } : person,
-  );
-  population.set([...updated, child]);
-  selectedIds.set(new Set());
-  return childId;
-}
+// Reproduction manuelle : RETIRÉE de la page principale (Feature 7, FR-001). Elle vit désormais
+// **exclusivement** dans la sandbox (`sandboxStore`), via le cœur `manualReproduce`.
 
 /** Couple actuel contenant un individu, ou null. */
 export function coupleOf(personId: string): Couple | null {
@@ -308,6 +286,24 @@ export function goToParametres(): void {
   currentView.set('parametres');
 }
 
+// --- Pont sandbox (Feature 7) : la sandbox lit un instantané du réel et n'écrit le réel qu'au make it real. ---
+
+/** Instantané complet de l'état réel courant (pour entrer/réinitialiser la sandbox). */
+export function snapshotState(): AppState {
+  return snapshot();
+}
+
+/** Promeut un état dans la population réelle (« make it real ») : remplace tout + restaure le RNG. */
+export function promoteState(state: AppState): void {
+  applyFull(state);
+  currentView.set('liste');
+}
+
+/** Ouvre l'écran sandbox. */
+export function goToSandbox(): void {
+  currentView.set('sandbox');
+}
+
 // --- Persistance par fichier (Feature 6) — 3 types + détection ; aucune sauvegarde auto (Principe VI). ---
 
 export const importError = writable<string | null>(null);
@@ -348,6 +344,7 @@ export function applyData(data: DataState): void {
   population.set(merged.population);
   couples.set(merged.couples);
   currentYear.set(merged.currentYear);
+  history.set(merged.history);
   selectedPersonId.set(null);
   selectedIds.set(new Set());
   engineRng = createRngFromState(merged.rngState);
@@ -361,6 +358,7 @@ function applyFull(state: AppState): void {
   population.set(state.population);
   currentYear.set(state.currentYear);
   couples.set(state.couples);
+  history.set(state.history);
   selectedPersonId.set(null);
   selectedIds.set(new Set());
   engineRng = createRngFromState(state.rngState);

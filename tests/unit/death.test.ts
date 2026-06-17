@@ -41,6 +41,7 @@ function state(population: Personne[], couples: Couple[] = []): AppState {
     currentYear: 2010,
     couples,
     rngState: createRng(1n).getState(),
+    history: [],
   };
 }
 

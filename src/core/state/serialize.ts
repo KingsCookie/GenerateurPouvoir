@@ -3,14 +3,16 @@ import { TRAIT_TYPES } from '../model/traitType.js';
 import type { Personne } from '../model/personne.js';
 import type { Couple } from '../model/couple.js';
 import type { Espece } from '../model/espece.js';
+import type { PopulationEvent } from '../model/event.js';
 import type { Parameters, ResilienceOverrides } from '../params/parameters.js';
 import { defaultParameters } from '../params/parameters.js';
 import { defaultCatalog, defaultEspeces } from '../catalog/defaultCatalog.js';
 import { createRng } from '../rng/rng.js';
 
-// v1 (Features 1-2) → v2 (Feature 3 : currentYear, couples, état du RNG). Compatibilité ascendante.
-// Constante UNIQUE partagée par les trois types de fichiers (config/data/full) — Feature 6.
-export const FORMAT_VERSION = 2;
+// v1 (Features 1-2) → v2 (Feature 3 : currentYear, couples, état du RNG) → v3 (Feature 7 : journal
+// d'événements daté `history`). Compatibilité ascendante. Constante UNIQUE partagée par les trois
+// types de fichiers (config/data/full) — Feature 6.
+export const FORMAT_VERSION = 3;
 
 export interface AppState {
   formatVersion: number;
@@ -22,6 +24,7 @@ export interface AppState {
   currentYear: number; // année courante (1ᵉʳ janvier), progresse au tick (Feature 3)
   couples: Couple[]; // couples actuels
   rngState: string[]; // état sérialisé du RNG (continuation déterministe, FR-021)
+  history: PopulationEvent[]; // journal d'événements daté (Feature 7 : reconstruction historique)
 }
 
 // --- Sous-états typés (Feature 6) : config (réglages) / data (monde généré). ---
@@ -43,6 +46,7 @@ export interface DataState {
   currentYear: number;
   couples: Couple[];
   rngState: string[]; // position exacte du RNG (reprise au tirage près)
+  history: PopulationEvent[]; // journal d'événements daté (Feature 7)
 }
 
 // `full` reste AppState (kind:'full').
@@ -68,6 +72,7 @@ export function createInitialState(params?: Partial<Parameters>): AppState {
     currentYear: parameters.birthYear,
     couples: [],
     rngState: createRng(BigInt(parameters.seed)).getState(),
+    history: [],
   };
 }
 
@@ -111,6 +116,7 @@ export function extractData(state: AppState): DataState {
     currentYear: state.currentYear,
     couples: state.couples,
     rngState: state.rngState,
+    history: state.history,
   };
 }
 
@@ -147,6 +153,7 @@ export function mergeData(state: AppState, data: DataState): AppState {
     currentYear: data.currentYear,
     couples: data.couples,
     rngState,
+    history: Array.isArray(data.history) ? data.history : [],
   };
 }
 
@@ -218,6 +225,7 @@ function validateDataInto(parsed: Record<string, unknown>, seedFallback: string)
   if (!Array.isArray(parsed.rngState) || parsed.rngState.length !== 4) {
     parsed.rngState = createRng(BigInt(seedFallback)).getState();
   }
+  if (!Array.isArray(parsed.history)) parsed.history = []; // Feature 7 : rétro-compat (INV-S8).
   return null;
 }
 
@@ -310,5 +318,6 @@ export function parseImport(json: string): Result<ParsedImport> {
   if (typeof data.currentYear !== 'number') data.currentYear = 0;
   if (!Array.isArray(data.couples)) data.couples = [];
   if (!Array.isArray(data.rngState) || data.rngState.length !== 4) data.rngState = [];
+  if (!Array.isArray(data.history)) data.history = []; // Feature 7 : rétro-compat (INV-S8).
   return { ok: true, value: { kind: 'data', data: parsed as unknown as DataState } };
 }
