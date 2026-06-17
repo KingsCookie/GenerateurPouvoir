@@ -41,6 +41,7 @@ function sampleState(seed: bigint): AppState {
     currentYear: parameters.birthYear,
     couples: [],
     rngState: createRng(seed).getState(),
+    history: [],
   };
 }
 
@@ -71,6 +72,7 @@ describe('Sérialisation de l’état (US3)', () => {
       currentYear: state.currentYear,
       parameters: state.parameters,
       formatVersion: state.formatVersion,
+      history: state.history,
     } as AppState;
     expect(serializeState(reordered)).toBe(serializeState(state));
   });
@@ -379,5 +381,62 @@ describe('US3 — Complet, détection automatique & versionnage (Feature 6)', ()
     if (res.ok && res.value.kind === 'full') {
       expect(res.value.state.parameters.resilienceOverrides).toEqual({ byType: {}, byTrait: {} });
     }
+  });
+});
+
+// --- Feature 7 : journal d'événements daté (history) ---
+
+describe('Journal d’événements (Feature 7)', () => {
+  it('FORMAT_VERSION vaut 3', () => {
+    expect(FORMAT_VERSION).toBe(3);
+  });
+
+  it('history survit au round-trip serializeFull → parseImport', () => {
+    const state = sampleState(0x111n);
+    const withHistory: AppState = {
+      ...state,
+      history: [
+        { kind: 'birth', year: 0, personId: 'p-000001' },
+        { kind: 'couple', year: 2, coupleId: 'c-000001', memberIds: ['p-000001', 'p-000002'] },
+        { kind: 'death', year: 5, personId: 'p-000002' },
+      ],
+    };
+    const res = parseImport(serializeFull(withHistory));
+    expect(res.ok).toBe(true);
+    if (res.ok && res.value.kind === 'full') {
+      expect(res.value.state.history).toEqual(withHistory.history);
+    }
+  });
+
+  it('history survit au round-trip serializeData → parseImport (extractData inclut history)', () => {
+    const state = sampleState(0x222n);
+    const withHistory: AppState = {
+      ...state,
+      history: [{ kind: 'birth', year: 0, personId: 'p-000001' }],
+    };
+    const res = parseImport(serializeData(withHistory));
+    expect(res.ok).toBe(true);
+    if (res.ok && res.value.kind === 'data') {
+      expect(res.value.data.history).toEqual(withHistory.history);
+      // mergeData restaure history sur un état hôte.
+      const host = createInitialState({ seed: '1' });
+      expect(mergeData(host, res.value.data).history).toEqual(withHistory.history);
+    }
+  });
+
+  it('rétro-compat : un fichier sans history ⇒ history = []', () => {
+    const parameters = { ...defaultParameters(), seed: '7', batchSize: 2 };
+    const catalog = defaultCatalog();
+    const population = generateInitialPopulation(parameters, catalog, createRng(7n));
+    const json = JSON.stringify({
+      formatVersion: 2,
+      kind: 'full',
+      parameters,
+      catalog,
+      population,
+    });
+    const res = parseImport(json);
+    expect(res.ok).toBe(true);
+    if (res.ok && res.value.kind === 'full') expect(res.value.state.history).toEqual([]);
   });
 });

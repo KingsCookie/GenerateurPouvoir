@@ -1,0 +1,169 @@
+import type { Rng } from '../rng/rng.js';
+import type { AppState, Result } from '../state/serialize.js';
+import type { Personne } from '../model/personne.js';
+import { birthEvent } from '../model/event.js';
+import { reproduce } from '../birth/reproduce.js';
+
+// Sous-ensemble ÉDITABLE des attributs d'une Personne (jamais parents/enfants/conjoints) — Feature 7.
+export type PersonDraft = Pick<
+  Personne,
+  | 'nom'
+  | 'especeId'
+  | 'genreId'
+  | 'dateNaissance'
+  | 'vivant'
+  | 'raisonDeces'
+  | 'adn'
+  | 'pouvoirs'
+  | 'notes'
+>;
+export type PersonPatch = Partial<PersonDraft>;
+
+/** Plus grand suffixe séquentiel `prefix-NNN` parmi des ids (0 si aucun). */
+function maxSeq(ids: Iterable<string>, prefix: string): number {
+  let max = 0;
+  const re = new RegExp(`^${prefix}-(\\d+)$`);
+  for (const id of ids) {
+    const m = re.exec(id);
+    if (m) max = Math.max(max, Number(m[1]));
+  }
+  return max;
+}
+
+function yearOfIso(dateIso: string): number {
+  const m = /^(-?\d+)-/.exec(dateIso);
+  return m ? Number(m[1]) : 0;
+}
+
+/**
+ * Reproduction manuelle (sandbox) : produit **`count` ≥ 1** enfants depuis `parentIds` (≥ 1) via le
+ * moteur génétique (Feature 2), chacun né un jour aléatoire de `birthYear` (le `reproduce` tire le
+ * jour via `rng`). Pose la parenté et émet les événements `birth`. **Pur** (RNG en paramètre) ;
+ * ne mute pas `state`. `count < 1` ou `parentIds` vide / introuvables ⇒ état inchangé (no-op).
+ */
+export function manualReproduce(
+  state: AppState,
+  parentIds: string[],
+  count: number,
+  birthYear: number,
+  rng: Rng,
+): AppState {
+  if (count < 1 || parentIds.length === 0) return state;
+  const parentSet = new Set(parentIds);
+  const parents = state.population.filter((p) => parentSet.has(p.id));
+  if (parents.length === 0) return state;
+
+  let counter = maxSeq(
+    state.population.map((p) => p.id),
+    'p',
+  );
+  const children: Personne[] = [];
+  for (let i = 0; i < count; i++) {
+    const childId = `p-${String(++counter).padStart(6, '0')}`;
+    children.push(reproduce(parents, state.parameters, state.catalog, rng, { childId, birthYear }));
+  }
+  const childIds = children.map((c) => c.id);
+  const population = state.population.map((p) =>
+    parentSet.has(p.id) ? { ...p, enfants: [...p.enfants, ...childIds] } : p,
+  );
+  const events = childIds.map((id) => birthEvent(id, birthYear));
+  return {
+    ...state,
+    population: [...population, ...children],
+    history: [...state.history, ...events],
+  };
+}
+
+/**
+ * Crée un individu **autonome** (sans liens de parenté) à partir d'un brouillon d'attributs.
+ * Émet un événement `birth` à l'année de sa date de naissance. Pur ; ne mute pas `state`.
+ */
+export function createPerson(state: AppState, draft: PersonDraft, newId: string): AppState {
+  const person: Personne = { id: newId, ...draft, parents: [], enfants: [], conjoints: [] };
+  return {
+    ...state,
+    population: [...state.population, person],
+    history: [...state.history, birthEvent(newId, yearOfIso(draft.dateNaissance))],
+  };
+}
+
+/**
+ * Clone les **attributs** d'un individu existant en une copie **autonome** (sans liens de parenté).
+ * Émet un `birth`. Pur ; `sourceId` introuvable ⇒ état inchangé.
+ */
+export function clonePerson(state: AppState, sourceId: string, newId: string): AppState {
+  const src = state.population.find((p) => p.id === sourceId);
+  if (!src) return state;
+  const copy: Personne = {
+    id: newId,
+    nom: src.nom,
+    especeId: src.especeId,
+    genreId: src.genreId,
+    dateNaissance: src.dateNaissance,
+    vivant: src.vivant,
+    raisonDeces: src.raisonDeces,
+    adn: { traits: src.adn.traits.map((t) => ({ ...t })) },
+    pouvoirs: src.pouvoirs.map((pw) => ({ ...pw })),
+    notes: src.notes,
+    parents: [],
+    enfants: [],
+    conjoints: [],
+  };
+  return {
+    ...state,
+    population: [...state.population, copy],
+    history: [...state.history, birthEvent(newId, yearOfIso(src.dateNaissance))],
+  };
+}
+
+/**
+ * Édite les **attributs** d'un individu (jamais parents/enfants/conjoints — réservés à la
+ * reproduction/suppression). Pur ; `id` introuvable ⇒ état inchangé.
+ */
+export function editPerson(state: AppState, id: string, patch: PersonPatch): AppState {
+  return {
+    ...state,
+    population: state.population.map((p) => (p.id === id ? { ...p, ...patch } : p)),
+  };
+}
+
+/**
+ * Supprime un individu **sans descendant** ; le retire **partout** (population, enfants des parents,
+ * conjoints des partenaires — qui reviennent à leur état antérieur, couples) et purge ses événements
+ * `birth`/`death` du journal. Pur ; `Err` si l'individu a des enfants ou est introuvable.
+ */
+export function deletePerson(state: AppState, id: string): Result<AppState> {
+  const target = state.population.find((p) => p.id === id);
+  if (!target) return { ok: false, error: `Individu introuvable : ${id}.` };
+  if (target.enfants.length > 0) {
+    return { ok: false, error: 'Suppression impossible : cet individu a des descendants.' };
+  }
+
+  const population = state.population
+    .filter((p) => p.id !== id)
+    .map((p) => {
+      let next = p;
+      if (next.parents.includes(id)) {
+        next = { ...next, parents: next.parents.filter((x) => x !== id) };
+      }
+      if (next.enfants.includes(id)) {
+        next = { ...next, enfants: next.enfants.filter((x) => x !== id) };
+      }
+      if (next.conjoints.some((c) => c.id === id)) {
+        next = { ...next, conjoints: next.conjoints.filter((c) => c.id !== id) };
+      }
+      return next;
+    });
+
+  const couples = state.couples
+    .map((c) =>
+      c.memberIds.includes(id) ? { ...c, memberIds: c.memberIds.filter((m) => m !== id) } : c,
+    )
+    .filter((c) => c.memberIds.length >= 2);
+
+  const history = state.history.filter(
+    (e) => !((e.kind === 'birth' || e.kind === 'death') && e.personId === id),
+  );
+
+  return { ok: true, value: { ...state, population, couples, history } };
+}

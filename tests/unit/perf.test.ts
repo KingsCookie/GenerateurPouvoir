@@ -43,6 +43,7 @@ describe('Performance du tick annuel (T032 / SC-009)', () => {
       currentYear: 25,
       couples: [],
       rngState: createRng(BigInt(params.seed)).getState(),
+      history: [],
     };
 
     const start = performance.now();

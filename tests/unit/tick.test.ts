@@ -52,6 +52,7 @@ function makeState(opts: {
     currentYear: opts.currentYear,
     couples: opts.couples ?? [],
     rngState: createRng(1n).getState(),
+    history: [],
   };
 }
 

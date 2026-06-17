@@ -62,6 +62,18 @@ export type { PairingResult } from './repro/pairing.js';
 export { tick, advanceYears } from './time/tick.js';
 export { kill } from './life/death.js';
 export type { KillResult } from './life/death.js';
+
+// Sandbox & « make it real » (Feature 7 : reproduction manuelle, création/clonage/édition/suppression,
+// reconstruction historique à partir du journal d'événements daté).
+export {
+  manualReproduce,
+  createPerson,
+  clonePerson,
+  editPerson,
+  deletePerson,
+} from './sandbox/sandbox.js';
+export type { PersonDraft, PersonPatch } from './sandbox/sandbox.js';
+export { reconstructAtYear } from './sandbox/reconstruct.js';
 export {
   serializeState,
   serializeFull,

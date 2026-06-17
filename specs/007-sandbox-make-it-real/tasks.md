@@ -28,7 +28,7 @@ description: "Task list — Feature 007 : Sandbox isolée & « make it real »"
 
 ## Phase 1 : Setup
 
-- [ ] T001 Baseline verte avant modification : `npm run test` + `npm run lint` + `npm run build` au vert ; repérer les tests `state`/`tick`/`genesis`/`death` existants servant de socle.
+- [X] T001 Baseline verte avant modification : `npm run test` + `npm run lint` + `npm run build` au vert ; repérer les tests `state`/`tick`/`genesis`/`death` existants servant de socle.
 
 ---
 
@@ -36,9 +36,9 @@ description: "Task list — Feature 007 : Sandbox isolée & « make it real »"
 
 **⚠️ Bloque US1, US2 et US3.** Ajoute le **champ** journal + versionnage, sans émission ni reconstruction.
 
-- [ ] T002 [P] `src/core/model/event.ts` : définir le type `PopulationEvent` (`birth`/`death`/`couple`/`divorce`, datés à l'`year`). Ré-exporter via `src/core/index.ts`.
-- [ ] T003 `tests/unit/state.test.ts` (étendre, **avant** T004) : `AppState.history` survit au round-trip `serializeFull`/`serializeData`→`parseImport` ; un fichier **sans** `history` ⇒ `history = []` (rétro-compat) ; `FORMAT_VERSION === 3`. Seed fixe.
-- [ ] T004 `src/core/state/serialize.ts` : ajouter `history: PopulationEvent[]` à `AppState` **et** `DataState` ; bump `FORMAT_VERSION` 2→3 ; `createInitialState` initialise `history: []` ; `extractData`/`mergeData` incluent `history` ; `deserializeState` + branches `data`/`full` de `parseImport` **défautent** `history → []`. Ré-export. Dépend de T002, T003.
+- [X] T002 [P] `src/core/model/event.ts` : définir le type `PopulationEvent` (`birth`/`death`/`couple`/`divorce`, datés à l'`year`). Ré-exporter via `src/core/index.ts`.
+- [X] T003 `tests/unit/state.test.ts` (étendre, **avant** T004) : `AppState.history` survit au round-trip `serializeFull`/`serializeData`→`parseImport` ; un fichier **sans** `history` ⇒ `history = []` (rétro-compat) ; `FORMAT_VERSION === 3`. Seed fixe.
+- [X] T004 `src/core/state/serialize.ts` : ajouter `history: PopulationEvent[]` à `AppState` **et** `DataState` ; bump `FORMAT_VERSION` 2→3 ; `createInitialState` initialise `history: []` ; `extractData`/`mergeData` incluent `history` ; `deserializeState` + branches `data`/`full` de `parseImport` **défautent** `history → []`. Ré-export. Dépend de T002, T003.
 
 **Checkpoint** : `AppState.history` existe, sérialisé/désérialisé, rétro-compatible.
 
@@ -56,17 +56,17 @@ real » ⇒ enfants présents dans le réel ; page principale **sans** reproduct
 
 ### Tests cœur (écrits AVANT — Principe V)
 
-- [ ] T005 [US1] `tests/unit/sandbox.test.ts` (nouveau) : `manualReproduce(state, parentIds, count, birthYear, rng)` — produit **exactement `count`** enfants (≥ 1) depuis les parents, pose `parents`/`enfants`, émet `count` événements `birth{year:birthYear}`, **ne mute pas** l'entrée (INV-S1/S4) ; `count < 1` ou `parentIds` vide ⇒ **no-op** ; déterminisme à seed fixe (INV-S10). Réutilise le moteur `reproduce`.
+- [X] T005 [US1] `tests/unit/sandbox.test.ts` (nouveau) : `manualReproduce(state, parentIds, count, birthYear, rng)` — produit **exactement `count`** enfants (≥ 1) depuis les parents, pose `parents`/`enfants`, émet `count` événements `birth{year:birthYear}`, **ne mute pas** l'entrée (INV-S1/S4) ; `count < 1` ou `parentIds` vide ⇒ **no-op** ; déterminisme à seed fixe (INV-S10). Réutilise le moteur `reproduce`.
 
 ### Implémentation cœur (pur)
 
-- [ ] T006 [US1] `src/core/sandbox/sandbox.ts` (nouveau) : implémenter `manualReproduce` (réutilise `reproduce` Feature 2 ; chaque enfant `dateNaissance` = jour aléatoire de `birthYear` via le RNG ; pose la parenté ; ajoute les `birth` à `history`). Ré-export `src/core/index.ts`. Dépend de T004, T005.
+- [X] T006 [US1] `src/core/sandbox/sandbox.ts` (nouveau) : implémenter `manualReproduce` (réutilise `reproduce` Feature 2 ; chaque enfant `dateNaissance` = jour aléatoire de `birthYear` via le RNG ; pose la parenté ; ajoute les `birth` à `history`). Ré-export `src/core/index.ts`. Dépend de T004, T005.
 
 ### Implémentation UI
 
-- [ ] T007 [US1] `src/ui/stores/sandboxStore.ts` (nouveau) : état sandbox **isolé** (`AppState` copié de l'état réel + RNG **forké** `createRngFromState`) ; `enterSandbox()` (snapshot), `resetSandbox()` (re-snapshot), `makeItReal()` (stores réels ← état sandbox, `engineRng = createRngFromState(sandbox.rngState)`) ; **état du mode repro** (`active`, `selected:Set`, `childCount`, `lastParents`) + `startManualRepro()`/`toggle(id)`/`setChildCount(n)`/`validate()` (→ `manualReproduce`, puis sortie du mode + vidage, mémorise `lastParents`)/`cancel()`/`reselectLastParents()` (ignore les absents). Dépend de T006.
-- [ ] T008 [US1] `src/ui/views/SandboxView.svelte` (nouveau) : écran sandbox réutilisant le rendu liste/fiche ; bouton **mode repro**, (dé)sélection au clic, champ **nombre d'enfants** (≥ 1), boutons **« valider »**/**« annuler »**/**« re-sélectionner les derniers parents »**, et boutons **« make it real »**/**« reset »** ; messages FR. Dépend de T007.
-- [ ] T009 [US1] `src/ui/stores/appState.ts` + `src/ui/views/ListeView.svelte` : **retirer** la reproduction manuelle de la page principale (`selectedIds`/`toggleSelect`/`reproduceSelected` et l'UI associée) ; ajouter l'**accès à la sandbox** (navigation/vue). Dépend de T007.
+- [X] T007 [US1] `src/ui/stores/sandboxStore.ts` (nouveau) : état sandbox **isolé** (`AppState` copié de l'état réel + RNG **forké** `createRngFromState`) ; `enterSandbox()` (snapshot), `resetSandbox()` (re-snapshot), `makeItReal()` (stores réels ← état sandbox, `engineRng = createRngFromState(sandbox.rngState)`) ; **état du mode repro** (`active`, `selected:Set`, `childCount`, `lastParents`) + `startManualRepro()`/`toggle(id)`/`setChildCount(n)`/`validate()` (→ `manualReproduce`, puis sortie du mode + vidage, mémorise `lastParents`)/`cancel()`/`reselectLastParents()` (ignore les absents). Dépend de T006.
+- [X] T008 [US1] `src/ui/views/SandboxView.svelte` (nouveau) : écran sandbox réutilisant le rendu liste/fiche ; bouton **mode repro**, (dé)sélection au clic, champ **nombre d'enfants** (≥ 1), boutons **« valider »**/**« annuler »**/**« re-sélectionner les derniers parents »**, et boutons **« make it real »**/**« reset »** ; messages FR. Dépend de T007.
+- [X] T009 [US1] `src/ui/stores/appState.ts` + `src/ui/views/ListeView.svelte` : **retirer** la reproduction manuelle de la page principale (`selectedIds`/`toggleSelect`/`reproduceSelected` et l'UI associée) ; ajouter l'**accès à la sandbox** (navigation/vue). Dépend de T007.
 
 **Checkpoint** : US1 testable seule (sandbox isolée, repro manuelle, make it real, reset ; page principale nettoyée).
 
@@ -83,15 +83,15 @@ suppression refusée si descendants (cf. quickstart US2).
 
 ### Tests cœur (écrits AVANT — Principe V)
 
-- [ ] T010 [US2] `tests/unit/sandbox.test.ts` (étendre) : `createPerson`/`clonePerson` produisent un individu **autonome** (`parents`/`enfants`/`conjoints` vides ; clone sans liens — INV-S5) ; `editPerson` modifie des **attributs** sans toucher la parenté ; `deletePerson` **refuse** si `enfants.length > 0`, sinon retire l'id **partout** + propagation : parent perd l'id dans `enfants`, conjoint repasse à l'état antérieur, couple dissous/réduit (INV-S6/S7). Ne mute pas l'entrée. Seed fixe.
+- [X] T010 [US2] `tests/unit/sandbox.test.ts` (étendre) : `createPerson`/`clonePerson` produisent un individu **autonome** (`parents`/`enfants`/`conjoints` vides ; clone sans liens — INV-S5) ; `editPerson` modifie des **attributs** sans toucher la parenté ; `deletePerson` **refuse** si `enfants.length > 0`, sinon retire l'id **partout** + propagation : parent perd l'id dans `enfants`, conjoint repasse à l'état antérieur, couple dissous/réduit (INV-S6/S7). Ne mute pas l'entrée. Seed fixe.
 
 ### Implémentation cœur (pur)
 
-- [ ] T011 [US2] `src/core/sandbox/sandbox.ts` (étendre) : `createPerson(state, draft, newId)`, `clonePerson(state, sourceId, newId)`, `editPerson(state, id, patch)`, `deletePerson(state, id): Result<AppState>` (propagation conjoints/parents/couples ; `Err` si descendants/introuvable). Ré-export. Dépend de T006, T010.
+- [X] T011 [US2] `src/core/sandbox/sandbox.ts` (étendre) : `createPerson(state, draft, newId)`, `clonePerson(state, sourceId, newId)`, `editPerson(state, id, patch)`, `deletePerson(state, id): Result<AppState>` (propagation conjoints/parents/couples ; `Err` si descendants/introuvable). Ré-export. Dépend de T006, T010.
 
 ### Implémentation UI
 
-- [ ] T012 [US2] `src/ui/views/SandboxView.svelte` (+ composant de formulaire si besoin) : UI de **création** (tous attributs : espèce, genre, ADN, pouvoirs, notes), **clonage**, **édition directe** des attributs, et **suppression** (bouton désactivé / message FR si descendants). Dépend de T008, T011.
+- [X] T012 [US2] `src/ui/views/SandboxView.svelte` (+ composant de formulaire si besoin) : UI de **création** (tous attributs : espèce, genre, ADN, pouvoirs, notes), **clonage**, **édition directe** des attributs, et **suppression** (bouton désactivé / message FR si descendants). Dépend de T008, T011.
 
 **Checkpoint** : US1 + US2 fonctionnelles indépendamment.
 
@@ -108,19 +108,19 @@ quickstart US3).
 
 ### Tests cœur (écrits AVANT — Principe V)
 
-- [ ] T013 [US3] `tests/unit/history.test.ts` (nouveau) : `generateInitialPopulation` émet un `birth{year:birthYear}` par individu ; `tick` émet `birth`/`couple`/`divorce` à `currentYear` ; `kill` émet `death` à `currentYear`. Seed fixe.
-- [ ] T014 [US3] `tests/unit/reconstruct.test.ts` (nouveau) : `reconstructAtYear(state, Y)` — individus nés ≤ Y seulement ; un individu mort en D apparaît **vivant** pour Y < D et **décédé** pour Y ≥ D ; couple formé en F absent pour Y < F, présent si non dissous ≤ Y ; **couple dont un membre meurt en D : actif pour Y < D, dissous (conjoints « ex ») pour Y ≥ D** (le décès dissout le couple sans `divorce` — C1) ; repli sans journal (INV-S8) ; **pure** (ne mute pas l'entrée, INV-S9). Seed fixe.
+- [X] T013 [US3] `tests/unit/history.test.ts` (nouveau) : `generateInitialPopulation` émet un `birth{year:birthYear}` par individu ; `tick` émet `birth`/`couple`/`divorce` à `currentYear` ; `kill` émet `death` à `currentYear`. Seed fixe.
+- [X] T014 [US3] `tests/unit/reconstruct.test.ts` (nouveau) : `reconstructAtYear(state, Y)` — individus nés ≤ Y seulement ; un individu mort en D apparaît **vivant** pour Y < D et **décédé** pour Y ≥ D ; couple formé en F absent pour Y < F, présent si non dissous ≤ Y ; **couple dont un membre meurt en D : actif pour Y < D, dissous (conjoints « ex ») pour Y ≥ D** (le décès dissout le couple sans `divorce` — C1) ; repli sans journal (INV-S8) ; **pure** (ne mute pas l'entrée, INV-S9). Seed fixe.
 
 ### Implémentation cœur (pur)
 
-- [ ] T015 [US3] `src/core/genesis/genesis.ts` : émettre les événements `birth` (année de genèse) pour le batch initial ; renvoyer/peupler `history`. Dépend de T013.
-- [ ] T016 [US3] `src/core/time/tick.ts` : émettre `birth` (naissances), `couple` (formations), `divorce` (dissolutions) à `currentYear`, en étendant `history`. Dépend de T013.
-- [ ] T017 [US3] `src/core/life/death.ts` : émettre `death{year:currentYear}` ; étendre `history`. Dépend de T013.
-- [ ] T018 [US3] `src/core/sandbox/reconstruct.ts` (nouveau) : `reconstructAtYear(state, year): AppState` (projection pure depuis `history` ; un couple est actif à `year` seulement si formé ≤ year, non `divorce ≤ year`, **et aucun membre mort ≤ year** — C1, conjoints « ex » sinon ; repli `yearOf(dateNaissance)` sans journal). Ré-export. Dépend de T014.
+- [X] T015 [US3] `src/core/genesis/genesis.ts` : émettre les événements `birth` (année de genèse) pour le batch initial ; renvoyer/peupler `history`. Dépend de T013.
+- [X] T016 [US3] `src/core/time/tick.ts` : émettre `birth` (naissances), `couple` (formations), `divorce` (dissolutions) à `currentYear`, en étendant `history`. Dépend de T013.
+- [X] T017 [US3] `src/core/life/death.ts` : émettre `death{year:currentYear}` ; étendre `history`. Dépend de T013.
+- [X] T018 [US3] `src/core/sandbox/reconstruct.ts` (nouveau) : `reconstructAtYear(state, year): AppState` (projection pure depuis `history` ; un couple est actif à `year` seulement si formé ≤ year, non `divorce ≤ year`, **et aucun membre mort ≤ year** — C1, conjoints « ex » sinon ; repli `yearOf(dateNaissance)` sans journal). Ré-export. Dépend de T014.
 
 ### Implémentation UI
 
-- [ ] T019 [US3] `src/ui/views/SandboxView.svelte` + `src/ui/stores/sandboxStore.ts` : **sélecteur d'année** borné `[birthYear, currentYear]` ; l'affichage applique `reconstructAtYear` ; la reproduction manuelle utilise l'**année sélectionnée** comme `birthYear`. Dépend de T018, T008.
+- [X] T019 [US3] `src/ui/views/SandboxView.svelte` + `src/ui/stores/sandboxStore.ts` : **sélecteur d'année** borné `[birthYear, currentYear]` ; l'affichage applique `reconstructAtYear` ; la reproduction manuelle utilise l'**année sélectionnée** comme `birthYear`. Dépend de T018, T008.
 
 **Checkpoint** : les 3 user stories sont indépendamment fonctionnelles.
 
@@ -128,10 +128,10 @@ quickstart US3).
 
 ## Phase 6 : Polish & transverse
 
-- [ ] T020 [P] `tests/unit/core-purity.test.ts` : vérifier que `src/core/sandbox/*` et l'émission du journal restent **purs** (aucun `Date`/`Math.random`/DOM) ; la garde scanne déjà `src/core` — confirmer la couverture.
-- [ ] T021 [P] `src/ui/views/SandboxView.svelte` (+ `src/app.css` si besoin) : styles **responsive** (mobile → desktop) de l'écran sandbox et de ses contrôles.
+- [X] T020 [P] `tests/unit/core-purity.test.ts` : vérifier que `src/core/sandbox/*` et l'émission du journal restent **purs** (aucun `Date`/`Math.random`/DOM) ; la garde scanne déjà `src/core` — confirmer la couverture.
+- [X] T021 [P] `src/ui/views/SandboxView.svelte` (+ `src/app.css` si besoin) : styles **responsive** (mobile → desktop) de l'écran sandbox et de ses contrôles.
 - [ ] T022 Dérouler `specs/007-sandbox-make-it-real/quickstart.md` (validation manuelle US1/US2/US3 + isolation/déterminisme).
-- [ ] T023 Portes de qualité : `npm run test` + `npm run lint` + `npm run build` **verts** ; bundle déployable (Principe II).
+- [X] T023 Portes de qualité : `npm run test` + `npm run lint` + `npm run build` **verts** ; bundle déployable (Principe II).
 
 ---
 
