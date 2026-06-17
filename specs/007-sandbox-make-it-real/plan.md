@@ -81,6 +81,14 @@ documentée en Complexity Tracking ; aucune autre violation.
 | **Journal d'événements daté** | `AppState.history: PopulationEvent[]` (additif). Émis par `generateInitialPopulation` (naissances an de genèse), `tick` (naissances, couples, divorces), `kill` (décès) — chacun **estampille l'année**. `FORMAT_VERSION → 3` ; rétro-compat : `history` absent ⇒ `[]` (reconstruction dégradée, documentée). |
 | **Retrait page principale** | La page principale (liste) **retire** la reproduction manuelle (`reproduceSelected`/sélection) ; seul « avancer de X années » fait évoluer la population réelle. La logique de sélection migre dans l'écran sandbox. |
 | **Aucune dépendance** | Réutilise `reproduce`, `kill`, la sérialisation canonique, l'état RNG, le rendu de liste/arbre existants. |
+| **Cycle de vie conjugal** (BUG-001 volet B) | Fonctions pures `formCouple`/`divorceCouple`/`dissolveConjugalLink` (conjoints symétriques + `couples` cohérent + émission/purge `couple`/`divorce` pour la reconstruction ; jamais `parents`/`enfants`). Détail D11. |
+| **Formulaire complet** (BUG-001 volet A) | Correction **UI** : `SandboxView` expose **tous** les attributs de `PersonDraft` (ADN, pouvoirs incl. sans-pouvoir / mutation forte / normale, `raisonDeces`). Le cœur est inchangé (les acceptait déjà). |
+| **Filtres sandbox** (BUG-002) | Correction **UI** : `SandboxView` réutilise `FilterBar` + `filterPopulation` (Feature 4/5) sur l'état reconstruit ; sélection de parents indépendante du filtrage. Détail D12. |
+
+> **Bugfix**: 2026-06-17 — BUG-001 — Mise à jour depuis le patch bugfix (volet A : formulaire UI complet ;
+> volet B : édition du cycle de vie conjugal — nouvelles fonctions pures cœur, sans toucher la parenté).
+
+> **Bugfix**: 2026-06-17 — BUG-002 — Mise à jour depuis le patch bugfix (parité de filtrage sandbox — UI seule).
 
 ## Project Structure
 
@@ -102,6 +110,7 @@ specs/007-sandbox-make-it-real/
 ```text
 src/core/sandbox/
 ├── sandbox.ts            # NOUVEAU — createPerson/clonePerson/editPerson/deletePerson/manualReproduce (purs)
+│                         #   + (BUG-001 vB) formCouple/divorceCouple/dissolveConjugalLink (purs)
 └── reconstruct.ts        # NOUVEAU — reconstructAtYear (projection à partir du journal)
 
 src/core/model/
@@ -121,6 +130,8 @@ src/ui/stores/
 
 src/ui/views/
 ├── SandboxView.svelte    # NOUVEAU — écran sandbox (liste + mode repro + sélecteur d'année + boutons)
+│                         #   + (BUG-001 vA) formulaire complet ADN/pouvoirs/raisonDeces ; (vB) édition couples
+│                         #   + (BUG-002) réutilise FilterBar + filterPopulation
 └── ListeView.svelte      # MODIFIÉ — retrait des contrôles de reproduction manuelle
 
 src/ui/components/        # réutilise liste/fiche/arbre ; ajout boutons make it real / reset / sélecteur année

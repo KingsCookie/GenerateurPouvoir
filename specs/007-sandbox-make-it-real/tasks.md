@@ -91,7 +91,7 @@ suppression refusée si descendants (cf. quickstart US2).
 
 ### Implémentation UI
 
-- [X] T012 [US2] `src/ui/views/SandboxView.svelte` (+ composant de formulaire si besoin) : UI de **création** (tous attributs : espèce, genre, ADN, pouvoirs, notes), **clonage**, **édition directe** des attributs, et **suppression** (bouton désactivé / message FR si descendants). Dépend de T008, T011.
+- [X] T012 [US2] (corrigé via T026 — BUG-001 volet A) `src/ui/views/SandboxView.svelte` : UI de **création** (tous attributs), **clonage**, **édition directe** des attributs, et **suppression** (bouton désactivé / message FR si descendants). Dépend de T008, T011. **Correctif livré** : le formulaire complet (ADN/traits, pouvoirs avec profil sans-pouvoir / mutation forte / normale, `raisonDeces`) est extrait dans `SandboxPersonForm.svelte` (T026).
 
 **Checkpoint** : US1 + US2 fonctionnelles indépendamment.
 
@@ -135,6 +135,33 @@ quickstart US3).
 
 ---
 
+## Phase 7 : Correctifs (bugfix)
+
+**Bugfix**: 2026-06-17 — BUG-001 (volet A : formulaire incomplet ; volet B : édition du cycle de vie
+conjugal) + BUG-002 (parité de filtrage sandbox). Voir `bugs/BUG-001.md`, `bugs/BUG-002.md`.
+
+### BUG-001 volet A — Formulaire complet (UI seule ; cœur inchangé)
+
+- [X] T026 [US2] (BUG-001 vA) `src/ui/components/SandboxPersonForm.svelte` (nouveau, utilisé par `SandboxView.svelte`) : exposer dans la création/édition les attributs manquants — **ADN/traits** (éditeur de traits par type, actif + résilience), **pouvoirs** avec **profil** (sans-pouvoir / mutation forte / mutation normale, puissance/maîtrise éditables), et **`raisonDeces`** (visible quand `vivant = false`). Mappe vers `PersonDraft`/`PersonPatch`. Lève T012.
+
+### BUG-001 volet B — Édition du cycle de vie conjugal (cœur pur + UI)
+
+- [X] T024 [US2] (BUG-001 vB) `tests/unit/sandbox.test.ts` (étendre, **avant** T025) : `formCouple(state, aId, bId, year)` pose des conjoints **« actuel » symétriques** + un `Couple` + émet `couple{year}` (Err si même id / introuvable / déjà en couple) ; `divorceCouple(state, coupleId, year)` passe les conjoints en **« ex »**, désactive le couple, émet `divorce{year}` ; `dissolveConjugalLink(state, coupleId)` **retire** le lien symétrique (retour célibataire) et **purge** les événements `couple`/`divorce` du couple ; aucune ne touche `parents`/`enfants` ; **ne mute pas** l'entrée ; cohérence `reconstructAtYear` (INV-S12). Seed fixe. **(8 tests, verts)**
+- [X] T025 [US2] (BUG-001 vB) `src/core/sandbox/sandbox.ts` (étendre) : implémenter `formCouple`/`divorceCouple`/`dissolveConjugalLink` (purs, `Result<AppState>`, liens symétriques, `couples` cohérent, émission/purge d'événements). Ré-export `src/core/index.ts`. Dépend de T011, T024.
+- [X] T027 [US2] (BUG-001 vB) `src/ui/views/SandboxView.svelte` + `src/ui/stores/sandboxStore.ts` : panneau **« Couples & cycle de vie conjugal »** (former un couple entre 2 individus, divorcer/séparer, dissoudre) appelant les fonctions cœur à l'**année sélectionnée** ; messages FR sur `Err`. Dépend de T025, T019.
+
+### BUG-002 — Parité de filtrage sandbox (UI seule)
+
+- [X] T028 [US3] (BUG-002) `src/ui/views/SandboxView.svelte` : intégrer **`FilterBar`** + le moteur pur **`filterPopulation`** (Feature 4/5) appliqué à la population **reconstruite** (`reconstructAtYear`), avec défaut dynamique « dernière génération » ; en **mode reproduction manuelle**, la sélection de parents (Set) reste **indépendante** du filtrage (les parents masqués restent sélectionnés). Dépend de T019.
+
+### Validation du correctif
+
+- [X] T029 (bugfix) Étendre `quickstart.md` (scénarios : formulaire complet, édition couples, filtres sandbox) + portes de qualité `npm run test` (**243 verts**) + `npm run lint` (**clean**) + `npm run build` (**OK, 176 kB**).
+
+**Checkpoint** : BUG-001 (A+B) et BUG-002 corrigés, testés (cœur à seed fixe pour vB), portes vertes.
+
+---
+
 ## Dependencies & Execution Order
 
 ### Dépendances de phase
@@ -148,6 +175,8 @@ quickstart US3).
 - **US1 (P1, MVP)** : T005 (test) → T006 → T007 → T008 → T009.
 - **US2 (P2)** : T010 (test) → T011 (après T006) → T012 (après T008).
 - **US3 (P3)** : T013/T014 (tests) → T015 ‖ T016 ‖ T017 (fichiers distincts) → T018 → T019 (après T008).
+- **Correctifs (Phase 7)** : BUG-001 vA → T012 (rouverte) ‖ T026 (après T012) ; BUG-001 vB → T024 (test) →
+  T025 (après T011) → T027 (après T025, T019) ; BUG-002 → T028 (après T019) ; validation → T029 (en dernier).
 
 ### Même fichier (séquentiel, pas de [P])
 

@@ -19,78 +19,76 @@
     sandboxError,
     sbClonePerson,
     sbDeletePerson,
-    sbCreatePerson,
-    sbEditPerson,
+    sbFormCouple,
+    sbDivorceCouple,
+    sbDissolveConjugalLink,
   } from '../stores/sandboxStore.js';
-  import { catalog, especes } from '../stores/appState.js';
+  import { catalog } from '../stores/appState.js';
+  import { criteria, generationTouched } from '../stores/filters.js';
+  import { filterPopulation, lastGeneration, type Personne } from '../../core/index.js';
   import { buildListRow } from '../lib/ficheViewModel.js';
-  import type { PersonDraft } from '../../core/index.js';
+  import FilterBar from '../components/FilterBar.svelte';
+  import SandboxPersonForm from '../components/SandboxPersonForm.svelte';
 
   $: view = $sandboxView;
-  $: rows = view ? view.population.map((p) => buildListRow(p, $catalog, $sandboxYear)) : [];
+  // Filtrage (BUG-002) : mêmes filtres que la liste principale, appliqués à l'état RECONSTRUIT à l'année.
+  $: derniere = view ? lastGeneration(view.population) : null;
+  $: effectiveGenerations =
+    $generationTouched || derniere === null ? $criteria.generations : new Set<number>([derniere]);
+  $: effectiveCriteria = { ...$criteria, generations: effectiveGenerations };
+  $: filtered = view
+    ? filterPopulation(view.population, effectiveCriteria, { currentYear: $sandboxYear })
+    : [];
+  $: rows = filtered.map((p) => buildListRow(p, $catalog, $sandboxYear));
   $: minYear = $sandboxState ? $sandboxState.parameters.birthYear : 0;
   $: maxYear = $sandboxState ? $sandboxState.currentYear : 0;
   $: selectedCount = $reproSelected.size;
 
-  // --- Formulaire de création / édition ---
+  // --- Formulaire de création / édition (BUG-001 volet A) ---
   let formOpen = false;
-  let editingId: string | null = null;
-  let fNom = '';
-  let fEspeceId = '';
-  let fGenreId = '';
-  let fNotes = '';
-  let fVivant = true;
+  let formMode: 'create' | 'edit' = 'create';
+  let editingPerson: Personne | null = null;
 
   function openCreate() {
-    editingId = null;
-    fNom = 'Nouvel individu';
-    fEspeceId = $especes[0]?.id ?? 'humain';
-    fGenreId = $especes[0]?.genres[0]?.id ?? 'tout';
-    fNotes = '';
-    fVivant = true;
+    formMode = 'create';
+    editingPerson = null;
     formOpen = true;
   }
-
   function openEdit(id: string) {
-    const p = $sandboxState?.population.find((x) => x.id === id);
+    const p = $sandboxState?.population.find((x) => x.id === id) ?? null;
     if (!p) return;
-    editingId = id;
-    fNom = p.nom;
-    fEspeceId = p.especeId;
-    fGenreId = p.genreId;
-    fNotes = p.notes ?? '';
-    fVivant = p.vivant;
+    formMode = 'edit';
+    editingPerson = p;
     formOpen = true;
   }
 
-  function submitForm() {
-    if (editingId) {
-      sbEditPerson(editingId, {
-        nom: fNom,
-        especeId: fEspeceId,
-        genreId: fGenreId,
-        notes: fNotes || null,
-        vivant: fVivant,
-      });
-    } else {
-      const yyyy = String(Math.abs($sandboxYear)).padStart(4, '0');
-      const draft: PersonDraft = {
-        nom: fNom,
-        especeId: fEspeceId,
-        genreId: fGenreId,
-        dateNaissance: `${yyyy}-01-01`,
-        vivant: fVivant,
-        raisonDeces: null,
-        adn: { traits: [] },
-        pouvoirs: [],
-        notes: fNotes || null,
-      };
-      sbCreatePerson(draft);
+  // --- Édition des couples (BUG-001 volet B) ---
+  let coupleA = '';
+  let coupleB = '';
+  $: nameById = new Map(($sandboxState?.population ?? []).map((p) => [p.id, p.nom]));
+  $: activeCoupleIds = new Set(($sandboxState?.couples ?? []).map((c) => c.id));
+  // Couples connus (depuis le journal) : actifs ou divorcés (« ex »). Purgés à la dissolution.
+  $: coupleList = (() => {
+    const seen = new Map<string, { id: string; memberIds: string[]; active: boolean }>();
+    for (const e of $sandboxState?.history ?? []) {
+      if (e.kind === 'couple') {
+        seen.set(e.coupleId, {
+          id: e.coupleId,
+          memberIds: e.memberIds,
+          active: activeCoupleIds.has(e.coupleId),
+        });
+      }
     }
-    formOpen = false;
-  }
+    return [...seen.values()];
+  })();
 
-  $: genresForEspece = $especes.find((e) => e.id === fEspeceId)?.genres ?? [];
+  function formCoupleNow() {
+    if (!coupleA || !coupleB) return;
+    sbFormCouple(coupleA, coupleB);
+  }
+  function nom(id: string): string {
+    return nameById.get(id) ?? id;
+  }
 </script>
 
 {#if !$sandboxState}
@@ -156,6 +154,58 @@
       <p class="error" role="alert">{$sandboxError}</p>
     {/if}
 
+    <!-- Édition des couples (cycle de vie conjugal) -->
+    {#if !$reproMode}
+      <details class="couples">
+        <summary>Couples & cycle de vie conjugal</summary>
+        <div class="form-couple">
+          <label>
+            A
+            <select bind:value={coupleA}>
+              <option value="" disabled>— choisir —</option>
+              {#each $sandboxState.population as p (p.id)}<option value={p.id}>{p.nom}</option
+                >{/each}
+            </select>
+          </label>
+          <label>
+            B
+            <select bind:value={coupleB}>
+              <option value="" disabled>— choisir —</option>
+              {#each $sandboxState.population as p (p.id)}<option value={p.id}>{p.nom}</option
+                >{/each}
+            </select>
+          </label>
+          <button
+            type="button"
+            on:click={formCoupleNow}
+            disabled={!coupleA || !coupleB || coupleA === coupleB}
+            >Former le couple (année {$sandboxYear})</button
+          >
+        </div>
+        {#if coupleList.length === 0}
+          <p class="muted">Aucun couple.</p>
+        {:else}
+          <ul class="couple-list">
+            {#each coupleList as c (c.id)}
+              <li>
+                <span>{c.memberIds.map(nom).join(' ⚭ ')}</span>
+                <span class="badge" class:ex={!c.active}>{c.active ? 'actuel' : 'ex'}</span>
+                {#if c.active}
+                  <button type="button" on:click={() => sbDivorceCouple(c.id)}>Divorcer</button>
+                {/if}
+                <button type="button" class="danger" on:click={() => sbDissolveConjugalLink(c.id)}
+                  >Dissoudre</button
+                >
+              </li>
+            {/each}
+          </ul>
+        {/if}
+      </details>
+    {/if}
+
+    <!-- Filtres (parité avec la liste principale, BUG-002) -->
+    <FilterBar />
+
     <table>
       <thead>
         <tr>
@@ -209,40 +259,18 @@
         {/each}
       </tbody>
     </table>
+    {#if rows.length === 0}
+      <p class="empty">Aucun individu ne correspond aux filtres.</p>
+    {/if}
   </section>
 
   {#if formOpen}
-    <div
-      class="form"
-      role="dialog"
-      aria-label={editingId ? 'Éditer un individu' : 'Créer un individu'}
-    >
-      <h3>{editingId ? 'Éditer' : 'Créer'} un individu</h3>
-      <label>Nom <input type="text" bind:value={fNom} /></label>
-      <label>
-        Espèce
-        <select bind:value={fEspeceId}>
-          {#each $especes as e (e.id)}<option value={e.id}>{e.label}</option>{/each}
-        </select>
-      </label>
-      <label>
-        Genre
-        <select bind:value={fGenreId}>
-          {#each genresForEspece as g (g.id)}<option value={g.id}>{g.label}</option>{/each}
-        </select>
-      </label>
-      <label>Notes <input type="text" bind:value={fNotes} /></label>
-      <label class="inline"><input type="checkbox" bind:checked={fVivant} /> Vivant</label>
-      <div class="form-actions">
-        <button type="button" class="primary" on:click={submitForm}
-          >{editingId ? 'Enregistrer' : 'Créer'}</button
-        >
-        <button type="button" on:click={() => (formOpen = false)}>Annuler</button>
-      </div>
-      <p class="muted">
-        Astuce : pour un ADN/des pouvoirs précis, clonez un individu existant puis éditez.
-      </p>
-    </div>
+    <SandboxPersonForm
+      mode={formMode}
+      person={editingPerson}
+      year={$sandboxYear}
+      onClose={() => (formOpen = false)}
+    />
   {/if}
 {/if}
 
@@ -280,6 +308,53 @@
   .year input[type='range'] {
     flex: 1 1 12rem;
   }
+  .couples {
+    margin: 0.6rem 0;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    padding: 0.5rem 0.7rem;
+    background: var(--bg-elev);
+  }
+  .couples summary {
+    cursor: pointer;
+    font-weight: 600;
+  }
+  .form-couple {
+    display: flex;
+    gap: 0.6rem;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    margin: 0.5rem 0;
+  }
+  .form-couple label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    font-size: 0.82rem;
+  }
+  .couple-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .couple-list li {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .badge {
+    font-size: 0.74rem;
+    padding: 0.05rem 0.4rem;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 25%, transparent);
+  }
+  .badge.ex {
+    background: color-mix(in srgb, var(--fg-muted) 25%, transparent);
+  }
   table {
     width: 100%;
     border-collapse: collapse;
@@ -313,31 +388,6 @@
   }
   .error {
     color: var(--danger);
-  }
-  .form {
-    margin-top: 1rem;
-    padding: 1rem;
-    border: 1px solid var(--border);
-    border-radius: var(--radius);
-    background: var(--bg-elev);
-    display: flex;
-    flex-direction: column;
-    gap: 0.5rem;
-    max-width: 28rem;
-  }
-  .form label {
-    display: flex;
-    flex-direction: column;
-    gap: 0.2rem;
-  }
-  .form label.inline {
-    flex-direction: row;
-    align-items: center;
-    gap: 0.4rem;
-  }
-  .form-actions {
-    display: flex;
-    gap: 0.5rem;
   }
   .empty {
     color: var(--fg-muted);

@@ -44,6 +44,14 @@ function deletePerson(state: AppState, id: string): Result<AppState>;
 function manualReproduce(
   state: AppState, parentIds: string[], count: number, birthYear: number, rng: Rng,
 ): AppState;
+
+// --- Édition directe du cycle de vie conjugal (BUG-001 volet B) — purs, sans RNG ---
+// Forme un couple « actuel » entre deux individus distincts ; conjoints symétriques ; émet `couple{year}`.
+function formCouple(state: AppState, aId: string, bId: string, year: number): Result<AppState>;
+// Divorce/sépare un couple actif : conjoints → « ex » des deux côtés ; émet `divorce{year}` ; couple inactif.
+function divorceCouple(state: AppState, coupleId: string, year: number): Result<AppState>;
+// Dissout un lien conjugal (retour célibataire) : retrait symétrique + purge des événements couple/divorce.
+function dissolveConjugalLink(state: AppState, coupleId: string): Result<AppState>;
 ```
 
 **Contrats** :
@@ -56,6 +64,10 @@ function manualReproduce(
 - `manualReproduce` : `count < 1` ou `parentIds` vide ⇒ `state` inchangé (no-op) ; sinon `count` enfants
   via `reproduce` (Feature 2), `parents`/`enfants` posés, `history` étendu (INV-S4). **Pur** (RNG en
   paramètre). Ne fait **aucune** vérification d'appariement (sandbox = libre).
+- `formCouple`/`divorceCouple`/`dissolveConjugalLink` : liens **symétriques** + `couples` cohérent ;
+  émission/purge des événements `couple`/`divorce` pour rester cohérent avec `reconstructAtYear` ;
+  **ne touchent jamais** `parents`/`enfants` (INV-S12). `Err` si introuvable / individus identiques /
+  couple déjà existant (`formCouple`). Sandbox = libre (aucune contrainte d'appariement génétique).
 - Toutes : **ne mutent pas** `state` (INV-S1).
 
 ## 3. Reconstruction historique (pure)
@@ -92,3 +104,10 @@ journal ⇒ repli sur `yearOf(dateNaissance)` pour la présence, état courant p
 - **Sélecteur d'année** : borne `[birthYear, currentYear]` ; l'affichage applique `reconstructAtYear`.
 - **Page principale** : **retrait** des contrôles de reproduction manuelle (sélection + `reproduceSelected`).
 - L'écran sandbox réutilise les rendus **liste/fiche/arbre** existants sur l'état (reconstruit) de la sandbox.
+- **Formulaire création/édition (BUG-001 volet A)** : expose **tous** les attributs de `PersonDraft`
+  (nom, espèce, genre, statut + `raisonDeces`, **ADN/traits**, **pouvoirs** avec profil sans-pouvoir /
+  mutation forte / normale, notes). L'**édition du cycle de vie conjugal** (volet B) appelle les
+  opérations cœur `formCouple`/`divorceCouple`/`dissolveConjugalLink` (à l'année sélectionnée).
+- **Filtres (BUG-002)** : l'écran sandbox réutilise `FilterBar` + le moteur pur `filterPopulation`
+  (Feature 4/5) appliqué à l'état **reconstruit** ; en mode reproduction manuelle, les parents sélectionnés
+  masqués par un filtre **restent** sélectionnés (cohérence).

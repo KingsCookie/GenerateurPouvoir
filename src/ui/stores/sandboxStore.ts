@@ -7,9 +7,16 @@ import {
   clonePerson as clonePersonCore,
   editPerson as editPersonCore,
   deletePerson as deletePersonCore,
+  formCouple as formCoupleCore,
+  divorceCouple as divorceCoupleCore,
+  dissolveConjugalLink as dissolveConjugalLinkCore,
+  generateStrongMutationPower,
+  derivePowersFromTraits,
   reconstructAtYear,
   type AppState,
   type Rng,
+  type ADN,
+  type Pouvoir,
   type PersonDraft,
   type PersonPatch,
 } from '../../core/index.js';
@@ -184,4 +191,65 @@ export function sbDeletePerson(id: string): string | null {
   sandboxError.set(null);
   sandboxState.set(res.value);
   return null;
+}
+
+// --- Édition du cycle de vie conjugal (BUG-001 volet B) — à l'année sélectionnée ---
+
+/** Forme un couple « actuel » entre deux individus ; message d'erreur ou `null`. */
+export function sbFormCouple(aId: string, bId: string): string | null {
+  const s = get(sandboxState);
+  if (!s) return null;
+  const res = formCoupleCore(s, aId, bId, get(sandboxYear));
+  if (!res.ok) {
+    sandboxError.set(res.error);
+    return res.error;
+  }
+  sandboxError.set(null);
+  sandboxState.set(res.value);
+  return null;
+}
+
+/** Divorce/sépare un couple actif (conjoints → « ex ») ; message d'erreur ou `null`. */
+export function sbDivorceCouple(coupleId: string): string | null {
+  const s = get(sandboxState);
+  if (!s) return null;
+  const res = divorceCoupleCore(s, coupleId, get(sandboxYear));
+  if (!res.ok) {
+    sandboxError.set(res.error);
+    return res.error;
+  }
+  sandboxError.set(null);
+  sandboxState.set(res.value);
+  return null;
+}
+
+/** Dissout totalement un lien conjugal (retour célibataire) ; message d'erreur ou `null`. */
+export function sbDissolveConjugalLink(coupleId: string): string | null {
+  const s = get(sandboxState);
+  if (!s) return null;
+  const res = dissolveConjugalLinkCore(s, coupleId);
+  if (!res.ok) {
+    sandboxError.set(res.error);
+    return res.error;
+  }
+  sandboxError.set(null);
+  sandboxState.set(res.value);
+  return null;
+}
+
+// --- Génération de pouvoirs pour le formulaire (BUG-001 volet A) — consomme le RNG forké. ---
+
+/** Génère un pouvoir de **mutation forte** (ou aucun si types/poids le rendent impossible). */
+export function sbGenerateStrongPower(): Pouvoir[] {
+  const s = get(sandboxState);
+  if (!s) return [];
+  const p = generateStrongMutationPower(s.catalog, s.parameters, sbRng);
+  return p ? [p] : [];
+}
+
+/** Dérive les pouvoirs de **mutation normale** depuis les traits actifs de l'ADN (peut enrichir l'ADN). */
+export function sbDerivePowers(adn: ADN): { pouvoirs: Pouvoir[]; adn: ADN } {
+  const s = get(sandboxState);
+  if (!s) return { pouvoirs: [], adn };
+  return derivePowersFromTraits(adn, s.catalog, s.parameters, sbRng);
 }

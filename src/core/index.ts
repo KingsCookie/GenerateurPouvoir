@@ -71,6 +71,9 @@ export {
   clonePerson,
   editPerson,
   deletePerson,
+  formCouple,
+  divorceCouple,
+  dissolveConjugalLink,
 } from './sandbox/sandbox.js';
 export type { PersonDraft, PersonPatch } from './sandbox/sandbox.js';
 export { reconstructAtYear } from './sandbox/reconstruct.js';

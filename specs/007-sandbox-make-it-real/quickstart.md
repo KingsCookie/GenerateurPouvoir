@@ -65,3 +65,37 @@ Prérequis : `npm run dev`. Couvre US1 (sandbox + repro manuelle + make it real)
 3. Exporter un `full` après « make it real ».
    - [ ] Le fichier inclut l'**historique** (journal d'événements) ; un import le restaure (rétro-compat :
          un ancien fichier sans historique s'importe avec un journal vide).
+
+## Correctifs (bugfix — BUG-001 / BUG-002)
+
+### BUG-001 volet A — Formulaire complet (création/édition)
+
+1. Ouvrir **« Créer un individu »**.
+   - [ ] Le formulaire expose : nom, espèce, genre, **vivant** (+ **raison du décès** quand décédé),
+         **notes**, **ADN/traits** (sélection par type, avec **actif** + **résilience**), et un **profil
+         de pouvoir**.
+2. Tester le **profil de pouvoir** : « Sans pouvoir », « Mutation normale (traits → pouvoirs) », « Mutation forte ».
+   - [ ] « Sans pouvoir » ⇒ aucun pouvoir ; « Mutation normale » ⇒ pouvoir(s) dérivé(s) des traits
+         **actifs** ; « Mutation forte » ⇒ un pouvoir généré ; **puissance/maîtrise** éditables (1..10).
+3. **Éditer** un individu existant : modifier ADN, pouvoirs, statut.
+   - [ ] Les modifications s'appliquent **dans la sandbox uniquement** ; la parenté n'est pas affectée.
+
+### BUG-001 volet B — Édition du cycle de vie conjugal
+
+1. Ouvrir **« Couples & cycle de vie conjugal »**, choisir A et B, **« Former le couple »**.
+   - [ ] A et B deviennent conjoints **« actuel »** (symétrique) ; le couple apparaît **actif**.
+2. **« Divorcer »** le couple.
+   - [ ] Les conjoints passent **« ex »** ; le couple n'est plus actif.
+3. **« Dissoudre »** un lien (actif ou ex).
+   - [ ] Le lien **disparaît** (retour célibataire) ; en **navigation temporelle**, le couple
+         n'apparaît plus à **aucune** année.
+4. Vérifier la **navigation temporelle** après former (année F) puis divorcer (année D > F).
+   - [ ] À une année ∈ [F, D[ ⇒ **« actuel »** ; à une année ≥ D ⇒ **« ex »**.
+
+### BUG-002 — Parité de filtrage
+
+1. Vérifier la présence de la **barre de filtres** dans la sandbox (nom, génération, espèce, statut,
+   pouvoir, traits).
+   - [ ] Les filtres **restreignent** la liste sandbox (état reconstruit à l'année).
+2. En **mode reproduction manuelle**, sélectionner des parents puis appliquer un filtre qui les **masque**.
+   - [ ] Les parents masqués **restent sélectionnés** (« valider » les inclut).

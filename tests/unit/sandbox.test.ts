@@ -12,8 +12,12 @@ import {
   clonePerson,
   editPerson,
   deletePerson,
+  formCouple,
+  divorceCouple,
+  dissolveConjugalLink,
   type PersonDraft,
 } from '../../src/core/sandbox/sandbox.js';
+import { reconstructAtYear } from '../../src/core/sandbox/reconstruct.js';
 
 function baseState(seed: bigint, batchSize = 6): AppState {
   const parameters = {
@@ -214,5 +218,159 @@ describe('Sandbox — suppression (US2)', () => {
 
   it('refuse un individu introuvable', () => {
     expect(deletePerson(makeFamilyState(), 'inconnu').ok).toBe(false);
+  });
+});
+
+describe('Sandbox — édition du cycle de vie conjugal (US2, BUG-001 volet B)', () => {
+  const pers = (id: string, over: Partial<Personne> = {}): Personne => ({
+    id,
+    nom: id,
+    especeId: 'humain',
+    genreId: 'homme',
+    dateNaissance: '0000-06-15',
+    vivant: true,
+    raisonDeces: null,
+    parents: [],
+    enfants: [],
+    conjoints: [],
+    adn: { traits: [] },
+    pouvoirs: [],
+    notes: null,
+    ...over,
+  });
+
+  function singlesState(): AppState {
+    return {
+      formatVersion: FORMAT_VERSION,
+      kind: 'full',
+      parameters: { ...defaultParameters(), birthYear: 0 },
+      catalog: defaultCatalog(),
+      especes: defaultEspeces(),
+      population: [pers('p-x'), pers('p-y'), pers('p-z')],
+      currentYear: 6,
+      couples: [],
+      rngState: createRng(1n).getState(),
+      history: [
+        { kind: 'birth', year: 0, personId: 'p-x' },
+        { kind: 'birth', year: 0, personId: 'p-y' },
+        { kind: 'birth', year: 0, personId: 'p-z' },
+      ],
+    };
+  }
+
+  it('INV-S12 : formCouple pose des conjoints « actuel » symétriques + couple + événement', () => {
+    const res = formCouple(singlesState(), 'p-x', 'p-y', 3);
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    const a = res.value.population.find((p) => p.id === 'p-x')!;
+    const b = res.value.population.find((p) => p.id === 'p-y')!;
+    expect(a.conjoints).toEqual([{ id: 'p-y', statut: 'actuel' }]);
+    expect(b.conjoints).toEqual([{ id: 'p-x', statut: 'actuel' }]);
+    expect(res.value.couples).toHaveLength(1);
+    expect(res.value.couples[0].memberIds.slice().sort()).toEqual(['p-x', 'p-y']);
+    const ce = res.value.history.filter((e) => e.kind === 'couple');
+    expect(ce).toHaveLength(1);
+    expect(ce[0]).toMatchObject({ year: 3 });
+  });
+
+  it('formCouple : Err si même id / introuvable / déjà en couple', () => {
+    const s = singlesState();
+    expect(formCouple(s, 'p-x', 'p-x', 1).ok).toBe(false);
+    expect(formCouple(s, 'p-x', 'inconnu', 1).ok).toBe(false);
+    const r1 = formCouple(s, 'p-x', 'p-y', 1);
+    expect(r1.ok).toBe(true);
+    if (!r1.ok) return;
+    expect(formCouple(r1.value, 'p-x', 'p-y', 2).ok).toBe(false);
+  });
+
+  it('INV-S1 : formCouple ne mute pas l’entrée', () => {
+    const s = singlesState();
+    formCouple(s, 'p-x', 'p-y', 3);
+    expect(s.population.find((p) => p.id === 'p-x')!.conjoints).toEqual([]);
+    expect(s.couples).toHaveLength(0);
+  });
+
+  it('divorceCouple : conjoints « ex », couple retiré, événement divorce daté', () => {
+    const formed = formCouple(singlesState(), 'p-x', 'p-y', 2);
+    expect(formed.ok).toBe(true);
+    if (!formed.ok) return;
+    const coupleId = formed.value.couples[0].id;
+    const res = divorceCouple(formed.value, coupleId, 4);
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.value.population.find((p) => p.id === 'p-x')!.conjoints).toEqual([
+      { id: 'p-y', statut: 'ex' },
+    ]);
+    expect(res.value.couples.find((c) => c.id === coupleId)).toBeUndefined();
+    expect(
+      res.value.history.some(
+        (e) => e.kind === 'divorce' && e.coupleId === coupleId && e.year === 4,
+      ),
+    ).toBe(true);
+  });
+
+  it('divorceCouple : Err si couple introuvable', () => {
+    expect(divorceCouple(singlesState(), 'c-999999', 1).ok).toBe(false);
+  });
+
+  it('INV-S12 : dissolveConjugalLink retire le lien (retour célibataire) + purge les événements', () => {
+    const formed = formCouple(singlesState(), 'p-x', 'p-y', 2);
+    expect(formed.ok).toBe(true);
+    if (!formed.ok) return;
+    const coupleId = formed.value.couples[0].id;
+    const res = dissolveConjugalLink(formed.value, coupleId);
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.value.population.find((p) => p.id === 'p-x')!.conjoints).toEqual([]);
+    expect(res.value.population.find((p) => p.id === 'p-y')!.conjoints).toEqual([]);
+    expect(res.value.couples.find((c) => c.id === coupleId)).toBeUndefined();
+    expect(
+      res.value.history.some(
+        (e) => (e.kind === 'couple' || e.kind === 'divorce') && e.coupleId === coupleId,
+      ),
+    ).toBe(false);
+  });
+
+  it('dissolveConjugalLink : fonctionne sur un couple divorcé (« ex ») via le journal', () => {
+    const formed = formCouple(singlesState(), 'p-x', 'p-y', 2);
+    if (!formed.ok) throw new Error('formCouple');
+    const coupleId = formed.value.couples[0].id;
+    const divorced = divorceCouple(formed.value, coupleId, 4);
+    if (!divorced.ok) throw new Error('divorceCouple');
+    const res = dissolveConjugalLink(divorced.value, coupleId);
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    expect(res.value.population.find((p) => p.id === 'p-x')!.conjoints).toEqual([]);
+    expect(
+      res.value.history.some(
+        (e) => (e.kind === 'couple' || e.kind === 'divorce') && e.coupleId === coupleId,
+      ),
+    ).toBe(false);
+  });
+
+  it('INV-S12 : les opérations conjugales ne touchent jamais parents/enfants', () => {
+    const base = singlesState();
+    const x = { ...base.population[0], parents: ['par'], enfants: ['enf'] };
+    const s = { ...base, population: [x, base.population[1], base.population[2]] };
+    const res = formCouple(s, 'p-x', 'p-y', 3);
+    expect(res.ok).toBe(true);
+    if (!res.ok) return;
+    const a = res.value.population.find((p) => p.id === 'p-x')!;
+    expect(a.parents).toEqual(['par']);
+    expect(a.enfants).toEqual(['enf']);
+  });
+
+  it('cohérence reconstructAtYear : « actuel » à la formation, « ex » après divorce', () => {
+    const formed = formCouple(singlesState(), 'p-x', 'p-y', 2);
+    if (!formed.ok) throw new Error('formCouple');
+    const coupleId = formed.value.couples[0].id;
+    const divorced = divorceCouple(formed.value, coupleId, 4);
+    if (!divorced.ok) throw new Error('divorceCouple');
+    expect(
+      reconstructAtYear(divorced.value, 3).population.find((p) => p.id === 'p-x')!.conjoints,
+    ).toEqual([{ id: 'p-y', statut: 'actuel' }]);
+    expect(
+      reconstructAtYear(divorced.value, 5).population.find((p) => p.id === 'p-x')!.conjoints,
+    ).toEqual([{ id: 'p-y', statut: 'ex' }]);
   });
 });

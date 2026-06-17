@@ -231,6 +231,23 @@ une **date de naissance tirée aléatoirement** dans l'année sélectionnée.
 - **FR-011b**: Le **rattachement généalogique** (parents/enfants) NE PEUT se faire **que** par la
   **reproduction manuelle** (FR-007) ; un individu créé/cloné reste **autonome** tant qu'il n'a pas été
   impliqué dans une reproduction (Clarification 2026-06-17).
+- **FR-011c**: La **création** (FR-010) et l'**édition directe** (FR-011a) DOIVENT exposer **l'intégralité**
+  des attributs caractérisant un individu, dont au minimum : **nom**, **espèce**, **genre**, **statut**
+  (vivant / mort + **`raisonDeces`** quand mort), **ADN / traits**, et le **profil de pouvoir** — y compris
+  les cas **sans-pouvoir**, **mutation forte** et **mutation normale** (pouvoirs avec puissance/maîtrise).
+  Aucun de ces attributs ne DOIT être inaccessible depuis le formulaire (volet A — BUG-001).
+- **FR-011d**: Dans la sandbox, l'utilisateur DOIT pouvoir **éditer directement le cycle de vie conjugal**
+  d'un individu, **indépendamment** de la reproduction : **former un couple** entre deux individus
+  (conjoints « actuel »), **divorcer / séparer** un couple (conjoints → « ex »), et **dissoudre** un lien
+  conjugal (retour **célibataire**). Cette édition reste **isolée** (FR-004) et **cohérente avec le journal
+  d'événements daté** (émission/retrait des événements `couple`/`divorce` à l'année sélectionnée, support
+  de la reconstruction FR-017). La **parenté** (parents/enfants) reste, elle, **exclusivement** issue de la
+  reproduction (FR-011b, **inchangé**) (volet B — BUG-001).
+
+> **Bugfix**: 2026-06-17 — BUG-001 — (A) FR-011c rappelle que le formulaire création/édition doit exposer
+> **tous** les attributs (ADN, profil sans-pouvoir / mutation forte / normale, `raisonDeces`), déjà supportés
+> par le cœur mais absents de l'UI (dérive d'implémentation). (B) FR-011d **ajoute** au périmètre l'édition
+> directe du **cycle de vie conjugal** (former / divorcer / dissoudre), sans toucher la parenté (FR-011b).
 
 #### Suppression d'individus (en sandbox)
 
@@ -255,6 +272,19 @@ une **date de naissance tirée aléatoirement** dans l'année sélectionnée.
   population suffisant pour reconstruire l'état à toute année entre l'année de départ et l'année courante,
   au minimum : **année de naissance** (déjà présente), **année de décès**, **années de formation et de
   dissolution des couples**. *(Extension du cœur — détail au `/speckit-plan`.)*
+
+#### Affichage & filtres (en sandbox)
+
+- **FR-021**: La page sandbox DOIT proposer **les mêmes filtres** que la liste de population (page
+  principale) — recherche par **nom**, **espèce/genre**, **génération**, **modes d'affichage des traits**,
+  etc. — appliqués à la population **affichée** dans la sandbox (état reconstruit à l'année sélectionnée,
+  FR-017). Le moteur de filtrage **existant** (Feature 4/5) est réutilisé tel quel (aucune nouvelle
+  dépendance). En **mode reproduction manuelle**, le filtrage ne DOIT pas casser la cohérence de la
+  sélection de parents (les parents sélectionnés mais masqués par un filtre restent sélectionnés)
+  (BUG-002).
+
+> **Bugfix**: 2026-06-17 — BUG-002 — Ajout de la **parité de filtrage** entre la liste de population et la
+> sandbox (lacune de spec) ; réutilisation du moteur `filterPopulation` + `FilterBar` existants.
 
 #### Déterminisme & persistance
 
@@ -307,6 +337,14 @@ une **date de naissance tirée aléatoirement** dans l'année sélectionnée.
   (≥ 1) à partir des parents sélectionnés (100 % des cas) ; « annuler » n'en produit **aucun**.
 - **SC-010**: Un individu **créé ou cloné** est **autonome** (0 lien de parenté) tant qu'aucune
   reproduction manuelle ne l'implique.
+- **SC-011**: Le formulaire de création/édition expose **100 %** des attributs caractérisants (nom,
+  espèce, genre, statut + `raisonDeces`, ADN/traits, profil de pouvoir incluant sans-pouvoir / mutation
+  forte / normale) — **0 attribut** inaccessible (BUG-001 volet A).
+- **SC-012**: L'édition directe du cycle de vie conjugal (former / divorcer / dissoudre) produit un état
+  **cohérent** : conjoints et couples symétriques (**0 lien pendant**) et reconstruction historique
+  exacte à l'année (BUG-001 volet B).
+- **SC-013**: La sandbox propose **les mêmes filtres** que la liste de population — **parité 100 %** des
+  critères de filtrage (BUG-002).
 
 ## Assumptions
 

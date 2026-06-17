@@ -34,11 +34,30 @@ export type PopulationEvent =
 
 ```ts
 // Sous-ensemble ÉDITABLE des attributs d'une Personne (jamais parents/enfants/conjoints).
+// NB (BUG-001 volet A) : `adn`, `pouvoirs` et `raisonDeces` font partie du brouillon ÉDITABLE ; l'UI DOIT
+// tous les exposer (formulaire), y compris le profil sans-pouvoir / mutation forte / normale.
 export type PersonDraft = Pick<
   Personne,
   'nom' | 'especeId' | 'genreId' | 'dateNaissance' | 'vivant' | 'raisonDeces' | 'adn' | 'pouvoirs' | 'notes'
 >;
 export type PersonPatch = Partial<PersonDraft>;
+```
+
+## Nouveau — Édition directe du cycle de vie conjugal (BUG-001 volet B)
+
+Le **cycle de vie conjugal** (conjoints/couples) n'est **pas** dans `PersonDraft`/`PersonPatch`
+(INV-S5 préservé) : il est géré par des **opérations dédiées pures**, distinctes de `editPerson`, qui
+maintiennent la **symétrie** des liens et émettent/retirent les événements `couple`/`divorce` à l'année
+sélectionnée (cohérence reconstruction, INV-S9).
+
+```ts
+// Forme un couple « actuel » entre deux individus distincts (conjoints symétriques) ; émet `couple{year}`.
+function formCouple(state: AppState, aId: string, bId: string, year: number): Result<AppState>;
+// Divorce/sépare un couple actif : conjoints → « ex » des deux côtés ; émet `divorce{year}` ; couple inactif.
+function divorceCouple(state: AppState, coupleId: string, year: number): Result<AppState>;
+// Dissout totalement un lien conjugal (retour célibataire) : retire le lien symétrique + purge les
+// événements `couple`/`divorce` du couple concerné (le lien n'a jamais existé pour la reconstruction).
+function dissolveConjugalLink(state: AppState, coupleId: string): Result<AppState>;
 ```
 
 ## Couche UI — état sandbox (non cœur, non persisté)
@@ -78,6 +97,17 @@ export type PersonPatch = Partial<PersonDraft>;
   real ») est strictement reproductible (Principe I).
 - **INV-S11 (année)** : `selectedYear` est borné à `[birthYear, currentYear]` ; un enfant de reproduction
   manuelle naît un **jour aléatoire** (RNG) de `selectedYear`.
+- **INV-S12 (cycle de vie conjugal — BUG-001 volet B)** : `formCouple`/`divorceCouple`/`dissolveConjugalLink`
+  maintiennent des liens **symétriques** (si A a B en `actuel`/`ex`, alors B a A au même statut) et un
+  `couples` cohérent (un couple « actuel » existe ⇔ ses deux membres se référencent en `actuel`). Elles
+  émettent (`formCouple`→`couple`, `divorceCouple`→`divorce`) ou **purgent** (`dissolveConjugalLink`) les
+  événements correspondants pour rester cohérentes avec `reconstructAtYear` (INV-S9). Elles **ne touchent
+  jamais** `parents`/`enfants` (la parenté reste réservée à la reproduction, FR-011b). **Pures** (INV-S1),
+  sans RNG. `Err` si individu/couple introuvable, individus identiques, ou couple déjà existant (`formCouple`).
+
+> **Bugfix**: 2026-06-17 — BUG-001 — Volet A : note sur `PersonDraft` (ADN/pouvoirs/`raisonDeces` éditables,
+> à exposer dans l'UI). Volet B : ajout des opérations conjugales dédiées + INV-S12 (INV-S5 inchangé : la
+> parenté et les conjoints restent hors `editPerson`).
 
 ## Reconstruction — règles de projection (détail INV-S9)
 
