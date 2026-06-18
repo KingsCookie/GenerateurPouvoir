@@ -7,3 +7,6 @@ declare module '*?raw' {
   const content: string;
   export default content;
 }
+
+// Version de l'app injectée au build par Vite (define) depuis package.json — pied de page (FR-009).
+declare const __APP_VERSION__: string;

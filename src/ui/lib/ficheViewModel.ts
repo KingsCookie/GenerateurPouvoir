@@ -4,19 +4,23 @@ import {
   computeAge,
   computeGeneration,
   powerLabel,
+  traitTypeOf,
   yearOf,
   type Catalog,
   type Personne,
   type PowerKind,
+  type TraitType,
 } from '../../core/index.js';
 
 // Réexport pour compatibilité (yearOf vit désormais dans le cœur, réutilisé par la généalogie).
-export { yearOf };
+export { yearOf, traitTypeOf };
 
 export interface TraitView {
   traitId: string;
   label: string;
   resilience: number;
+  /** Type du trait (Remplacement | PartieCorps | Etat | Element | Ajout | Action) — FR-015. */
+  type: TraitType | undefined;
 }
 
 export interface PouvoirView {
@@ -40,6 +44,8 @@ export interface FicheView {
   pouvoirs: PouvoirView[];
   traitsActifs: TraitView[];
   traitsInactifs: TraitView[];
+  /** Enfants de l'individu (id → nom résolu dans la population), cliquables vers leur fiche (FR-015). */
+  enfants: { id: string; nom: string }[];
 }
 
 function labelIndex(catalog: Catalog): Map<string, string> {
@@ -63,26 +69,39 @@ export function traitLabelOf(idx: Map<string, string>, traitId: string): string 
   return human.length > 0 ? human : traitId;
 }
 
-/** Résumé pour une ligne de liste : nom, date, âge, libellés de pouvoir(s). */
+/** Résumé pour une ligne de liste : nom, espèce/génération, date, âge, statut, libellés de pouvoir(s). */
 export function buildListRow(person: Personne, catalog: Catalog, currentYear: number) {
   return {
     id: person.id,
     nom: person.nom,
+    especeId: person.especeId,
+    generation: computeGeneration(yearOf(person.dateNaissance)),
     dateNaissance: person.dateNaissance,
     age: computeAge(yearOf(person.dateNaissance), currentYear),
+    vivant: person.vivant,
     pouvoirs: person.pouvoirs.map((p) => powerLabel(p, catalog)),
   };
 }
 
-/** Vue détaillée d'un individu (US2). */
-export function buildFicheView(person: Personne, catalog: Catalog, currentYear: number): FicheView {
+/**
+ * Vue détaillée d'un individu (US2). `population` (optionnelle) sert à résoudre les **noms** des
+ * enfants (FR-015) ; sans elle, les noms retombent sur l'id.
+ */
+export function buildFicheView(
+  person: Personne,
+  catalog: Catalog,
+  currentYear: number,
+  population: readonly Personne[] = [],
+): FicheView {
   const idx = labelIndex(catalog);
   const resilById = new Map(person.adn.traits.map((t) => [t.traitId, t.resilience]));
+  const nameById = new Map(population.map((p) => [p.id, p.nom]));
 
   const toView = (t: { traitId: string; resilience: number }): TraitView => ({
     traitId: t.traitId,
     label: traitLabelOf(idx, t.traitId),
     resilience: t.resilience,
+    type: traitTypeOf(t.traitId),
   });
 
   // ADN complet (US3) : traits actifs et inactifs, chacun avec sa résilience.
@@ -98,8 +117,11 @@ export function buildFicheView(person: Personne, catalog: Catalog, currentYear: 
       traitId: id,
       label: traitLabelOf(idx, id),
       resilience: resilById.get(id) ?? 0,
+      type: traitTypeOf(id),
     })),
   }));
+
+  const enfants = person.enfants.map((id) => ({ id, nom: nameById.get(id) ?? id }));
 
   return {
     id: person.id,
@@ -114,5 +136,6 @@ export function buildFicheView(person: Personne, catalog: Catalog, currentYear: 
     pouvoirs,
     traitsActifs,
     traitsInactifs,
+    enfants,
   };
 }

@@ -24,7 +24,8 @@ export default tseslint.config(
     // Couche UI (Svelte + stores) : environnement navigateur.
     files: ['**/*.svelte', 'src/ui/**/*.ts'],
     languageOptions: {
-      globals: { ...globals.browser },
+      // __APP_VERSION__ : constante injectée au build par Vite (define) — pied de page (FR-009).
+      globals: { ...globals.browser, __APP_VERSION__: 'readonly' },
       parserOptions: {
         parser: tseslint.parser,
       },

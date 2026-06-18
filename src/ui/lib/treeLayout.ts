@@ -7,8 +7,8 @@
 import type { TreeNode, TreeNodeLite } from '../../core/index.js';
 import { cellLines } from './treeViewModel.js';
 
-export const CARD_W = 160;
-export const CARD_H = 64;
+export const CARD_W = 162;
+export const CARD_H = 62;
 const H_GAP = 28; // écart horizontal entre sous-arbres frères
 const COUPLE_GAP = 34; // écart entre les deux membres d'un couple (place pour ⚭)
 const V_GAP = 70; // écart vertical entre générations (place pour les liens)

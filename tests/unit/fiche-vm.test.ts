@@ -92,12 +92,81 @@ describe('Modèle de vue fiche (US2)', () => {
     expect(view.traitsInactifs[0].resilience).toBe(40);
   });
 
-  it('buildListRow renvoie nom, date, âge et libellés de pouvoir', () => {
+  it('buildListRow renvoie nom, date, âge, espèce/génération, statut et libellés de pouvoir', () => {
     const pop = popWithPowers(0x444n);
     const row = buildListRow(pop[0], catalog, 0);
     expect(row.nom.length).toBeGreaterThan(0);
     expect(row.dateNaissance).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(row.age).toBe(0);
     expect(row.pouvoirs.length).toBe(1);
+    expect(typeof row.especeId).toBe('string');
+    expect(row.generation).toBe(0);
+    expect(row.vivant).toBe(true);
+  });
+
+  it('expose le TYPE de chaque trait (FR-015)', () => {
+    const actionId = catalog.byType.Action[0].id;
+    const elementId = catalog.byType.Element[0].id;
+    const person = {
+      id: 'p-type',
+      nom: 'TypeTest',
+      especeId: 'esp',
+      genreId: 'masculin',
+      dateNaissance: '0000-01-01',
+      vivant: true,
+      raisonDeces: null,
+      parents: [],
+      enfants: [],
+      conjoints: [],
+      adn: {
+        traits: [
+          { traitId: actionId, active: true, resilience: 55 },
+          { traitId: elementId, active: false, resilience: 40 },
+        ],
+      },
+      pouvoirs: [],
+      notes: null,
+    };
+    const view = buildFicheView(person, catalog, 0);
+    expect(view.traitsActifs[0].type).toBe('Action');
+    expect(view.traitsInactifs[0].type).toBe('Element');
+  });
+
+  it('résout les NOMS des enfants depuis la population (FR-015)', () => {
+    const enfantA = {
+      id: 'c-1',
+      nom: 'Alice',
+      especeId: 'esp',
+      genreId: 'feminin',
+      dateNaissance: '0020-01-01',
+      vivant: true,
+      raisonDeces: null,
+      parents: ['p-parent'],
+      enfants: [],
+      conjoints: [],
+      adn: { traits: [] },
+      pouvoirs: [],
+      notes: null,
+    };
+    const parent = {
+      id: 'p-parent',
+      nom: 'Bob',
+      especeId: 'esp',
+      genreId: 'masculin',
+      dateNaissance: '0000-01-01',
+      vivant: true,
+      raisonDeces: null,
+      parents: [],
+      enfants: ['c-1', 'c-inconnu'],
+      conjoints: [],
+      adn: { traits: [] },
+      pouvoirs: [],
+      notes: null,
+    };
+    const view = buildFicheView(parent, catalog, 30, [parent, enfantA]);
+    expect(view.enfants).toEqual([
+      { id: 'c-1', nom: 'Alice' },
+      { id: 'c-inconnu', nom: 'c-inconnu' }, // repli sur l'id si introuvable
+    ]);
   });
 });

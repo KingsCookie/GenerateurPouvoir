@@ -1,14 +1,148 @@
-// État d'interface (Feature 4) — NON exporté dans l'état applicatif (Principe VI).
-import { writable } from 'svelte/store';
+// État d'INTERFACE — NON exporté dans l'état applicatif ni l'export/import (Principe VI).
+// Couvre : préférences d'apparence (persistées localStorage) + états de session
+// (pagination, onglet sandbox, vue d'arbre, scroll). Aucune logique métier ici.
+import { writable, type Writable } from 'svelte/store';
 
-// Mode d'affichage des traits sur la fiche (FR-012/FR-013) :
+// ---------------------------------------------------------------------------
+// Accès sûrs (l'app doit fonctionner sans localStorage ; les tests purs aussi).
+// ---------------------------------------------------------------------------
+const hasDOM = typeof document !== 'undefined';
+const hasLS = (() => {
+  try {
+    return typeof localStorage !== 'undefined';
+  } catch {
+    return false;
+  }
+})();
+
+function lsGet(key: string): string | null {
+  if (!hasLS) return null;
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+function lsSet(key: string, value: string): void {
+  if (!hasLS) return;
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* quota / mode privé : on ignore, l'app reste fonctionnelle (défauts). */
+  }
+}
+
+/** Lit une préférence bornée à un ensemble de valeurs autorisées (sinon défaut). */
+function readChoice<T extends string>(key: string, allowed: readonly T[], fallback: T): T {
+  const raw = lsGet(key);
+  return raw !== null && (allowed as readonly string[]).includes(raw) ? (raw as T) : fallback;
+}
+
+/** Pose un attribut sur <html> (no-op hors DOM). */
+function setHtmlAttr(name: string, value: string): void {
+  if (hasDOM) document.documentElement.setAttribute(name, value);
+}
+
+// ===========================================================================
+// Apparence (persistée localStorage) — 3 axes indépendants (FR-001..005).
+// ===========================================================================
+export type Mode = 'dark' | 'light';
+export type Palette = 'violet' | 'cyan' | 'vert';
+export type Style = 'a' | 'b';
+
+const LS_MODE = 'ui.mode';
+const LS_PALETTE = 'ui.palette';
+const LS_STYLE = 'ui.style';
+const LS_TRAITMODE = 'ui.traitMode';
+
+export const mode: Writable<Mode> = writable(readChoice<Mode>(LS_MODE, ['dark', 'light'], 'dark'));
+export const palette: Writable<Palette> = writable(
+  readChoice<Palette>(LS_PALETTE, ['violet', 'cyan', 'vert'], 'violet'),
+);
+export const style: Writable<Style> = writable(readChoice<Style>(LS_STYLE, ['a', 'b'], 'a'));
+
+// Application immédiate + persistance à chaque changement (SC-002/003/004).
+// (Le script anti-FOUC d'index.html a déjà posé les attributs avant ce 1er abonnement.)
+mode.subscribe((m) => {
+  setHtmlAttr('data-mode', m);
+  lsSet(LS_MODE, m);
+});
+palette.subscribe((p) => {
+  setHtmlAttr('data-palette', p);
+  lsSet(LS_PALETTE, p);
+});
+style.subscribe((s) => {
+  setHtmlAttr('data-style', s);
+  lsSet(LS_STYLE, s);
+});
+
+export function setMode(m: Mode): void {
+  mode.set(m);
+}
+export function toggleMode(): void {
+  mode.update((m) => (m === 'dark' ? 'light' : 'dark'));
+}
+export function setPalette(p: Palette): void {
+  palette.set(p);
+}
+export function setStyle(s: Style): void {
+  style.set(s);
+}
+
+// ===========================================================================
+// Mode d'affichage des traits (existant, persisté) — défaut 3 (FR-013).
 //   1 = pouvoirs seuls ; 2 = + traits actifs ; 3 = + traits inactifs + résilience.
+// ===========================================================================
 export type TraitMode = 1 | 2 | 3;
-
-/** Mode d'affichage courant, **défaut 3** (FR-013). Module-level ⇒ persiste sur la session. */
-export const traitMode = writable<TraitMode>(3);
-
-/** Sélectionne le mode d'affichage des traits. */
+export const traitMode: Writable<TraitMode> = writable(
+  ((): TraitMode => {
+    const raw = lsGet(LS_TRAITMODE);
+    return raw === '1' || raw === '2' ? (Number(raw) as TraitMode) : 3;
+  })(),
+);
+traitMode.subscribe((m) => lsSet(LS_TRAITMODE, String(m)));
 export function setTraitMode(m: TraitMode): void {
   traitMode.set(m);
 }
+
+// ===========================================================================
+// Pagination (session, non persistée) — Liste & Sandbox (FR-016 ; INV-UI4).
+// ===========================================================================
+export type PageSize = 50 | 100 | 250 | 1000 | 'all';
+export const DEFAULT_PAGE_SIZE: PageSize = 50;
+
+export const listePageSize: Writable<PageSize> = writable(DEFAULT_PAGE_SIZE);
+export const listePage: Writable<number> = writable(1);
+export const sbPageSize: Writable<PageSize> = writable(DEFAULT_PAGE_SIZE);
+export const sbPage: Writable<number> = writable(1);
+
+/** Change la taille de page Liste et **revient à la page 1** (INV-UI4). */
+export function setListePageSize(n: PageSize): void {
+  listePageSize.set(n);
+  listePage.set(1);
+}
+/** Change la taille de page Sandbox et **revient à la page 1** (INV-UI4). */
+export function setSbPageSize(n: PageSize): void {
+  sbPageSize.set(n);
+  sbPage.set(1);
+}
+
+// ===========================================================================
+// Sandbox — onglet interne (session) (FR-017).
+// ===========================================================================
+export type SandboxTab = 'population' | 'couples';
+export const sbTab: Writable<SandboxTab> = writable('population');
+
+// ===========================================================================
+// Vue d'arbre (session) — zoom/pan/profondeur/racine (FR-012, US2).
+// ===========================================================================
+export const arbreScale: Writable<number> = writable(1);
+export const arbreTx: Writable<number> = writable(0);
+export const arbreTy: Writable<number> = writable(0);
+export const arbreRootId: Writable<string | null> = writable(null);
+export const arbreDepth: Writable<number> = writable(3);
+
+// ===========================================================================
+// Chrome (session) — bouton « remonter en haut » (FR-010).
+// ===========================================================================
+export const showScrollTop: Writable<boolean> = writable(false);

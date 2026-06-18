@@ -24,6 +24,11 @@
   export let year = 0;
   export let onClose: () => void = () => {};
 
+  // Fermeture par Échap (la modale capte le focus visuellement ; backdrop cliquable aussi).
+  function onKeydown(e: KeyboardEvent): void {
+    if (e.key === 'Escape') onClose();
+  }
+
   // --- État local du formulaire ---
   let fNom = '';
   let fEspeceId = '';
@@ -134,146 +139,202 @@
   }
 </script>
 
-<div
-  class="form"
-  role="dialog"
-  aria-label={mode === 'edit' ? 'Éditer un individu' : 'Créer un individu'}
->
-  <h3>{mode === 'edit' ? 'Éditer' : 'Créer'} un individu</h3>
+<svelte:window on:keydown={onKeydown} />
 
-  <div class="grid">
-    <label>Nom <input type="text" bind:value={fNom} /></label>
-    <label>
-      Espèce
-      <select bind:value={fEspeceId}>
-        {#each $especes as e (e.id)}<option value={e.id}>{e.label}</option>{/each}
-      </select>
-    </label>
-    <label>
-      Genre
-      <select bind:value={fGenreId}>
-        {#each genresForEspece as g (g.id)}<option value={g.id}>{g.label}</option>{/each}
-      </select>
-    </label>
-    <label class="inline"><input type="checkbox" bind:checked={fVivant} /> Vivant</label>
-    {#if !fVivant}
-      <label
-        >Raison du décès <input
-          type="text"
-          bind:value={fRaisonDeces}
-          placeholder="inconnue"
-        /></label
-      >
-    {/if}
-  </div>
+<!-- Fermeture par clic sur le fond ; le clavier ferme via Échap (svelte:window on:keydown). -->
+<!-- svelte-ignore a11y_click_events_have_key_events -->
+<div class="overlay" on:click={onClose} role="presentation">
+  <div
+    class="modal"
+    role="dialog"
+    tabindex="-1"
+    aria-modal="true"
+    aria-label={mode === 'edit' ? 'Éditer un individu' : 'Créer un individu'}
+    on:click|stopPropagation
+  >
+    <h3>{mode === 'edit' ? 'Éditer' : 'Créer'} un individu</h3>
 
-  <label>Notes <input type="text" bind:value={fNotes} /></label>
-
-  <!-- Profil de pouvoir -->
-  <fieldset>
-    <legend>Profil de pouvoir</legend>
-    <div class="actions">
-      <button type="button" on:click={setSansPouvoir}>Sans pouvoir</button>
-      <button type="button" on:click={genMutationNormale}
-        >Mutation normale (traits → pouvoirs)</button
-      >
-      <button type="button" on:click={genMutationForte}>Mutation forte</button>
-    </div>
-    {#if fPouvoirs.length === 0}
-      <p class="muted">Aucun pouvoir.</p>
-    {:else}
-      <ul class="powers">
-        {#each fPouvoirs as p, i (p.id + i)}
-          <li>
-            <span class="pw-label">{p.label}</span>
-            <label class="stat"
-              >P <input
-                type="number"
-                min="1"
-                max="10"
-                value={p.puissance}
-                on:input={(e) => setPuissance(i, Number((e.target as HTMLInputElement).value))}
-              /></label
-            >
-            <label class="stat"
-              >M <input
-                type="number"
-                min="1"
-                max="10"
-                value={p.maitrise}
-                on:input={(e) => setMaitrise(i, Number((e.target as HTMLInputElement).value))}
-              /></label
-            >
-            <button type="button" class="danger" on:click={() => removePouvoir(i)}>✕</button>
-          </li>
-        {/each}
-      </ul>
-    {/if}
-  </fieldset>
-
-  <!-- ADN / traits -->
-  <fieldset>
-    <legend>ADN / traits ({fAdn.length} sélectionné(s))</legend>
-    {#each TRAIT_TYPES as type (type)}
-      <details>
-        <summary>{type}</summary>
-        <div class="traits">
-          {#each $catalog.byType[type] as t (t.id)}
-            {@const entry = traitEntry(t.id)}
-            <div class="trait-row">
-              <label class="chip">
-                <input
-                  type="checkbox"
-                  checked={hasTrait(t.id)}
-                  on:change={() => toggleTrait(t.id)}
-                />
-                {traitLabelOf(idx, t.id)}
-              </label>
-              {#if entry}
-                <label class="mini"
-                  ><input
-                    type="checkbox"
-                    checked={entry.active}
-                    on:change={(e) => setTraitActive(t.id, (e.target as HTMLInputElement).checked)}
-                  /> actif</label
-                >
-                <label class="mini"
-                  >rés. <input
-                    type="number"
-                    min="0"
-                    max="100"
-                    value={entry.resilience}
-                    on:input={(e) =>
-                      setTraitResilience(t.id, Number((e.target as HTMLInputElement).value))}
-                  /></label
-                >
-              {/if}
-            </div>
-          {/each}
+    <div class="grid">
+      <label>Nom <input type="text" bind:value={fNom} /></label>
+      <label>
+        Espèce
+        <select bind:value={fEspeceId}>
+          {#each $especes as e (e.id)}<option value={e.id}>{e.label}</option>{/each}
+        </select>
+      </label>
+      <label>
+        Genre
+        <select bind:value={fGenreId}>
+          {#each genresForEspece as g (g.id)}<option value={g.id}>{g.label}</option>{/each}
+        </select>
+      </label>
+      <div class="statut-seg" role="group" aria-label="Statut">
+        <span class="field-label">Statut</span>
+        <div class="segments">
+          <button
+            type="button"
+            class="nav-item"
+            class:is-active={fVivant}
+            on:click={() => (fVivant = true)}>Vivant</button
+          >
+          <button
+            type="button"
+            class="nav-item"
+            class:is-active={!fVivant}
+            on:click={() => (fVivant = false)}>Décédé</button
+          >
         </div>
-      </details>
-    {/each}
-  </fieldset>
+      </div>
+      {#if !fVivant}
+        <label
+          >Raison du décès <input
+            type="text"
+            bind:value={fRaisonDeces}
+            placeholder="inconnue"
+          /></label
+        >
+      {/if}
+    </div>
 
-  <div class="form-actions">
-    <button type="button" class="primary" on:click={submit}
-      >{mode === 'edit' ? 'Enregistrer' : 'Créer'}</button
-    >
-    <button type="button" on:click={onClose}>Annuler</button>
+    <label>Notes <input type="text" bind:value={fNotes} /></label>
+
+    <!-- Profil de pouvoir -->
+    <fieldset>
+      <legend>Profil de pouvoir</legend>
+      <div class="actions">
+        <button type="button" on:click={setSansPouvoir}>Sans pouvoir</button>
+        <button type="button" on:click={genMutationNormale}
+          >Mutation normale (traits → pouvoirs)</button
+        >
+        <button type="button" on:click={genMutationForte}>Mutation forte</button>
+      </div>
+      {#if fPouvoirs.length === 0}
+        <p class="muted">Aucun pouvoir.</p>
+      {:else}
+        <ul class="powers">
+          {#each fPouvoirs as p, i (p.id + i)}
+            <li>
+              <span class="pw-label">{p.label}</span>
+              <label class="stat"
+                >P <input
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={p.puissance}
+                  on:input={(e) => setPuissance(i, Number((e.target as HTMLInputElement).value))}
+                /></label
+              >
+              <label class="stat"
+                >M <input
+                  type="number"
+                  min="1"
+                  max="10"
+                  value={p.maitrise}
+                  on:input={(e) => setMaitrise(i, Number((e.target as HTMLInputElement).value))}
+                /></label
+              >
+              <button type="button" class="danger" on:click={() => removePouvoir(i)}>✕</button>
+            </li>
+          {/each}
+        </ul>
+      {/if}
+    </fieldset>
+
+    <!-- ADN / traits -->
+    <fieldset>
+      <legend>ADN / traits ({fAdn.length} sélectionné(s))</legend>
+      {#each TRAIT_TYPES as type (type)}
+        <details>
+          <summary>{type}</summary>
+          <div class="traits">
+            {#each $catalog.byType[type] as t (t.id)}
+              {@const entry = traitEntry(t.id)}
+              <div class="trait-row">
+                <label class="chip">
+                  <input
+                    type="checkbox"
+                    checked={hasTrait(t.id)}
+                    on:change={() => toggleTrait(t.id)}
+                  />
+                  {traitLabelOf(idx, t.id)}
+                </label>
+                {#if entry}
+                  <label class="mini"
+                    ><input
+                      type="checkbox"
+                      checked={entry.active}
+                      on:change={(e) =>
+                        setTraitActive(t.id, (e.target as HTMLInputElement).checked)}
+                    /> actif</label
+                  >
+                  <label class="mini"
+                    >rés. <input
+                      type="number"
+                      min="0"
+                      max="100"
+                      value={entry.resilience}
+                      on:input={(e) =>
+                        setTraitResilience(t.id, Number((e.target as HTMLInputElement).value))}
+                    /></label
+                  >
+                {/if}
+              </div>
+            {/each}
+          </div>
+        </details>
+      {/each}
+    </fieldset>
+
+    <div class="form-actions">
+      <button type="button" on:click={onClose} class="contour">Annuler</button>
+      <button type="button" class="primary" on:click={submit}
+        >{mode === 'edit' ? 'Enregistrer' : 'Créer'}</button
+      >
+    </div>
   </div>
 </div>
 
 <style>
-  .form {
-    margin-top: 1rem;
-    padding: 1rem;
+  .overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 60;
+    background: rgba(0, 0, 0, 0.55);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding: 5vh 1rem;
+    overflow-y: auto;
+  }
+  .modal {
+    padding: 22px 24px;
     border: 1px solid var(--border);
     border-radius: var(--radius);
     background: var(--bg-elev);
     display: flex;
     flex-direction: column;
-    gap: 0.6rem;
-    max-width: 40rem;
+    gap: 0.7rem;
+    width: 100%;
+    max-width: 640px;
+    max-height: 86vh;
+    overflow-y: auto;
+  }
+  .statut-seg {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+  .segments {
+    display: inline-flex;
+    gap: 5px;
+  }
+  .nav-item {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--fg-muted);
+    border-radius: var(--chip-radius);
+    padding: 6px 13px;
+    font-size: 13px;
   }
   .grid {
     display: flex;
@@ -286,11 +347,6 @@
     flex-direction: column;
     gap: 0.2rem;
     font-size: 0.85rem;
-  }
-  label.inline {
-    flex-direction: row;
-    align-items: center;
-    gap: 0.4rem;
   }
   fieldset {
     border: 1px solid var(--border);

@@ -46,15 +46,16 @@
 </script>
 
 <div class="io">
-  <button type="button" on:click={exportConfig}>⬇ Exporter la configuration</button>
-  <button type="button" on:click={exportData} disabled={$population.length === 0}>
-    ⬇ Exporter les données
+  <span class="io-label">État (fichier)</span>
+  <button type="button" class="contour" on:click={exportConfig}>⬇ Configuration</button>
+  <button type="button" class="contour" on:click={exportData} disabled={$population.length === 0}>
+    ⬇ Données
   </button>
-  <button type="button" on:click={exportFull} disabled={$population.length === 0}>
-    ⬇ Exporter tout (complet)
+  <button type="button" class="contour" on:click={exportFull} disabled={$population.length === 0}>
+    ⬇ Tout (complet)
   </button>
-  <button type="button" class="import" on:click={() => fileInput.click()}>
-    ⬆ Importer un fichier
+  <button type="button" class="import primary" on:click={() => fileInput.click()}>
+    ⬆ Importer…
   </button>
   <input
     bind:this={fileInput}
@@ -72,14 +73,25 @@
 <style>
   .io {
     display: flex;
+    align-items: center;
     gap: 0.5rem;
     flex-wrap: wrap;
   }
+  .io-label {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: var(--label-transform);
+    color: var(--fg-faint);
+    margin-right: 0.25rem;
+  }
   .io button {
     flex: 1 1 auto;
+    font-size: 13px;
+    padding: 0.4rem 0.8rem;
   }
   .import {
     flex-basis: 100%;
+    margin-left: auto;
   }
   @media (min-width: 40rem) {
     .io button {
