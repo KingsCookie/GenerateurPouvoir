@@ -1,30 +1,28 @@
 <!-- SPECKIT START -->
-## Feature active : 007-sandbox-make-it-real
+## Feature active : 008-refonte-ui
 
-- **Plan** : `specs/007-sandbox-make-it-real/plan.md` (contexte technique, décisions, Constitution Check, Complexity Tracking)
-- **Spec** : `specs/007-sandbox-make-it-real/spec.md` (source : `rsrc/DescriptionProjet.md` §10.2, §10.3, §6.8, §8.4 — NE PAS modifier sans accord)
-- **Recherche / décisions** : `specs/007-sandbox-make-it-real/research.md`
-- **Modèle de données** : `specs/007-sandbox-make-it-real/data-model.md`
-- **Contrats** : `specs/007-sandbox-make-it-real/contracts/core-api.md` (sandbox, reconstruction, journal d'événements)
-- **Périmètre** : **bac à sable isolé** (copie de l'état réel) ; **make it real** = l'état sandbox **devient**
-  l'état réel (transfert, pas de rejeu) ; **reset** = re-snapshot du réel. **Reproduction manuelle déplacée**
-  de la page principale vers la sandbox (mode : bouton → (dé)sélection au clic → **nb enfants ≥ 1** →
-  valider/annuler + re-sélection des derniers parents ; **1 « valider » = N enfants**). **Création / clonage /
-  édition directe** d'attributs (individus créés/clonés **autonomes** ; parenté **via reproduction
-  uniquement**). **Suppression** refusée si descendants ; propagation conjoint→état antérieur,
-  parents→retrait de l'enfant. **Navigation temporelle** : année ∈ [départ, courante] ⇒ **reconstruction
-  historique complète** (couples/divorces/décès tels qu'à l'année).
-- **Clarifications 2026-06-17** : make it real = remplacement complet (transfert RNG) ; vue à l'année =
-  **reconstruction historique complète** ; édition directe libre ; rattachement via reproduction ; nb enfants
-  libre (≥ 1, sans plafond) ; valider sort du mode + désélectionne.
-- **Extension cœur** : `src/core/sandbox/` (`createPerson`/`clonePerson`/`editPerson`/`deletePerson`/
-  `manualReproduce`, purs) + `reconstruct.ts` (`reconstructAtYear`) ; **journal d'événements daté**
-  `AppState.history: PopulationEvent[]` (émis par genèse/tick/mort), **`FORMAT_VERSION` 2→3** + défaut
-  rétro-compat `history→[]`. UI : `sandboxStore` (état copié + RNG forké), `SandboxView.svelte`, retrait
-  de la repro manuelle de `ListeView`. **Aucune dépendance ajoutée.**
-- **Complexité justifiée (YAGNI)** : le **journal d'événements daté** est requis par la reconstruction
-  historique ; re-simulation rejetée (interventions manuelles) et champs datés épars rejetés (plus invasifs).
-- Features livrées : 6 (`specs/006-persistance-compl-partage/`) persistance 3 types (config/data/full),
+- **Plan** : `specs/008-refonte-ui/plan.md` (contexte technique, décisions, Constitution Check)
+- **Spec** : `specs/008-refonte-ui/spec.md` (source de vérité **visuelle** : `design_handoff_refonte_ui/`
+  — gitignoré/local ; contrat **fonctionnel** : `rsrc/DefUi.md` — gitignoré/local. `DescriptionProjet.md`
+  inchangé.)
+- **Recherche / décisions** : `specs/008-refonte-ui/research.md`
+- **Modèle de données** : `specs/008-refonte-ui/data-model.md` (état d'**interface** uniquement)
+- **Contrats** : `specs/008-refonte-ui/contracts/ui-contract.md` (thème, store `ui.ts`, non-régression DefUi)
+- **Périmètre** : **refonte purement visuelle** des 5 vues + chrome global ; **aucune perte de
+  fonctionnalité** (DefUi). **Système de thème 3 axes** sur `<html>` : `data-mode` (sombre défaut/clair),
+  `data-palette` (violet/cyan/vert), `data-style` (A/B), mémorisés en `localStorage`. Ajouts : pied de page
+  version, bouton remonter, **pagination** (liste+sandbox, défaut 50), **onglets sandbox** (Population/
+  Couples), lentille champ+curseur, **Fiche** (liste enfants + type de trait). **Polices auto-hébergées**
+  (woff2 + `@font-face`, précachées) ⇒ hors-ligne strict.
+- **Clarifications 2026-06-18** : périmètre thème = **système complet 3 axes** ; polices = **auto-hébergées**
+  (local, précachées) avec repli système.
+- **Cœur INTOUCHÉ** (Principe IV) : refonte limitée à `src/ui/**`, `src/app.css`, `index.html`, config build
+  (version + précache woff2), `public/fonts/`. État ajouté = **interface** (`src/ui/stores/ui.ts`), **hors**
+  `AppState`/export (Principe VI). `tokens.css` déjà fusionné dans `src/app.css`. **Aucune dépendance ajoutée.**
+- Features livrées : 7 (`specs/007-sandbox-make-it-real/`) sandbox isolée & make it real (transfert RNG),
+  reproduction manuelle déplacée en sandbox, création/clonage/édition directe + cycle de vie conjugal,
+  suppression avec propagation, reconstruction historique via journal d'événements daté (`FORMAT_VERSION` 3) ;
+  6 (`specs/006-persistance-compl-partage/`) persistance 3 types (config/data/full),
   détection auto à l'import, fusion pure non destructive, versionnage + rétro-compat ;
   1 (`specs/001-fondations-genese/`) seed/RNG, modèle, genèse, liste/fiche, export/import ;
   2 (`specs/002-reproduction-heredite/`) moteur génétique (hérédité §4, traits→pouvoirs §6.4, P/M §7.2, reproduction) ;
