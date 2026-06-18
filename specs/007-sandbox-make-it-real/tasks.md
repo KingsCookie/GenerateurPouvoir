@@ -130,7 +130,7 @@ quickstart US3).
 
 - [X] T020 [P] `tests/unit/core-purity.test.ts` : vérifier que `src/core/sandbox/*` et l'émission du journal restent **purs** (aucun `Date`/`Math.random`/DOM) ; la garde scanne déjà `src/core` — confirmer la couverture.
 - [X] T021 [P] `src/ui/views/SandboxView.svelte` (+ `src/app.css` si besoin) : styles **responsive** (mobile → desktop) de l'écran sandbox et de ses contrôles.
-- [ ] T022 Dérouler `specs/007-sandbox-make-it-real/quickstart.md` (validation manuelle US1/US2/US3 + isolation/déterminisme).
+- [X] T022 Dérouler `specs/007-sandbox-make-it-real/quickstart.md` (validation manuelle US1/US2/US3 + isolation/déterminisme). **Validé par l'utilisateur 2026-06-18.**
 - [X] T023 Portes de qualité : `npm run test` + `npm run lint` + `npm run build` **verts** ; bundle déployable (Principe II).
 
 ---

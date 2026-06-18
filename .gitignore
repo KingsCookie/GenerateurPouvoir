@@ -1,5 +1,7 @@
 # Documents de travail locaux (hors versionnement)
 rsrc/plangénéral.md
+rsrc/DefUi.md
+design_handoff_refonte_ui/
 
 # Dépendances et sorties de build
 node_modules/

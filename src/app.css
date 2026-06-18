@@ -1,15 +1,116 @@
+/* =====================================================================
+   Générateur de Pouvoir — système de thème (refonte UI)
+   Fusionné depuis design_handoff_refonte_ui/tokens.css.
+
+   Combinatoire : 3 axes indépendants, posés en attributs sur <html> :
+     data-mode    = "dark" | "light"      (défaut : dark — imposé par la spec)
+     data-palette = "violet" | "cyan" | "vert"
+     data-style   = "a" | "b"             (A = Atelier, B = Signal)
+
+   Mémorisation : préférence d'interface → localStorage (autorisé par DefUi.md).
+   color-mix() reproduit fidèlement les "tokens" calculés dans la maquette
+   (cible : navigateur moderne / PWA). Voir le README du handoff pour les formules.
+   ===================================================================== */
+
 :root {
-  --bg: #1f2933;
-  --bg-elev: #2b3744;
-  --fg: #e4e7eb;
-  --fg-muted: #9aa5b1;
-  --accent: #4fd1c5;
-  --accent-fg: #08302d;
-  --border: #3e4c59;
-  --danger: #f8b4b4;
-  --radius: 8px;
-  --space: 0.75rem;
   color-scheme: dark;
+
+  /* --- neutres (mode sombre, défaut) --- */
+  --bg:        #15161a;
+  --bg-elev:   #1d1f25;   /* = "elev" dans la maquette */
+  --fg:        #e6e7ea;
+  --fg-muted:  #9aa0ab;
+  --fg-faint:  #6b7079;
+  --border:    #2b2e36;
+  --row-border:#212530;
+  --hover-bg:  #1c1e25;
+  --danger:    #e6a5a5;
+
+  /* --- palette (accent ; défaut violet) --- */
+  --accent:    #9b7fe6;
+  --accent-fg: #ffffff;   /* texte SUR un aplat d'accent */
+
+  /* --- dérivés (mode sombre) --- */
+  --accent-text: color-mix(in srgb, var(--accent) 78%, #ffffff);
+  --chip-bg:     color-mix(in srgb, var(--accent) 20%, var(--bg-elev));
+  --chip-border: color-mix(in srgb, var(--accent) 45%, var(--bg));
+  --chip-text:   var(--accent-text);
+  --tint-bg:     color-mix(in srgb, var(--accent) 5%, var(--bg));
+  --year-shadow: 0 0 16px color-mix(in srgb, var(--accent) 30%, var(--bg));
+
+  /* --- style graphique (défaut A — Atelier) --- */
+  --font:        'Hanken Grotesk', system-ui, sans-serif;
+  --mono:        'JetBrains Mono', monospace;
+  --radius:      11px;
+  --radius-sm:   8px;
+  --chip-radius: 20px;
+  --logo-radius: 8px;
+  --label-transform: uppercase;
+  --btn-transform:   none;
+  --btn-spacing:     normal;
+
+  /* --- espacement de base (conservé : utilisé par #app) --- */
+  --space: 0.75rem;
+}
+
+/* ===================== MODE CLAIR ===================== */
+:root[data-mode='light'] {
+  color-scheme: light;
+  --bg:        #f4f4f1;
+  --bg-elev:   #ffffff;
+  --fg:        #1e2025;
+  --fg-muted:  #5d626c;
+  --fg-faint:  #8b909a;
+  --border:    #e2e2dd;
+  --row-border:#eeeeea;
+  --hover-bg:  #faf9f6;
+  --danger:    #c2484c;
+
+  --accent-text: color-mix(in srgb, var(--accent) 72%, #000000);
+  --chip-bg:     color-mix(in srgb, var(--accent) 13%, #ffffff);
+  --chip-border: color-mix(in srgb, var(--accent) 30%, #ffffff);
+  --tint-bg:     color-mix(in srgb, var(--accent) 4.5%, var(--bg));
+  --year-shadow: none;
+}
+
+/* ===================== PALETTES ===================== */
+/* violet = défaut (déjà dans :root) */
+:root[data-palette='cyan'] {
+  --accent: #2fcdbb;
+  --accent-fg: #16170f;
+}
+:root[data-palette='vert'] {
+  --accent: #86c057;
+  --accent-fg: #16170f;
+}
+/* (violet garde --accent-fg:#ffffff car l'accent est foncé ; cyan/vert sont clairs → texte foncé) */
+
+/* ===================== STYLE B — Signal ===================== */
+:root[data-style='b'] {
+  --font:        'Space Grotesk', system-ui, sans-serif;
+  --mono:        'Space Mono', monospace;
+  --radius:      7px;
+  --radius-sm:   5px;
+  --chip-radius: 5px;
+  --logo-radius: 50%;
+  --label-transform: lowercase;
+  --btn-transform:   uppercase;
+  --btn-spacing:     0.05em;
+}
+/* En mode clair, --year-shadow est forcé à none (cf. bloc light ci-dessus). */
+
+/* ===================== ÉTAT ACTIF DE NAVIGATION =====================
+   Style A : pastille douce (chip).  Style B : aplat d'accent plein.
+   À appliquer sur l'onglet/nav actif. */
+.nav-item.is-active {
+  background: var(--chip-bg);
+  border: 1px solid var(--chip-border);
+  color: var(--accent-text);
+}
+:root[data-style='b'] .nav-item.is-active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-fg);
 }
 
 * {
