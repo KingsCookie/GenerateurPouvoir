@@ -12,7 +12,8 @@
   {#each MODES as m (m.value)}
     <button
       type="button"
-      class:active={$traitMode === m.value}
+      class="nav-item"
+      class:is-active={$traitMode === m.value}
       title={m.title}
       on:click={() => setTraitMode(m.value)}
     >
@@ -26,8 +27,13 @@
     display: inline-flex;
     gap: 0.3rem;
   }
-  button.active {
-    border-color: var(--accent);
-    color: var(--accent);
+  .nav-item {
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--fg-muted);
+    border-radius: var(--chip-radius);
+    padding: 5px 12px;
+    font-size: 13px;
   }
+  /* .is-active fourni par app.css (chip en A, aplat en B). */
 </style>

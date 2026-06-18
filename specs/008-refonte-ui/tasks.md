@@ -30,7 +30,7 @@ UI : pagination, view-model de fiche). L'état ajouté est de l'**interface** (`
 
 ## Phase 1 : Setup
 
-- [ ] T001 Baseline verte avant refonte : `npm run test` + `npm run lint` + `npm run build` au vert (référence cœur intact) ; noter le hash du bundle pour comparaison.
+- [x] T001 Baseline verte avant refonte : `npm run test` + `npm run lint` + `npm run build` au vert (référence cœur intact) ; noter le hash du bundle pour comparaison.
 
 ---
 
@@ -38,8 +38,8 @@ UI : pagination, view-model de fiche). L'état ajouté est de l'**interface** (`
 
 **⚠️ Bloque US1, US2 et US3** (identité visuelle de base + polices).
 
-- [ ] T002 [P] Polices **auto-hébergées** : placer les `woff2` (Hanken Grotesk 400–700, JetBrains Mono 400–600, Space Grotesk 400–700, Space Mono 400/700) + leurs licences **OFL** dans `public/fonts/` ; déclarer les `@font-face` (avec `font-display: swap`) dans `src/app.css` ; **retirer** le `<link>` Google Fonts de `index.html` ; ajouter `woff2` aux `globPatterns` Workbox dans `vite.config.ts` (précache). (research D2)
-- [ ] T003 Styles de base restylés `src/app.css` : appliquer `var(--font)` au `body` et `var(--mono)` aux éléments mono ; restyler boutons (primary/contour), `input`/`select`, focus visibles ; primitives partagées (carte `--bg-elev`/`--border`/`--radius`, chip `--chip-*`/`--chip-radius`, badge accent, label `--label-transform`) conformes aux tokens, **lisibles dans les 2 modes**. Dépend de T002 (même fichier).
+- [x] T002 [P] Polices **auto-hébergées** : placer les `woff2` (Hanken Grotesk 400–700, JetBrains Mono 400–600, Space Grotesk 400–700, Space Mono 400/700) + leurs licences **OFL** dans `public/fonts/` ; déclarer les `@font-face` (avec `font-display: swap`) dans `src/app.css` ; **retirer** le `<link>` Google Fonts de `index.html` ; ajouter `woff2` aux `globPatterns` Workbox dans `vite.config.ts` (précache). (research D2)
+- [x] T003 Styles de base restylés `src/app.css` : appliquer `var(--font)` au `body` et `var(--mono)` aux éléments mono ; restyler boutons (primary/contour), `input`/`select`, focus visibles ; primitives partagées (carte `--bg-elev`/`--border`/`--radius`, chip `--chip-*`/`--chip-radius`, badge accent, label `--label-transform`) conformes aux tokens, **lisibles dans les 2 modes**. Dépend de T002 (même fichier). **Note BUG-001** : la règle `.nav-item.is-active` (style A) doit rendre l'état actif **nettement distinct** (bordure d'accent marquée + fond/texte teintés), pas un chip trop léger ; aligner `.chip:has(input:checked)` et `tr.selected`.
 
 **Checkpoint** : polices locales chargées (hors-ligne), primitives et tokens prêts pour toutes les vues.
 
@@ -54,11 +54,11 @@ permanent en-tête + section Paramètres, **mémorisés** ; toutes les vues exis
 rechargement ; changer palette/style en direct ; après rechargement, les 3 choix sont restaurés
 (cf. quickstart US1).
 
-- [ ] T004 [US1] `src/ui/stores/ui.ts` : ajouter `mode` (`dark`|`light`, défaut `dark`), `palette` (`violet`|`cyan`|`vert`, défaut `violet`), `style` (`a`|`b`, défaut `a`) + `setMode`/`toggleMode`/`setPalette`/`setStyle` ; **persistance `localStorage`** ; abonnement appliquant `data-mode`/`data-palette`/`data-style` sur `document.documentElement` ; hydratation au démarrage (défauts si absent/illisible). (contrat §2)
-- [ ] T005 [US1] `index.html` : **script inline anti-FOUC** posant les 3 attributs depuis `localStorage` (défauts sinon) **avant** le bundle, pour éviter le flash. (research D1)
-- [ ] T006 [P] [US1] `src/ui/components/ThemeControls.svelte` (nouveau) : segments des 3 axes (mode, palette avec pastilles de couleur, style A/B) + une variante **toggle** compacte ; pilote `ui.ts`. Bouton actif = chip ; inactif = contour.
-- [ ] T007 [US1] `src/ui/App.svelte` : intégrer le **toggle de thème** (mode clair/sombre) dans l'en-tête via `ThemeControls`. Dépend de T006.
-- [ ] T008 [US1] `src/ui/views/ParametresView.svelte` : ajouter la section **« Paramètres graphiques »** (en tête) réglant les **3 axes** via `ThemeControls`. Dépend de T006.
+- [x] T004 [US1] `src/ui/stores/ui.ts` : ajouter `mode` (`dark`|`light`, défaut `dark`), `palette` (`violet`|`cyan`|`vert`, défaut `violet`), `style` (`a`|`b`, défaut `a`) + `setMode`/`toggleMode`/`setPalette`/`setStyle` ; **persistance `localStorage`** ; abonnement appliquant `data-mode`/`data-palette`/`data-style` sur `document.documentElement` ; hydratation au démarrage (défauts si absent/illisible). (contrat §2)
+- [x] T005 [US1] `index.html` : **script inline anti-FOUC** posant les 3 attributs depuis `localStorage` (défauts sinon) **avant** le bundle, pour éviter le flash. (research D1)
+- [x] T006 [P] [US1] `src/ui/components/ThemeControls.svelte` (nouveau) : segments des 3 axes (mode, palette avec pastilles de couleur, style A/B) + une variante **toggle** compacte ; pilote `ui.ts`. Bouton actif = chip ; inactif = contour.
+- [x] T007 [US1] `src/ui/App.svelte` : intégrer le **toggle de thème** (mode clair/sombre) dans l'en-tête via `ThemeControls`. Dépend de T006.
+- [x] T008 [US1] `src/ui/views/ParametresView.svelte` : ajouter la section **« Paramètres graphiques »** (en tête) réglant les **3 axes** via `ThemeControls`. Dépend de T006.
 
 **Checkpoint** : US1 testable seule — l'apparence est pilotable et mémorisée sur l'UI (même non encore restylée).
 
@@ -74,26 +74,26 @@ I/O, **pied de page version**, **bouton remonter**), **sans perte de fonctionnal
 
 ### Chrome global
 
-- [ ] T009 [US2] `src/ui/App.svelte` : en-tête **sticky** (pastille logo `--logo-radius`/`--accent`, titre, nav `Paramètres`/`Population`/`Sandbox` avec `.nav-item`/`.is-active` et conditions d'activation) ; placement de la **barre I/O** (fond `--tint-bg`, bordure basse). Dépend de T007 (même fichier).
-- [ ] T010 [P] [US2] `src/ui/components/AppFooter.svelte` (nouveau) + `vite.config.ts` (define `__APP_VERSION__` depuis `package.json`) : **pied de page de version** persistant (« Générateur de Pouvoir · v<version> · hors-ligne »). (research D8 ; vite.config après T002)
-- [ ] T011 [P] [US2] `src/ui/components/ScrollToTop.svelte` (nouveau) : bouton **remonter-en-haut** visible si `scrollY > ~300` ; clic ⇒ `window.scrollTo({top:0, behavior})` (`auto` si `prefers-reduced-motion`, sinon `smooth`). (research D9)
-- [ ] T012 [US2] `src/ui/App.svelte` : monter `AppFooter` + `ScrollToTop` ; conserver le scroll-top à l'ouverture Fiche/Arbre. Dépend de T009, T010, T011 (même fichier).
+- [x] T009 [US2] `src/ui/App.svelte` : en-tête **sticky** (pastille logo `--logo-radius`/`--accent`, titre, nav `Paramètres`/`Population`/`Sandbox` avec `.nav-item`/`.is-active` et conditions d'activation) ; placement de la **barre I/O** (fond `--tint-bg`, bordure basse). Dépend de T007 (même fichier).
+- [x] T010 [P] [US2] `src/ui/components/AppFooter.svelte` (nouveau) + `vite.config.ts` (define `__APP_VERSION__` depuis `package.json`) : **pied de page de version** persistant (« Générateur de Pouvoir · v<version> · hors-ligne »). (research D8 ; vite.config après T002)
+- [x] T011 [P] [US2] `src/ui/components/ScrollToTop.svelte` (nouveau) : bouton **remonter-en-haut** visible si `scrollY > ~300` ; clic ⇒ `window.scrollTo({top:0, behavior})` (`auto` si `prefers-reduced-motion`, sinon `smooth`). (research D9)
+- [x] T012 [US2] `src/ui/App.svelte` : monter `AppFooter` + `ScrollToTop` ; conserver le scroll-top à l'ouverture Fiche/Arbre. Dépend de T009, T010, T011 (même fichier).
 
 ### Restyle des composants & vues (présentation, logique inchangée)
 
-- [ ] T013 [P] [US2] Restyle `src/ui/components/TimeBar.svelte` + `src/ui/components/FilterBar.svelte` (cartes `--bg-elev`, chips de filtre, grand nombre d'année `--mono`/`--accent-text` + `--year-shadow`, bouton accent).
-- [ ] T014 [P] [US2] Restyle `src/ui/components/StateIO.svelte` + `src/ui/components/TraitModeSelector.svelte` + `src/ui/components/TreeLegend.svelte` (boutons export contour/accent, segments actifs en chip, légende lisible 2 modes).
-- [ ] T015 [P] [US2] Restyle `src/ui/components/SpeciesEditor.svelte` + `src/ui/components/GaussianCurve.svelte` + `src/ui/components/TraitCatalogEditor.svelte` + `src/ui/components/ResilienceOverrides.svelte` (cartes, chips trait+poids, champs `--mono`, courbe lisible 2 modes).
-- [ ] T016 [US2] Restyle `src/ui/views/ParametresView.svelte` : **index latéral collant** + sections en **cartes** (titre + pastille accent) + champs/labels conformes tokens. Dépend de T008 (même fichier).
-- [ ] T017 [US2] Restyle `src/ui/views/ListeView.svelte` : en-tête de résultats (`--mono`), tableau (grille de colonnes, « espèce · génération » sous le nom, **† décédé** en `--danger`, pouvoirs en **chips**, hover `--hover-bg`), **lignes cliquables** activables clavier.
-- [ ] T018 [US2] `src/ui/lib/ficheViewModel.ts` : exposer (pur) la **liste des enfants** (`{id, nom}[]` résolus dans la population) et le **type** de chaque trait affiché (`traitTypeOf`). (research D7)
-- [ ] T019 [US2] Restyle `src/ui/views/FicheView.svelte` : en-tête (nom + badge statut + « espèce · genre · génération »), 2 colonnes (Informations / Cycle de vie : conjoints, % repro, **tuer** + erreur si cause vide), cartes de pouvoir (badge gabarit, P/M), **liste des enfants** (chips cliquables → fiche), **type** par trait. Dépend de T018.
+- [x] T013 [P] [US2] Restyle `src/ui/components/TimeBar.svelte` + `src/ui/components/FilterBar.svelte` (cartes `--bg-elev`, chips de filtre, grand nombre d'année `--mono`/`--accent-text` + `--year-shadow`, bouton accent).
+- [x] T014 [P] [US2] Restyle `src/ui/components/StateIO.svelte` + `src/ui/components/TraitModeSelector.svelte` + `src/ui/components/TreeLegend.svelte` (boutons export contour/accent, segments actifs en chip, légende lisible 2 modes).
+- [x] T015 [P] [US2] Restyle `src/ui/components/SpeciesEditor.svelte` + `src/ui/components/GaussianCurve.svelte` + `src/ui/components/TraitCatalogEditor.svelte` + `src/ui/components/ResilienceOverrides.svelte` (cartes, chips trait+poids, champs `--mono`, courbe lisible 2 modes).
+- [x] T016 [US2] Restyle `src/ui/views/ParametresView.svelte` : **index latéral collant** + sections en **cartes** (titre + pastille accent) + champs/labels conformes tokens. Dépend de T008 (même fichier).
+- [x] T017 [US2] Restyle `src/ui/views/ListeView.svelte` : en-tête de résultats (`--mono`), tableau (grille de colonnes, « espèce · génération » sous le nom, **† décédé** en `--danger`, pouvoirs en **chips**, hover `--hover-bg`), **lignes cliquables** activables clavier.
+- [x] T018 [US2] `src/ui/lib/ficheViewModel.ts` : exposer (pur) la **liste des enfants** (`{id, nom}[]` résolus dans la population) et le **type** de chaque trait affiché (`traitTypeOf`). (research D7)
+- [x] T019 [US2] Restyle `src/ui/views/FicheView.svelte` : en-tête (nom + badge statut + « espèce · genre · génération »), 2 colonnes (Informations / Cycle de vie : conjoints, % repro, **tuer** + erreur si cause vide), cartes de pouvoir (badge gabarit, P/M), **liste des enfants** (chips cliquables → fiche), **type** par trait. Dépend de T018.
 
 ### Refonte de l'arbre
 
-- [ ] T020 [US2] `src/ui/lib/treeLayout.ts` : disposition **organigramme** conforme maquette (cartes 162×62, rangées, connecteurs « ⊓ », symbole **⚭** aux unions, **séparation nette des fratries par couple** — DefUi §11.4) ; **pur**, réutilise `buildGenealogyTree` (cœur inchangé).
-- [ ] T021 [US2] `src/ui/stores/ui.ts` : ajouter l'**état de vue d'arbre** — `arbreScale` (0.2–4), `arbreTx`, `arbreTy`, `arbreRootId` (`string|null`), `arbreDepth` (≥1) — **session** (non persistés). Puis refonte `src/ui/components/GenealogyTree.svelte` : rendu organigramme + **zoom** (molette non-passive bornée 0.2–4, centrée curseur) + **pan** (seuil 5 px) + **clic** (recentrer page dédiée / ouvrir fiche) ; **âge masqué** en fiche, **affiché** en page dédiée ; décédé = pointillés + « † » ; observé = bordure accent + `--chip-bg`. Dépend de T020 (et de `ui.ts` T004, même fichier).
-- [ ] T022 [US2] Refonte `src/ui/views/ArbreView.svelte` : barre de contrôles (← retour, **profondeur 1/2/3/4** segments, **zoom** −/%/+, **recentrer**) reliée à l'**état d'arbre** (`ui.ts`, **ajouté en T021**). Dépend de T021.
+- [x] T020 [US2] `src/ui/lib/treeLayout.ts` : disposition **organigramme** conforme maquette (cartes 162×62, rangées, connecteurs « ⊓ », symbole **⚭** aux unions, **séparation nette des fratries par couple** — DefUi §11.4) ; **pur**, réutilise `buildGenealogyTree` (cœur inchangé).
+- [x] T021 [US2] `src/ui/stores/ui.ts` : ajouter l'**état de vue d'arbre** — `arbreScale` (0.2–4), `arbreTx`, `arbreTy`, `arbreRootId` (`string|null`), `arbreDepth` (≥1) — **session** (non persistés). Puis refonte `src/ui/components/GenealogyTree.svelte` : rendu organigramme + **zoom** (molette non-passive bornée 0.2–4, centrée curseur) + **pan** (seuil 5 px) + **clic** (recentrer page dédiée / ouvrir fiche) ; **âge masqué** en fiche, **affiché** en page dédiée ; décédé = pointillés + « † » ; observé = bordure accent + `--chip-bg`. Dépend de T020 (et de `ui.ts` T004, même fichier).
+- [x] T022 [US2] Refonte `src/ui/views/ArbreView.svelte` : barre de contrôles (← retour, **profondeur 1/2/3/4** segments, **zoom** −/%/+, **recentrer**) reliée à l'**état d'arbre** (`ui.ts`, **ajouté en T021**). Dépend de T021.
 
 **Checkpoint** : US1 + US2 — UI entièrement redessinée, chrome complet, 0 régression DefUi.
 
@@ -107,12 +107,12 @@ lentille temporelle champ+curseur.
 **Independent Test** : 1000+ individus ⇒ une page (taille choisie) ; changer la taille ⇒ page 1 ; basculer
 les onglets sandbox conserve l'état ; lentille champ/curseur synchronisés (cf. quickstart US3).
 
-- [ ] T023 [US3] `src/ui/stores/ui.ts` : ajouter `listePageSize`/`listePage`, `sbPageSize`/`sbPage` (setters de taille remettant `page=1`), `sbTab` (`population`|`couples`), `showScrollTop` — **session** (non persistés). (L'**état d'arbre** est ajouté en **T021**, US2.) Dépend de T004 et T021 (même fichier).
-- [ ] T024 [P] [US3] `src/ui/lib/pagination.ts` (nouveau, **pur**) : `paginate(items, page, size)` → `{ pageItems, page, nbPages, from, to, total }` ; borne `page` à `[1, nbPages]` ; gère `'all'`. (contrat §3)
-- [ ] T025 [P] [US3] `src/ui/components/Paginator.svelte` (nouveau) : sélecteur de taille **50/100/250/1000/Tous** (actif = chip), indicateur « début–fin / total », flèches `‹ ›` **bornées** (désactivées aux extrêmes).
-- [ ] T026 [US3] `src/ui/views/ListeView.svelte` : intégrer `Paginator` + `paginate` sur la population **filtrée** (au-dessus du tableau). Dépend de T017, T024, T025 (ListeView après son restyle).
-- [ ] T027 [US3] Refonte `src/ui/views/SandboxView.svelte` : **onglets** Population / Couples (`sbTab`) ; barre d'actions (make it real/reset/quitter) + **lentille** (champ numérique **et** curseur **synchronisés**) communes ; `FilterBar` + `Paginator` sur l'onglet Population ; **sélection de parents indépendante** du filtre/pagination (INV-UI5) ; restyle conforme maquette. Dépend de T023, T024, T025.
-- [ ] T028 [US3] Refonte `src/ui/components/SandboxPersonForm.svelte` (modale) conforme maquette : overlay + carte scrollable ; statut en segment Vivant/Décédé (+ raisonDeces) ; éditeur **ADN par type** (chips actif/inactif + résilience + « + trait ») ; **profil de pouvoir** « Sans pouvoir / Normal (traits → pouvoirs) / Mutation forte » ; pouvoirs P/M (1–10) + retrait. (logique `sandboxStore` inchangée)
+- [x] T023 [US3] `src/ui/stores/ui.ts` : ajouter `listePageSize`/`listePage`, `sbPageSize`/`sbPage` (setters de taille remettant `page=1`), `sbTab` (`population`|`couples`), `showScrollTop` — **session** (non persistés). (L'**état d'arbre** est ajouté en **T021**, US2.) Dépend de T004 et T021 (même fichier).
+- [x] T024 [P] [US3] `src/ui/lib/pagination.ts` (nouveau, **pur**) : `paginate(items, page, size)` → `{ pageItems, page, nbPages, from, to, total }` ; borne `page` à `[1, nbPages]` ; gère `'all'`. (contrat §3)
+- [x] T025 [P] [US3] `src/ui/components/Paginator.svelte` (nouveau) : sélecteur de taille **50/100/250/1000/Tous** (actif = chip), indicateur « début–fin / total », flèches `‹ ›` **bornées** (désactivées aux extrêmes).
+- [x] T026 [US3] `src/ui/views/ListeView.svelte` : intégrer `Paginator` + `paginate` sur la population **filtrée** (au-dessus du tableau). Dépend de T017, T024, T025 (ListeView après son restyle).
+- [x] T027 [US3] Refonte `src/ui/views/SandboxView.svelte` : **onglets** Population / Couples (`sbTab`) ; barre d'actions (make it real/reset/quitter) + **lentille** (champ numérique **et** curseur **synchronisés**) communes ; `FilterBar` + `Paginator` sur l'onglet Population ; **sélection de parents indépendante** du filtre/pagination (INV-UI5) ; restyle conforme maquette. Dépend de T023, T024, T025.
+- [x] T028 [US3] Refonte `src/ui/components/SandboxPersonForm.svelte` (modale) conforme maquette : overlay + carte scrollable ; statut en segment Vivant/Décédé (+ raisonDeces) ; éditeur **ADN par type** (chips actif/inactif + résilience + « + trait ») ; **profil de pouvoir** « Sans pouvoir / Normal (traits → pouvoirs) / Mutation forte » ; pouvoirs P/M (1–10) + retrait. (logique `sandboxStore` inchangée)
 
 **Checkpoint** : les 3 user stories sont indépendamment fonctionnelles ; UI complète.
 
@@ -120,11 +120,11 @@ les onglets sandbox conserve l'état ; lentille champ/curseur synchronisés (cf.
 
 ## Phase 6 : Polish & transverse
 
-- [ ] T029 [P] `tests/unit/pagination.test.ts` (nouveau) : tests **purs** de `paginate` (bornage page, `'all'`, calcul from/to/nbPages, liste vide).
-- [ ] T030 [P] `tests/unit/fiche-vm.test.ts` (étendre) : enfants résolus (id→nom) + **type** de trait exposés par le view-model (purs).
-- [ ] T031 [P] Accessibilité & contraste : vérifier les **12 combinaisons** (mode×palette×style) sur les 5 vues — focus clavier, contraste **AA** du texte courant, arbre & courbe lisibles.
-- [ ] T032 Dérouler `specs/008-refonte-ui/quickstart.md` (US1/US2/US3 + non-régression DefUi + hors-ligne/polices).
-- [ ] T033 Portes de qualité : `npm run test` (cœur **vert**, + tests purs UI) + `npm run lint` + `npm run build` **verts** ; vérifier que les `woff2` sont **précachés** et que l'app se charge **hors-ligne** ; bundle déployable (Principe II).
+- [x] T029 [P] `tests/unit/pagination.test.ts` (nouveau) : tests **purs** de `paginate` (bornage page, `'all'`, calcul from/to/nbPages, liste vide).
+- [x] T030 [P] `tests/unit/fiche-vm.test.ts` (étendre) : enfants résolus (id→nom) + **type** de trait exposés par le view-model (purs).
+- [x] T031 [P] (BUG-001 corrigé) Accessibilité & contraste : vérifier les **12 combinaisons** (mode×palette×style) sur les 5 vues — focus clavier, contraste **AA** du texte courant, arbre & courbe lisibles. **BUG-001 résolu** : `.nav-item.is-active` (style A) renforcé (bordure d'accent + fond teinté marqué + gras), `.chip:has(input:checked)` et `tr.selected` alignés ⇒ état actif/sélectionné nettement distinct en style A comme en B.
+- [x] T032 Dérouler `specs/008-refonte-ui/quickstart.md` (US1/US2/US3 + non-régression DefUi + hors-ligne/polices).
+- [x] T033 Portes de qualité : `npm run test` (cœur **vert**, + tests purs UI) + `npm run lint` + `npm run build` **verts** ; vérifier que les `woff2` sont **précachés** et que l'app se charge **hors-ligne** ; bundle déployable (Principe II).
 
 ---
 
@@ -193,3 +193,7 @@ les onglets sandbox conserve l'état ; lentille champ/curseur synchronisés (cf.
 - **Aucune dépendance ajoutée** (Principe VIII). **Hors-ligne strict** via polices précachées (Principes
   II/III). **Anonymat** (Principe X) : commits `KingsCookie`, email vide ; auto-hébergement = 0 appel tiers.
 - **Non-régression** : SC-001 = 100 % des fonctionnalités `DefUi.md` préservées (check-list quickstart).
+
+**Bugfix**: 2026-06-18 — BUG-001 — T031 **rouverte** (état actif/sélectionné peu visible en style A) ;
+note ajoutée à T003 (renforcer `.nav-item.is-active` en style A + chips/lignes sélectionnés). Correctif
+**présentation seulement** (`src/app.css`), cœur inchangé.

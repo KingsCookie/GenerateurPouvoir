@@ -27,7 +27,10 @@
   import { criteria, generationTouched } from '../stores/filters.js';
   import { filterPopulation, lastGeneration, type Personne } from '../../core/index.js';
   import { buildListRow } from '../lib/ficheViewModel.js';
+  import { paginate } from '../lib/pagination.js';
+  import { sbTab, sbPage, sbPageSize, setSbPageSize, type PageSize } from '../stores/ui.js';
   import FilterBar from '../components/FilterBar.svelte';
+  import Paginator from '../components/Paginator.svelte';
   import SandboxPersonForm from '../components/SandboxPersonForm.svelte';
 
   $: view = $sandboxView;
@@ -43,6 +46,23 @@
   $: minYear = $sandboxState ? $sandboxState.parameters.birthYear : 0;
   $: maxYear = $sandboxState ? $sandboxState.currentYear : 0;
   $: selectedCount = $reproSelected.size;
+
+  // Pagination de l'onglet Population (FR-016). La SÉLECTION de parents (Set) reste indépendante
+  // des lignes visibles (INV-UI5) : un parent hors page/filtre demeure sélectionné.
+  $: pageInfo = paginate(rows, $sbPage, $sbPageSize);
+  $: if (pageInfo.page !== $sbPage) sbPage.set(pageInfo.page);
+  function onSize(e: CustomEvent<PageSize>) {
+    setSbPageSize(e.detail);
+  }
+  function onPage(e: CustomEvent<number>) {
+    sbPage.set(e.detail);
+  }
+
+  // Lentille temporelle : champ numérique + curseur SYNCHRONISÉS (FR-018), bornés [minYear, maxYear].
+  function setYearClamped(v: number) {
+    if (!Number.isFinite(v)) return;
+    setSandboxYear(Math.min(maxYear, Math.max(minYear, Math.round(v))));
+  }
 
   // --- Formulaire de création / édition (BUG-001 volet A) ---
   let formOpen = false;
@@ -95,71 +115,184 @@
   <p class="empty">La sandbox n'est pas ouverte.</p>
 {:else}
   <section>
+    <!-- Barre d'actions commune -->
     <div class="bar">
-      <h2>Bac à sable — année {$sandboxYear}</h2>
+      <div class="bar-left">
+        <span class="badge-accent">Bac à sable · copie isolée</span>
+      </div>
       <div class="actions">
         <button type="button" class="primary" on:click={makeItReal}>✔ Make it real</button>
-        <button type="button" on:click={resetSandbox}>↺ Reset</button>
-        <button type="button" on:click={exitSandbox}>✕ Quitter (sans appliquer)</button>
+        <button type="button" class="contour" on:click={resetSandbox}>↺ Reset</button>
+        <button type="button" class="contour" on:click={exitSandbox}>✕ Quitter</button>
       </div>
     </div>
 
-    <div class="year">
-      <label for="sb-year">Voir l'état à l'année : <strong>{$sandboxYear}</strong></label>
+    <!-- Lentille temporelle commune : champ + curseur synchronisés (FR-018) -->
+    <div class="lens">
+      <label class="field-label" for="sb-year-num">An</label>
       <input
-        id="sb-year"
+        id="sb-year-num"
+        class="year-num"
+        type="number"
+        min={minYear}
+        max={maxYear}
+        value={$sandboxYear}
+        on:input={(e) => setYearClamped(Number((e.target as HTMLInputElement).value))}
+      />
+      <input
+        class="year-range"
         type="range"
         min={minYear}
         max={maxYear}
         value={$sandboxYear}
-        on:input={(e) => setSandboxYear(Number((e.target as HTMLInputElement).value))}
+        on:input={(e) => setYearClamped(Number((e.target as HTMLInputElement).value))}
+        aria-label="Année observée"
       />
       <span class="muted">[{minYear} … {maxYear}]</span>
     </div>
 
-    <!-- Mode reproduction manuelle -->
-    {#if !$reproMode}
-      <div class="repro">
-        <button type="button" on:click={startManualRepro}>👶 Reproduction manuelle</button>
-        <button type="button" on:click={openCreate}>＋ Créer un individu</button>
-      </div>
-    {:else}
-      <div class="repro mode" role="region" aria-label="Reproduction manuelle">
-        <span>{selectedCount} parent(s) sélectionné(s)</span>
-        <label>
-          Nombre d'enfants
-          <input
-            type="number"
-            min="1"
-            value={$reproChildCount}
-            on:input={(e) => setReproChildCount(Number((e.target as HTMLInputElement).value))}
-          />
-        </label>
-        <button
-          type="button"
-          class="primary"
-          on:click={validateRepro}
-          disabled={selectedCount === 0}
-        >
-          Valider
-        </button>
-        <button type="button" on:click={cancelRepro}>Annuler</button>
-        <button type="button" on:click={reselectLastParents}
-          >Re-sélectionner les derniers parents</button
-        >
-      </div>
-    {/if}
-
     {#if $sandboxError}
-      <p class="error" role="alert">{$sandboxError}</p>
+      <p class="error-msg" role="alert">{$sandboxError}</p>
     {/if}
 
-    <!-- Édition des couples (cycle de vie conjugal) -->
-    {#if !$reproMode}
-      <details class="couples">
-        <summary>Couples & cycle de vie conjugal</summary>
-        <div class="form-couple">
+    <!-- Onglets internes -->
+    <div class="tabs" role="tablist">
+      <button
+        type="button"
+        role="tab"
+        class="tab"
+        class:active={$sbTab === 'population'}
+        aria-selected={$sbTab === 'population'}
+        on:click={() => sbTab.set('population')}
+      >
+        Population
+      </button>
+      <button
+        type="button"
+        role="tab"
+        class="tab"
+        class:active={$sbTab === 'couples'}
+        aria-selected={$sbTab === 'couples'}
+        on:click={() => sbTab.set('couples')}
+      >
+        Couples & cycle de vie conjugal
+      </button>
+    </div>
+
+    {#if $sbTab === 'population'}
+      <!-- Barre d'outils repro / création -->
+      {#if !$reproMode}
+        <div class="repro">
+          <button type="button" class="contour" on:click={startManualRepro}
+            >⚭ Reproduction manuelle</button
+          >
+          <button type="button" class="contour" on:click={openCreate}>＋ Créer un individu</button>
+          <button type="button" class="contour" on:click={reselectLastParents}
+            >↩ Re-sélectionner les derniers parents</button
+          >
+        </div>
+      {:else}
+        <div class="repro mode" role="region" aria-label="Reproduction manuelle">
+          <span>{selectedCount} parent(s) sélectionné(s)</span>
           <label>
+            Nombre d'enfants
+            <input
+              type="number"
+              min="1"
+              value={$reproChildCount}
+              on:input={(e) => setReproChildCount(Number((e.target as HTMLInputElement).value))}
+            />
+          </label>
+          <button
+            type="button"
+            class="primary"
+            on:click={validateRepro}
+            disabled={selectedCount === 0}
+          >
+            Valider
+          </button>
+          <button type="button" class="contour" on:click={cancelRepro}>Annuler</button>
+        </div>
+      {/if}
+
+      <!-- Filtres (parité avec la liste principale, BUG-002) -->
+      <FilterBar />
+
+      {#if rows.length === 0}
+        <p class="empty">Aucun individu ne correspond aux filtres.</p>
+      {:else}
+        <Paginator
+          pageSize={$sbPageSize}
+          page={pageInfo.page}
+          nbPages={pageInfo.nbPages}
+          from={pageInfo.from}
+          to={pageInfo.to}
+          total={pageInfo.total}
+          on:sizechange={onSize}
+          on:pagechange={onPage}
+        />
+
+        <table>
+          <thead>
+            <tr>
+              {#if $reproMode}<th class="sel"></th>{/if}
+              <th>Nom</th>
+              <th>Naissance</th>
+              <th>Âge</th>
+              <th>Pouvoir(s)</th>
+              {#if !$reproMode}<th>Actions</th>{/if}
+            </tr>
+          </thead>
+          <tbody>
+            {#each pageInfo.pageItems as row (row.id)}
+              <tr
+                class:selected={$reproSelected.has(row.id)}
+                on:click={() => $reproMode && toggleReproSelect(row.id)}
+              >
+                {#if $reproMode}
+                  <td class="sel">
+                    <input
+                      type="checkbox"
+                      checked={$reproSelected.has(row.id)}
+                      on:change|stopPropagation={() => toggleReproSelect(row.id)}
+                      aria-label={`Sélectionner ${row.nom}`}
+                    />
+                  </td>
+                {/if}
+                <td>
+                  {row.nom}{#if !row.vivant}<span class="dead" title="décédé"> †</span>{/if}
+                </td>
+                <td class="mono">{row.dateNaissance}</td>
+                <td>{row.age}</td>
+                <td class="powers">
+                  {#if row.pouvoirs.length === 0}<span class="muted">—</span
+                    >{:else}{#each row.pouvoirs as pw}<span class="chip">{pw}</span>{/each}{/if}
+                </td>
+                {#if !$reproMode}
+                  <td class="row-actions">
+                    <button type="button" on:click|stopPropagation={() => openEdit(row.id)}
+                      >Éditer</button
+                    >
+                    <button type="button" on:click|stopPropagation={() => sbClonePerson(row.id)}
+                      >Cloner</button
+                    >
+                    <button
+                      type="button"
+                      class="danger"
+                      on:click|stopPropagation={() => sbDeletePerson(row.id)}>Supprimer</button
+                    >
+                  </td>
+                {/if}
+              </tr>
+            {/each}
+          </tbody>
+        </table>
+      {/if}
+    {:else}
+      <!-- Onglet Couples & cycle de vie conjugal -->
+      <div class="card couples-panel">
+        <div class="form-couple">
+          <label class="field-label">
             A
             <select bind:value={coupleA}>
               <option value="" disabled>— choisir —</option>
@@ -167,7 +300,7 @@
                 >{/each}
             </select>
           </label>
-          <label>
+          <label class="field-label">
             B
             <select bind:value={coupleB}>
               <option value="" disabled>— choisir —</option>
@@ -177,6 +310,7 @@
           </label>
           <button
             type="button"
+            class="primary"
             on:click={formCoupleNow}
             disabled={!coupleA || !coupleB || coupleA === coupleB}
             >Former le couple (année {$sandboxYear})</button
@@ -188,10 +322,12 @@
           <ul class="couple-list">
             {#each coupleList as c (c.id)}
               <li>
-                <span>{c.memberIds.map(nom).join(' ⚭ ')}</span>
-                <span class="badge" class:ex={!c.active}>{c.active ? 'actuel' : 'ex'}</span>
+                <span class="members">{c.memberIds.map(nom).join(c.active ? ' ⚭ ' : ' ⚮ ')}</span>
+                <span class="badge-statut" class:ex={!c.active}>{c.active ? 'actuel' : 'ex'}</span>
                 {#if c.active}
-                  <button type="button" on:click={() => sbDivorceCouple(c.id)}>Divorcer</button>
+                  <button type="button" class="contour" on:click={() => sbDivorceCouple(c.id)}
+                    >Divorcer</button
+                  >
                 {/if}
                 <button type="button" class="danger" on:click={() => sbDissolveConjugalLink(c.id)}
                   >Dissoudre</button
@@ -200,67 +336,7 @@
             {/each}
           </ul>
         {/if}
-      </details>
-    {/if}
-
-    <!-- Filtres (parité avec la liste principale, BUG-002) -->
-    <FilterBar />
-
-    <table>
-      <thead>
-        <tr>
-          {#if $reproMode}<th class="sel"></th>{/if}
-          <th>Nom</th>
-          <th>Naissance</th>
-          <th>Âge</th>
-          <th>Pouvoir(s)</th>
-          {#if !$reproMode}<th>Actions</th>{/if}
-        </tr>
-      </thead>
-      <tbody>
-        {#each rows as row (row.id)}
-          <tr
-            class:selected={$reproSelected.has(row.id)}
-            on:click={() => $reproMode && toggleReproSelect(row.id)}
-          >
-            {#if $reproMode}
-              <td class="sel">
-                <input
-                  type="checkbox"
-                  checked={$reproSelected.has(row.id)}
-                  on:change|stopPropagation={() => toggleReproSelect(row.id)}
-                  aria-label={`Sélectionner ${row.nom}`}
-                />
-              </td>
-            {/if}
-            <td>{row.nom}</td>
-            <td class="mono">{row.dateNaissance}</td>
-            <td>{row.age}</td>
-            <td>
-              {#if row.pouvoirs.length === 0}<span class="muted">—</span
-                >{:else}{#each row.pouvoirs as pw}<div>{pw}</div>{/each}{/if}
-            </td>
-            {#if !$reproMode}
-              <td class="row-actions">
-                <button type="button" on:click|stopPropagation={() => openEdit(row.id)}
-                  >Éditer</button
-                >
-                <button type="button" on:click|stopPropagation={() => sbClonePerson(row.id)}
-                  >Cloner</button
-                >
-                <button
-                  type="button"
-                  class="danger"
-                  on:click|stopPropagation={() => sbDeletePerson(row.id)}>Supprimer</button
-                >
-              </td>
-            {/if}
-          </tr>
-        {/each}
-      </tbody>
-    </table>
-    {#if rows.length === 0}
-      <p class="empty">Aucun individu ne correspond aux filtres.</p>
+      </div>
     {/if}
   </section>
 
@@ -278,9 +354,10 @@
   .bar {
     display: flex;
     flex-wrap: wrap;
-    align-items: baseline;
+    align-items: center;
     justify-content: space-between;
     gap: 0.5rem;
+    margin-bottom: 0.8rem;
   }
   .actions,
   .repro {
@@ -298,39 +375,64 @@
     border: 1px solid var(--border);
     border-radius: var(--radius);
   }
-  .year {
+
+  .lens {
     display: flex;
     align-items: center;
     gap: 0.6rem;
     flex-wrap: wrap;
-    margin: 0.6rem 0;
-  }
-  .year input[type='range'] {
-    flex: 1 1 12rem;
-  }
-  .couples {
-    margin: 0.6rem 0;
+    margin: 0.4rem 0 0.8rem;
+    padding: 12px 16px;
+    background: var(--bg-elev);
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 0.5rem 0.7rem;
-    background: var(--bg-elev);
   }
-  .couples summary {
-    cursor: pointer;
-    font-weight: 600;
+  .year-num {
+    width: 6rem;
+    font-family: var(--mono);
+    color: var(--accent-text);
+    font-size: 16px;
+  }
+  .year-range {
+    flex: 1 1 12rem;
+    accent-color: var(--accent);
+  }
+
+  .tabs {
+    display: flex;
+    gap: 1.2rem;
+    border-bottom: 1px solid var(--border);
+    margin-bottom: 0.8rem;
+  }
+  .tab {
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    border-radius: 0;
+    color: var(--fg-muted);
+    padding: 8px 2px;
+    font-size: 14px;
+  }
+  .tab.active {
+    color: var(--accent-text);
+    border-bottom-color: var(--accent);
+  }
+
+  .couples-panel {
+    display: flex;
+    flex-direction: column;
+    gap: 0.8rem;
   }
   .form-couple {
     display: flex;
     gap: 0.6rem;
     align-items: flex-end;
     flex-wrap: wrap;
-    margin: 0.5rem 0;
   }
   .form-couple label {
     display: flex;
     flex-direction: column;
     gap: 0.2rem;
-    font-size: 0.82rem;
   }
   .couple-list {
     list-style: none;
@@ -338,7 +440,7 @@
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 0.3rem;
+    gap: 0.4rem;
   }
   .couple-list li {
     display: flex;
@@ -346,15 +448,23 @@
     gap: 0.5rem;
     flex-wrap: wrap;
   }
-  .badge {
-    font-size: 0.74rem;
-    padding: 0.05rem 0.4rem;
-    border-radius: 999px;
-    background: color-mix(in srgb, var(--accent) 25%, transparent);
+  .members {
+    font-weight: 600;
   }
-  .badge.ex {
-    background: color-mix(in srgb, var(--fg-muted) 25%, transparent);
+  .badge-statut {
+    font-size: 0.72rem;
+    padding: 1px 0.5rem;
+    border-radius: var(--chip-radius);
+    background: var(--chip-bg);
+    border: 1px solid var(--chip-border);
+    color: var(--chip-text);
   }
+  .badge-statut.ex {
+    background: transparent;
+    border-color: var(--border);
+    color: var(--fg-muted);
+  }
+
   table {
     width: 100%;
     border-collapse: collapse;
@@ -362,31 +472,51 @@
   th,
   td {
     text-align: left;
-    padding: 0.4rem 0.6rem;
-    border-bottom: 1px solid var(--border);
+    padding: 0.45rem 0.6rem;
+    border-bottom: 1px solid var(--row-border);
   }
+  th {
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: var(--label-transform);
+    color: var(--fg-faint);
+    font-weight: 400;
+  }
+  tbody tr {
+    cursor: default;
+  }
+  /* Parent sélectionné (repro) NETTEMENT visible (BUG-001) — fond accent marqué + liseré gauche. */
   tbody tr.selected {
-    background: color-mix(in srgb, var(--accent) 18%, transparent);
+    background: color-mix(in srgb, var(--accent) 24%, var(--bg-elev));
+    box-shadow: inset 3px 0 0 0 var(--accent);
   }
   .sel {
     width: 2.2rem;
     text-align: center;
+  }
+  .powers {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
   }
   .row-actions {
     display: flex;
     gap: 0.3rem;
     flex-wrap: wrap;
   }
+  .dead {
+    color: var(--danger);
+  }
   .mono {
-    font-family: ui-monospace, monospace;
+    font-family: var(--mono);
+    font-size: 13px;
   }
   .muted {
     color: var(--fg-muted);
   }
   .danger {
-    color: var(--danger);
-  }
-  .error {
+    background: transparent;
+    border: 1px solid var(--danger);
     color: var(--danger);
   }
   .empty {

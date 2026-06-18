@@ -154,7 +154,15 @@ choisie) ; changer la taille ou la page met à jour l'affichage. Dans la sandbox
 
 - **FR-007**: L'**en-tête** DOIT être **persistant/collant** et contenir : identité (logo + titre),
   **navigation** vers Paramètres / Population / Sandbox (les deux derniers **désactivés** sans population),
-  l'élément **actif** étant visuellement distinct, et le **toggle de thème**.
+  l'élément **actif** étant visuellement distinct, et le **toggle de thème**. L'état **actif/sélectionné**
+  DOIT être **nettement distinct de l'inactif dans les DEUX styles** (A — Atelier **et** B — Signal), et
+  pas seulement en style B : en style A, un chip trop léger ne suffit pas (bordure d'accent marquée +
+  fond/texte teintés requis). Cette exigence vaut pour **tous** les sélecteurs réutilisant l'état actif
+  (navigation, segments de thème, onglets sandbox, tailles de pagination, mode de traits, profondeur
+  d'arbre) et, par cohérence, pour les **chips de filtre cochés** et les **lignes/parents sélectionnés**.
+
+**Bugfix**: 2026-06-18 — BUG-001 — Clarifié FR-007 (et FR-006/SC-005 ci-dessous) : l'état
+sélectionné/actif doit être **visiblement distinct en style A (Atelier)**, pas uniquement en style B.
 - **FR-008**: La **barre import/export** DOIT rester présente et fonctionnelle (3 exports + import auto-détecté).
 - **FR-009**: Un **pied de page de version** persistant DOIT être affiché sur toutes les vues (nom de l'app
   + version/indicateur hors-ligne).

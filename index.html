@@ -4,14 +4,31 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Générateur de Pouvoir</title>
+    <!-- Anti-FOUC (FR-002) : pose les 3 axes de thème depuis localStorage AVANT le 1er rendu,
+         pour éviter le flash. Défauts sombre/violet/A si absent/illisible. Clés alignées sur ui.ts. -->
+    <script>
+      (function () {
+        try {
+          var d = document.documentElement,
+            ls = window.localStorage,
+            pick = function (k, allowed, def) {
+              var v = ls ? ls.getItem(k) : null;
+              return v && allowed.indexOf(v) !== -1 ? v : def;
+            };
+          d.setAttribute('data-mode', pick('ui.mode', ['dark', 'light'], 'dark'));
+          d.setAttribute('data-palette', pick('ui.palette', ['violet', 'cyan', 'vert'], 'violet'));
+          d.setAttribute('data-style', pick('ui.style', ['a', 'b'], 'a'));
+        } catch (e) {
+          var el = document.documentElement;
+          el.setAttribute('data-mode', 'dark');
+          el.setAttribute('data-palette', 'violet');
+          el.setAttribute('data-style', 'a');
+        }
+      })();
+    </script>
     <meta name="description" content="Générateur de pouvoirs déterministe (PWA hors-ligne)." />
-    <!-- Polices (refonte UI) : Style A → Hanken Grotesk + JetBrains Mono ; Style B → Space Grotesk + Space Mono. -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Hanken+Grotesk:wght@400..700&family=JetBrains+Mono:wght@400..600&family=Space+Grotesk:wght@400..700&family=Space+Mono:wght@400;700&display=swap"
-    />
+    <!-- Polices auto-hébergées (FR-020) : déclarées en @font-face dans src/app.css, précachées par
+         le service worker (hors-ligne strict). Aucun appel tiers (Principe X). Repli système en sécurité. -->
     <link rel="icon" type="image/png" sizes="48x48" href="/favicon.png" />
     <link rel="icon" type="image/png" sizes="192x192" href="/icons/icon-192.png" />
     <link rel="apple-touch-icon" href="/icons/icon-192.png" />

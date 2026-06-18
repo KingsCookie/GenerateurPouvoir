@@ -176,7 +176,7 @@
   .filters {
     border: 1px solid var(--border);
     border-radius: var(--radius);
-    padding: 0.75rem;
+    padding: 18px 20px;
     margin-bottom: 1rem;
     background: var(--bg-elev);
   }
@@ -194,8 +194,10 @@
     max-width: 22rem;
   }
   .search span {
-    font-size: 0.8rem;
-    color: var(--fg-muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: var(--label-transform);
+    color: var(--fg-faint);
   }
   .dims {
     display: flex;
@@ -204,13 +206,15 @@
   }
   fieldset {
     border: 1px solid var(--border);
-    border-radius: var(--radius);
-    padding: 0.4rem 0.6rem;
+    border-radius: var(--radius-sm);
+    padding: 0.5rem 0.7rem;
     min-width: 8rem;
   }
   legend {
-    font-size: 0.78rem;
-    color: var(--fg-muted);
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: var(--label-transform);
+    color: var(--fg-faint);
     padding: 0 0.3rem;
   }
   .chips {
@@ -227,9 +231,20 @@
   .radio {
     display: inline-flex;
     align-items: center;
-    gap: 0.25rem;
+    gap: 0.3rem;
     font-size: 0.82rem;
     cursor: pointer;
+    padding: 2px 8px;
+    border-radius: var(--chip-radius);
+    border: 1px solid transparent;
+  }
+  /* Chip filtre sélectionné : teinte d'accent NETTE (BUG-001) — bordure d'accent + fond marqué,
+     visible aussi en style A (Atelier). */
+  .chip:has(input:checked) {
+    background: color-mix(in srgb, var(--accent) 28%, var(--bg-elev));
+    border-color: var(--accent);
+    color: var(--accent-text);
+    font-weight: 600;
   }
   .scope {
     display: flex;

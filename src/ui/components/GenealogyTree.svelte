@@ -8,6 +8,8 @@
   export let showAge = false;
   /** Clic (sans glisser) sur une case : ouverture de fiche (fiche) ou recentrage (page dédiée). */
   export let onSelect: (id: string) => void = () => {};
+  /** Échelle courante (bindable) — permet à la page dédiée d'afficher le % (FR-002d). */
+  export let scale = 1;
 
   // Disposition calculée (cartes, ⚭, liens) — déterministe, connecteurs SVG alignés (BUG-004).
   $: layout = layoutTree(node, showAge);
@@ -16,7 +18,6 @@
   const THRESHOLD = 5; // px : en deçà = clic ; au-delà = pan
   const MIN_SCALE = 0.2;
   const MAX_SCALE = 4;
-  let scale = 1;
   let tx = 0;
   let ty = 0;
   let viewportEl: HTMLDivElement;
@@ -49,15 +50,31 @@
     return Math.hypot(pts[0].x - pts[1].x, pts[0].y - pts[1].y);
   }
 
-  function onWheel(e: WheelEvent) {
-    e.preventDefault();
-    const ns = clamp(scale * (e.deltaY < 0 ? 1.1 : 1 / 1.1));
-    // Zoom centré sur le milieu du viewport (le point central reste stable).
-    const cx = viewportEl.clientWidth / 2;
-    const cy = viewportEl.clientHeight / 2;
+  /** Zoom borné centré sur (cx, cy) exprimés dans le repère du viewport. */
+  function zoomAt(factor: number, cx: number, cy: number) {
+    const ns = clamp(scale * factor);
+    if (ns === scale) return;
     tx = cx - (cx - tx) * (ns / scale);
     ty = cy - (cy - ty) * (ns / scale);
     scale = ns;
+  }
+
+  function onWheel(e: WheelEvent) {
+    e.preventDefault();
+    // Zoom centré sur le CURSEUR (le point sous la souris reste stable — FR-002b).
+    const rect = viewportEl.getBoundingClientRect();
+    zoomAt(e.deltaY < 0 ? 1.1 : 1 / 1.1, e.clientX - rect.left, e.clientY - rect.top);
+  }
+
+  // --- API exposée (page dédiée : boutons − / % / + / recentrer) ---
+  export function zoomIn() {
+    if (viewportEl) zoomAt(1.2, viewportEl.clientWidth / 2, viewportEl.clientHeight / 2);
+  }
+  export function zoomOut() {
+    if (viewportEl) zoomAt(1 / 1.2, viewportEl.clientWidth / 2, viewportEl.clientHeight / 2);
+  }
+  export function recenter() {
+    centerOnRoot();
   }
 
   function onPointerDown(e: PointerEvent) {
@@ -264,10 +281,11 @@
   .card:hover {
     border-color: var(--accent);
   }
-  /* Racine (individu consulté) : couleur distincte (FR-003c). */
+  /* Racine (individu observé) : bordure accent 1.5px + fond chip (FR-003c, handoff). */
   .card.root {
+    border-width: 1.5px;
     border-color: var(--accent);
-    background: color-mix(in srgb, var(--accent) 24%, var(--bg));
+    background: var(--chip-bg);
   }
   /* Conjoint « ex » / enfant d'ex / parent d'un couple « ex » : pointillés (FR-003c). */
   .card.dashed {
@@ -280,7 +298,8 @@
   /* Décédé : couleur de bordure distincte + marqueur « † » (BUG-005) — dimension « border-color ».
      Cumulable avec ex (border-style), pièce rapportée (background) et racine. */
   .card.dead {
-    border-color: #c98bdb;
+    border-style: dashed;
+    opacity: 0.78;
     color: var(--fg-muted);
   }
   .card .nom {

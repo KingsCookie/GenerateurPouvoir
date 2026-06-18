@@ -1,13 +1,20 @@
 import { defineConfig } from 'vite';
 import { svelte } from '@sveltejs/vite-plugin-svelte';
 import { VitePWA } from 'vite-plugin-pwa';
+import { readFileSync } from 'node:fs';
 
 // Base path configurable pour GitHub Pages (servi sous /<repo>/).
 // En local : '/'. En CI Pages : BASE_PATH=/<repo>/ (cf. .github/workflows/deploy.yml).
 const base = process.env.BASE_PATH ?? '/';
 
+// Version injectée au build (déterministe, pas d'horloge runtime — Principe I) pour le pied de page.
+const pkg = JSON.parse(readFileSync(new URL('./package.json', import.meta.url), 'utf-8'));
+
 export default defineConfig({
   base,
+  define: {
+    __APP_VERSION__: JSON.stringify(pkg.version),
+  },
   plugins: [
     svelte(),
     VitePWA({
@@ -36,7 +43,8 @@ export default defineConfig({
       },
       workbox: {
         // Precache de tous les assets du bundle → fonctionnement hors-ligne (Principe III).
-        globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest}'],
+        // woff2 inclus : polices auto-hébergées disponibles hors-ligne dès le 1er rendu (FR-020).
+        globPatterns: ['**/*.{js,css,html,svg,png,ico,webmanifest,woff2}'],
       },
     }),
   ],
