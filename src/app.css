@@ -55,6 +55,54 @@
   src: url('/fonts/space-mono-700.woff2') format('woff2');
 }
 
+/* --- Feature 009 : 1 couple de polices par nouveau style (auto-hébergé, précaché) ---
+   Style C : Fraunces (serif, titres) + Inter (sans, corps) · mono réutilisée (JetBrains Mono).
+   Style D : IBM Plex Mono (tout mono, 400 + 600).
+   Style E : Archivo (grotesque, graisses fortes) · mono réutilisée (Space Mono).
+   Style F : Nunito (humaniste arrondie) · mono réutilisée (JetBrains Mono). */
+@font-face {
+  font-family: 'Fraunces';
+  font-style: normal;
+  font-weight: 400 700; /* fichier variable */
+  font-display: swap;
+  src: url('/fonts/fraunces.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Inter';
+  font-style: normal;
+  font-weight: 400 700; /* fichier variable */
+  font-display: swap;
+  src: url('/fonts/inter.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-mono-400.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'IBM Plex Mono';
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url('/fonts/ibm-plex-mono-600.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Archivo';
+  font-style: normal;
+  font-weight: 400 800; /* fichier variable */
+  font-display: swap;
+  src: url('/fonts/archivo.woff2') format('woff2');
+}
+@font-face {
+  font-family: 'Nunito';
+  font-style: normal;
+  font-weight: 400 700; /* fichier variable */
+  font-display: swap;
+  src: url('/fonts/nunito.woff2') format('woff2');
+}
+
 :root {
   color-scheme: dark;
 
@@ -83,6 +131,9 @@
 
   /* --- style graphique (défaut A — Atelier) --- */
   --font: 'Hanken Grotesk', system-ui, sans-serif;
+  /* Police des titres : par défaut identique au corps (résolue paresseusement → suit --font de chaque
+     style). Seul le style C (Éditorial) la surcharge en serif. */
+  --font-title: var(--font);
   --mono: 'JetBrains Mono', monospace;
   --radius: 11px;
   --radius-sm: 8px;
@@ -91,6 +142,8 @@
   --label-transform: uppercase;
   --btn-transform: none;
   --btn-spacing: normal;
+  /* Épaisseur de bordure (défaut 1px ; le style E — Néo-brutaliste — la passe à 2px). */
+  --border-width: 1px;
 
   /* --- espacement de base (conservé : utilisé par #app) --- */
   --space: 0.75rem;
@@ -128,6 +181,25 @@
 }
 /* (violet garde --accent-fg:#ffffff car l'accent est foncé ; cyan/vert sont clairs → texte foncé) */
 
+/* --- Feature 009 : 3 nouvelles palettes. Seuls --accent + --accent-fg sont posés ;
+   tous les dérivés (chip, teinte, texte d'accent, ombre) sont recalculés par color-mix()
+   ci-dessus, identiques au mécanisme F008 (sombre + clair). --accent-fg : foncé sur accent
+   clair (ambre), blanc sur accent saturé (rose, bleu). */
+:root[data-palette='ambre'] {
+  --accent: #e0a13a;
+  --accent-fg: #16170f;
+}
+:root[data-palette='rose'] {
+  --accent: #e25d96;
+  --accent-fg: #ffffff;
+}
+:root[data-palette='bleu'] {
+  /* azur assombri (vs #3f9ae0) pour porter le contraste texte-blanc-sur-accent au-dessus du
+     plancher établi en F008 (violet ≈ 3.19) → ≈ 3.9 (T013, cible AA). */
+  --accent: #2f86cc;
+  --accent-fg: #ffffff;
+}
+
 /* ===================== STYLE B — Signal ===================== */
 :root[data-style='b'] {
   --font: 'Space Grotesk', system-ui, sans-serif;
@@ -141,6 +213,69 @@
   --btn-spacing: 0.05em;
 }
 /* En mode clair, --year-shadow est forcé à none (cf. bloc light ci-dessus). */
+
+/* ===================== STYLE C — Éditorial =====================
+   Élégance « magazine » : serif raffinée en titres (Fraunces) + sans très lisible en corps (Inter),
+   rayons moyens/généreux, libellés en petites capitales, boutons sans transformation. */
+:root[data-style='c'] {
+  --font: 'Inter', system-ui, sans-serif;
+  --font-title: 'Fraunces', Georgia, serif;
+  --mono: 'JetBrains Mono', monospace;
+  --radius: 12px;
+  --radius-sm: 9px;
+  --chip-radius: 14px;
+  --logo-radius: 6px;
+  --label-transform: uppercase;
+  --btn-transform: none;
+  --btn-spacing: 0.02em;
+}
+
+/* ===================== STYLE D — Terminal =====================
+   Esthétique console : tout en monospace (IBM Plex Mono), angles vifs, MAJUSCULES, logo carré. */
+:root[data-style='d'] {
+  --font: 'IBM Plex Mono', monospace;
+  --font-title: 'IBM Plex Mono', monospace;
+  --mono: 'IBM Plex Mono', monospace;
+  --radius: 2px;
+  --radius-sm: 1px;
+  --chip-radius: 0px;
+  --logo-radius: 0px;
+  --label-transform: uppercase;
+  --btn-transform: uppercase;
+  --btn-spacing: 0.08em;
+}
+
+/* ===================== STYLE E — Néo-brutaliste =====================
+   Contrastes francs : grotesque grasse (Archivo), coins droits, bordures épaisses, MAJUSCULES. */
+:root[data-style='e'] {
+  --font: 'Archivo', system-ui, sans-serif;
+  --font-title: 'Archivo', system-ui, sans-serif;
+  --mono: 'Space Mono', monospace;
+  --radius: 0px;
+  --radius-sm: 0px;
+  --chip-radius: 0px;
+  --logo-radius: 0px;
+  --label-transform: uppercase;
+  --btn-transform: uppercase;
+  --btn-spacing: 0.04em;
+  --border-width: 2px; /* bordures épaisses (cf. primitives ci-dessous) */
+}
+
+/* ===================== STYLE F — Organique =====================
+   Rondeur et calme : humaniste arrondie (Nunito), très grands rayons (« pilule »), logo rond,
+   libellés en minuscules, transitions douces. */
+:root[data-style='f'] {
+  --font: 'Nunito', system-ui, sans-serif;
+  --font-title: 'Nunito', system-ui, sans-serif;
+  --mono: 'JetBrains Mono', monospace;
+  --radius: 22px;
+  --radius-sm: 16px;
+  --chip-radius: 999px;
+  --logo-radius: 50%;
+  --label-transform: lowercase;
+  --btn-transform: none;
+  --btn-spacing: normal;
+}
 
 /* ===================== ÉTAT ACTIF DE NAVIGATION =====================
    Style A : pastille douce (chip).  Style B : aplat d'accent plein.
@@ -157,7 +292,11 @@
   color: var(--accent-text);
   font-weight: 600;
 }
-:root[data-style='b'] .nav-item.is-active {
+/* Styles « affirmés » (B Signal, D Terminal, E Néo-brutaliste) : actif en aplat d'accent plein.
+   C (Éditorial) et F (Organique) gardent le chip doux de la règle de base ci-dessus. */
+:root[data-style='b'] .nav-item.is-active,
+:root[data-style='d'] .nav-item.is-active,
+:root[data-style='e'] .nav-item.is-active {
   background: var(--accent);
   border-color: var(--accent);
   color: var(--accent-fg);
@@ -192,6 +331,8 @@ h1,
 h2,
 h3 {
   line-height: 1.2;
+  /* Titres dans la police de titre du style courant (serif en C ; = corps sinon). */
+  font-family: var(--font-title);
 }
 
 /* Éléments monospace (libellés techniques, nombres, codes) → police mono du style courant. */
@@ -205,7 +346,7 @@ samp,
 button {
   font: inherit;
   cursor: pointer;
-  border: 1px solid var(--border);
+  border: var(--border-width) solid var(--border);
   background: var(--bg-elev);
   color: var(--fg);
   padding: 0.5rem 0.9rem;
@@ -259,7 +400,7 @@ a {
 /* Carte : conteneur de section/panneau. */
 .card {
   background: var(--bg-elev);
-  border: 1px solid var(--border);
+  border: var(--border-width) solid var(--border);
   border-radius: var(--radius);
   padding: 22px 24px;
 }
@@ -270,7 +411,7 @@ a {
   align-items: center;
   gap: 0.35em;
   background: var(--chip-bg);
-  border: 1px solid var(--chip-border);
+  border: var(--border-width) solid var(--chip-border);
   color: var(--chip-text);
   border-radius: var(--chip-radius);
   padding: 2px 10px;

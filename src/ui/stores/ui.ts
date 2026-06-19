@@ -32,8 +32,8 @@ function lsSet(key: string, value: string): void {
   }
 }
 
-/** Lit une préférence bornée à un ensemble de valeurs autorisées (sinon défaut). */
-function readChoice<T extends string>(key: string, allowed: readonly T[], fallback: T): T {
+/** Lit une préférence bornée à un ensemble de valeurs autorisées (sinon défaut). Pure (hors I/O LS). */
+export function readChoice<T extends string>(key: string, allowed: readonly T[], fallback: T): T {
   const raw = lsGet(key);
   return raw !== null && (allowed as readonly string[]).includes(raw) ? (raw as T) : fallback;
 }
@@ -47,19 +47,26 @@ function setHtmlAttr(name: string, value: string): void {
 // Apparence (persistée localStorage) — 3 axes indépendants (FR-001..005).
 // ===========================================================================
 export type Mode = 'dark' | 'light';
-export type Palette = 'violet' | 'cyan' | 'vert';
-export type Style = 'a' | 'b';
+// Palette/Style étendus en Feature 009 (+3 palettes, +4 styles). Les valeurs inconnues
+// (anciens exports, valeurs retirées) repliront sur le défaut de l'axe via readChoice().
+export type Palette = 'violet' | 'cyan' | 'vert' | 'ambre' | 'rose' | 'bleu';
+export type Style = 'a' | 'b' | 'c' | 'd' | 'e' | 'f';
+
+// Valeurs autorisées par axe (source unique : store + repli ; consommées aussi par les tests).
+export const MODES: readonly Mode[] = ['dark', 'light'];
+export const PALETTES: readonly Palette[] = ['violet', 'cyan', 'vert', 'ambre', 'rose', 'bleu'];
+export const STYLES: readonly Style[] = ['a', 'b', 'c', 'd', 'e', 'f'];
 
 const LS_MODE = 'ui.mode';
 const LS_PALETTE = 'ui.palette';
 const LS_STYLE = 'ui.style';
 const LS_TRAITMODE = 'ui.traitMode';
 
-export const mode: Writable<Mode> = writable(readChoice<Mode>(LS_MODE, ['dark', 'light'], 'dark'));
+export const mode: Writable<Mode> = writable(readChoice<Mode>(LS_MODE, MODES, 'dark'));
 export const palette: Writable<Palette> = writable(
-  readChoice<Palette>(LS_PALETTE, ['violet', 'cyan', 'vert'], 'violet'),
+  readChoice<Palette>(LS_PALETTE, PALETTES, 'violet'),
 );
-export const style: Writable<Style> = writable(readChoice<Style>(LS_STYLE, ['a', 'b'], 'a'));
+export const style: Writable<Style> = writable(readChoice<Style>(LS_STYLE, STYLES, 'a'));
 
 // Application immédiate + persistance à chaque changement (SC-002/003/004).
 // (Le script anti-FOUC d'index.html a déjà posé les attributs avant ce 1er abonnement.)
