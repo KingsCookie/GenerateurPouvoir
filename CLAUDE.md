@@ -1,25 +1,28 @@
 <!-- SPECKIT START -->
-## Feature active : 008-refonte-ui
+## Feature active : 009-ajout-4-styles
 
-- **Plan** : `specs/008-refonte-ui/plan.md` (contexte technique, décisions, Constitution Check)
-- **Spec** : `specs/008-refonte-ui/spec.md` (source de vérité **visuelle** : `design_handoff_refonte_ui/`
-  — gitignoré/local ; contrat **fonctionnel** : `rsrc/DefUi.md` — gitignoré/local. `DescriptionProjet.md`
-  inchangé.)
-- **Recherche / décisions** : `specs/008-refonte-ui/research.md`
-- **Modèle de données** : `specs/008-refonte-ui/data-model.md` (état d'**interface** uniquement)
-- **Contrats** : `specs/008-refonte-ui/contracts/ui-contract.md` (thème, store `ui.ts`, non-régression DefUi)
-- **Périmètre** : **refonte purement visuelle** des 5 vues + chrome global ; **aucune perte de
-  fonctionnalité** (DefUi). **Système de thème 3 axes** sur `<html>` : `data-mode` (sombre défaut/clair),
-  `data-palette` (violet/cyan/vert), `data-style` (A/B), mémorisés en `localStorage`. Ajouts : pied de page
-  version, bouton remonter, **pagination** (liste+sandbox, défaut 50), **onglets sandbox** (Population/
-  Couples), lentille champ+curseur, **Fiche** (liste enfants + type de trait). **Polices auto-hébergées**
-  (woff2 + `@font-face`, précachées) ⇒ hors-ligne strict.
-- **Clarifications 2026-06-18** : périmètre thème = **système complet 3 axes** ; polices = **auto-hébergées**
-  (local, précachées) avec repli système.
-- **Cœur INTOUCHÉ** (Principe IV) : refonte limitée à `src/ui/**`, `src/app.css`, `index.html`, config build
-  (version + précache woff2), `public/fonts/`. État ajouté = **interface** (`src/ui/stores/ui.ts`), **hors**
-  `AppState`/export (Principe VI). `tokens.css` déjà fusionné dans `src/app.css`. **Aucune dépendance ajoutée.**
-- Features livrées : 7 (`specs/007-sandbox-make-it-real/`) sandbox isolée & make it real (transfert RNG),
+- **Plan** : `specs/009-ajout-4-styles/plan.md` (contexte technique, décisions, Constitution Check)
+- **Spec** : `specs/009-ajout-4-styles/spec.md` (contrat **fonctionnel** : `rsrc/DefUi.md` — gitignoré/local.
+  `DescriptionProjet.md` inchangé.)
+- **Recherche / décisions** : `specs/009-ajout-4-styles/research.md` (polices OFL, accents, tokens par style)
+- **Modèle de données** : `specs/009-ajout-4-styles/data-model.md` (énumérations Style/Palette étendues)
+- **Contrats** : `specs/009-ajout-4-styles/contracts/ui-contract.md` (thème étendu, store, non-régression)
+- **Périmètre** : **extension purement présentationnelle** du système de thème F008 — on **ajoute des
+  valeurs** aux axes existants : `data-style` **+4** (`c` Éditorial serif · `d` Terminal mono · `e`
+  Néo-brutaliste · `f` Organique) → 6 ; `data-palette` **+3** (`ambre` · `rose` · `bleu`) → 6.
+  **72 combinaisons** (6 styles × 6 palettes × 2 modes). **Chaque** nouveau style a **son couple de polices
+  auto-hébergé** (woff2 latin OFL, précaché ; mono réutilisée sauf D). Non-régression DefUi + styles/palettes
+  existants à 100 %.
+- **Clarification 2026-06-19** : polices = **une par style** (titre/corps + mono au besoin), auto-hébergées
+  et précachées, repli système.
+- **Cœur INTOUCHÉ** (Principe IV) : modifs limitées à `src/app.css`, `src/ui/stores/ui.ts`,
+  `src/ui/components/ThemeControls.svelte`, `index.html` (anti-FOUC), `public/fonts/`. **Aucune dépendance
+  ajoutée** ; aucune vue ni store de logique touchés ; rien dans `AppState`/export (Principe VI).
+- Features livrées : 8 (`specs/008-refonte-ui/`) refonte UI 5 vues + chrome, système de thème 3 axes
+  (`data-mode`/`data-palette`/`data-style` en `localStorage`), polices auto-hébergées woff2 précachées,
+  pied de page version, bouton remonter, pagination (défaut 50), onglets sandbox, lentille, Fiche enrichie
+  (enfants + type de trait), correctif BUG-001 (état actif visible en style A) ;
+  7 (`specs/007-sandbox-make-it-real/`) sandbox isolée & make it real (transfert RNG),
   reproduction manuelle déplacée en sandbox, création/clonage/édition directe + cycle de vie conjugal,
   suppression avec propagation, reconstruction historique via journal d'événements daté (`FORMAT_VERSION` 3) ;
   6 (`specs/006-persistance-compl-partage/`) persistance 3 types (config/data/full),

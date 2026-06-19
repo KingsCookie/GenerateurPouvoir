@@ -11,14 +11,29 @@
     setPalette,
     setStyle,
     type Palette,
+    type Style,
   } from '../stores/ui.js';
 
   export let variant: 'full' | 'toggle' = 'full';
 
+  // 6 palettes (Feature 009 : + ambre / rose / bleu). swatch = couleur d'accent du mode sombre.
   const palettes: { id: Palette; label: string; swatch: string }[] = [
     { id: 'violet', label: 'Violet', swatch: '#9b7fe6' },
     { id: 'cyan', label: 'Cyan', swatch: '#2fcdbb' },
     { id: 'vert', label: 'Vert', swatch: '#86c057' },
+    { id: 'ambre', label: 'Ambre', swatch: '#e0a13a' },
+    { id: 'rose', label: 'Rose', swatch: '#e25d96' },
+    { id: 'bleu', label: 'Bleu', swatch: '#2f86cc' },
+  ];
+
+  // 6 styles (Feature 009 : + C Éditorial / D Terminal / E Néo-brutaliste / F Organique).
+  const styles: { id: Style; label: string }[] = [
+    { id: 'a', label: 'A — Atelier' },
+    { id: 'b', label: 'B — Signal' },
+    { id: 'c', label: 'C — Éditorial' },
+    { id: 'd', label: 'D — Terminal' },
+    { id: 'e', label: 'E — Néo-brutaliste' },
+    { id: 'f', label: 'F — Organique' },
   ];
 </script>
 
@@ -37,18 +52,14 @@
     <div class="group" role="group" aria-label="Style graphique">
       <span class="field-label">Style graphique</span>
       <div class="segments">
-        <button
-          type="button"
-          class="seg nav-item"
-          class:is-active={$style === 'a'}
-          on:click={() => setStyle('a')}>A — Atelier</button
-        >
-        <button
-          type="button"
-          class="seg nav-item"
-          class:is-active={$style === 'b'}
-          on:click={() => setStyle('b')}>B — Signal</button
-        >
+        {#each styles as s (s.id)}
+          <button
+            type="button"
+            class="seg nav-item"
+            class:is-active={$style === s.id}
+            on:click={() => setStyle(s.id)}>{s.label}</button
+          >
+        {/each}
       </div>
     </div>
 
@@ -111,7 +122,7 @@
     gap: 7px;
     padding: 7px 13px;
     font-size: 13px;
-    border: 1px solid var(--border);
+    border: var(--border-width, 1px) solid var(--border);
     background: transparent;
     color: var(--fg-muted);
     border-radius: var(--chip-radius);
