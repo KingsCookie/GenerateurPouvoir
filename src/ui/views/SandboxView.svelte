@@ -25,10 +25,33 @@
   } from '../stores/sandboxStore.js';
   import { catalog } from '../stores/appState.js';
   import { criteria, generationTouched } from '../stores/filters.js';
-  import { filterPopulation, lastGeneration, type Personne } from '../../core/index.js';
+  import {
+    filterPopulation,
+    lastGeneration,
+    sortPopulation,
+    type Personne,
+  } from '../../core/index.js';
+
+  // Indicateur/état de tri d'un en-tête (reçoit $sbSort ⇒ réactif).
+  function ariaSortOf(s: ListSort, key: SortKey): 'ascending' | 'descending' | 'none' {
+    return s.key !== key ? 'none' : s.dir === 'asc' ? 'ascending' : 'descending';
+  }
+  function sortIndic(s: ListSort, key: SortKey): string {
+    return s.key !== key ? '' : s.dir === 'asc' ? ' ▲' : ' ▼';
+  }
   import { buildListRow } from '../lib/ficheViewModel.js';
   import { paginate } from '../lib/pagination.js';
-  import { sbTab, sbPage, sbPageSize, setSbPageSize, type PageSize } from '../stores/ui.js';
+  import {
+    sbTab,
+    sbPage,
+    sbPageSize,
+    setSbPageSize,
+    sbSort,
+    cycleSort,
+    type PageSize,
+    type ListSort,
+  } from '../stores/ui.js';
+  import type { SortKey } from '../../core/index.js';
   import FilterBar from '../components/FilterBar.svelte';
   import Paginator from '../components/Paginator.svelte';
   import SandboxPersonForm from '../components/SandboxPersonForm.svelte';
@@ -42,7 +65,9 @@
   $: filtered = view
     ? filterPopulation(view.population, effectiveCriteria, { currentYear: $sandboxYear })
     : [];
-  $: rows = filtered.map((p) => buildListRow(p, $catalog, $sandboxYear));
+  // Tri de l'ensemble filtré (avant pagination) ; key=null ⇒ ordre par défaut (FR-011).
+  $: sorted = sortPopulation(filtered, $sbSort.key, $sbSort.dir, { currentYear: $sandboxYear });
+  $: rows = sorted.map((p) => buildListRow(p, $catalog, $sandboxYear));
   $: minYear = $sandboxState ? $sandboxState.parameters.birthYear : 0;
   $: maxYear = $sandboxState ? $sandboxState.currentYear : 0;
   $: selectedCount = $reproSelected.size;
@@ -216,7 +241,7 @@
       {/if}
 
       <!-- Filtres (parité avec la liste principale, BUG-002) -->
-      <FilterBar />
+      <FilterBar list="sandbox" />
 
       {#if rows.length === 0}
         <p class="empty">Aucun individu ne correspond aux filtres.</p>
@@ -236,9 +261,24 @@
           <thead>
             <tr>
               {#if $reproMode}<th class="sel"></th>{/if}
-              <th>Nom</th>
-              <th>Naissance</th>
-              <th>Âge</th>
+              <th aria-sort={ariaSortOf($sbSort, 'nom')}>
+                <button type="button" class="colhdr" on:click={() => cycleSort('sandbox', 'nom')}
+                  >Nom{sortIndic($sbSort, 'nom')}</button
+                >
+              </th>
+              <th aria-sort={ariaSortOf($sbSort, 'naissance')}>
+                <button
+                  type="button"
+                  class="colhdr"
+                  on:click={() => cycleSort('sandbox', 'naissance')}
+                  >Naissance{sortIndic($sbSort, 'naissance')}</button
+                >
+              </th>
+              <th aria-sort={ariaSortOf($sbSort, 'age')}>
+                <button type="button" class="colhdr" on:click={() => cycleSort('sandbox', 'age')}
+                  >Âge{sortIndic($sbSort, 'age')}</button
+                >
+              </th>
               <th>Pouvoir(s)</th>
               {#if !$reproMode}<th>Actions</th>{/if}
             </tr>
@@ -266,7 +306,10 @@
                 <td>{row.age}</td>
                 <td class="powers">
                   {#if row.pouvoirs.length === 0}<span class="muted">—</span
-                    >{:else}{#each row.pouvoirs as pw}<span class="chip">{pw}</span>{/each}{/if}
+                    >{:else}{#each row.pouvoirs as pw}<span class="chip"
+                        >{pw.label} <span class="pm">P : {pw.puissance}</span>
+                        <span class="pm">M : {pw.maitrise}</span></span
+                      >{/each}{/if}
                 </td>
                 {#if !$reproMode}
                   <td class="row-actions">
@@ -481,6 +524,27 @@
     text-transform: var(--label-transform);
     color: var(--fg-faint);
     font-weight: 400;
+  }
+  /* En-tête triable : bouton nu héritant du style du th. */
+  .colhdr {
+    font: inherit;
+    text-transform: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    background: transparent;
+    border: none;
+    padding: 0;
+    text-align: left;
+    cursor: pointer;
+  }
+  .colhdr:hover {
+    color: var(--accent-text);
+  }
+  .pm {
+    font-family: var(--mono);
+    font-size: 11px;
+    opacity: 0.85;
+    margin-left: 2px;
   }
   tbody tr {
     cursor: default;

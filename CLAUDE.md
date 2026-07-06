@@ -1,24 +1,27 @@
 <!-- SPECKIT START -->
-## Feature active : 009-ajout-4-styles
+## Feature active : 010-tri-filtres-etiquettes
 
-- **Plan** : `specs/009-ajout-4-styles/plan.md` (contexte technique, décisions, Constitution Check)
-- **Spec** : `specs/009-ajout-4-styles/spec.md` (contrat **fonctionnel** : `rsrc/DefUi.md` — gitignoré/local.
-  `DescriptionProjet.md` inchangé.)
-- **Recherche / décisions** : `specs/009-ajout-4-styles/research.md` (polices OFL, accents, tokens par style)
-- **Modèle de données** : `specs/009-ajout-4-styles/data-model.md` (énumérations Style/Palette étendues)
-- **Contrats** : `specs/009-ajout-4-styles/contracts/ui-contract.md` (thème étendu, store, non-régression)
-- **Périmètre** : **extension purement présentationnelle** du système de thème F008 — on **ajoute des
-  valeurs** aux axes existants : `data-style` **+4** (`c` Éditorial serif · `d` Terminal mono · `e`
-  Néo-brutaliste · `f` Organique) → 6 ; `data-palette` **+3** (`ambre` · `rose` · `bleu`) → 6.
-  **72 combinaisons** (6 styles × 6 palettes × 2 modes). **Chaque** nouveau style a **son couple de polices
-  auto-hébergé** (woff2 latin OFL, précaché ; mono réutilisée sauf D). Non-régression DefUi + styles/palettes
-  existants à 100 %.
-- **Clarification 2026-06-19** : polices = **une par style** (titre/corps + mono au besoin), auto-hébergées
-  et précachées, repli système.
-- **Cœur INTOUCHÉ** (Principe IV) : modifs limitées à `src/app.css`, `src/ui/stores/ui.ts`,
-  `src/ui/components/ThemeControls.svelte`, `index.html` (anti-FOUC), `public/fonts/`. **Aucune dépendance
-  ajoutée** ; aucune vue ni store de logique touchés ; rien dans `AppState`/export (Principe VI).
-- Features livrées : 8 (`specs/008-refonte-ui/`) refonte UI 5 vues + chrome, système de thème 3 axes
+- **Plan** : `specs/010-tri-filtres-etiquettes/plan.md` (contexte technique, décisions, Constitution Check)
+- **Spec** : `specs/010-tri-filtres-etiquettes/spec.md` (contrat **fonctionnel** : `rsrc/DefUi.md` —
+  gitignoré/local. `DescriptionProjet.md` inchangé.)
+- **Recherche / décisions** : `specs/010-tri-filtres-etiquettes/research.md` (présence, tri, P/M, reset)
+- **Modèle de données** : `specs/010-tri-filtres-etiquettes/data-model.md` (TraitPresence, état de tri, ligne)
+- **Contrats** : `specs/010-tri-filtres-etiquettes/contracts/ui-contract.md` (cœur filtre/tri, store, VM)
+- **Périmètre** : 3 améliorations des **listes** Population + Sandbox (barre de filtres et
+  `filterPopulation` partagés) : (1) **filtres de présence de trait** 4 options mono-sélection
+  (`none-active`/`some-active`/`some-inactive`/`some-any`) ; (2) **tri par clic** sur en-tête
+  (Nom/Date/Âge, cycle défaut→croissant→décroissant ; Pouvoir(s) non triable) ; (3) **étiquettes de
+  pouvoir** enrichies « P : x » / « M : y ». États filtre/tri = **interface** (session), hors export.
+- **Clarifications 2026-07-06** : présence = **mono-sélection** ; « au moins un trait » = actif **ou**
+  inactif ; « Réinitialiser » remet **filtres ET tri** ; **+4ᵉ** option « au moins un trait inactif ».
+- **Cœur TOUCHÉ (légitime, Principe IV/V)** : logique **pure/lecture seule** ajoutée à
+  `src/core/genealogy/filter.ts` (`TraitPresence` + `matchTraitPresence` ; `sortPopulation` +
+  `SortKey`/`SortDir`) → **tests Vitest obligatoires**. UI : `stores/filters.ts`, `stores/ui.ts`,
+  `FilterBar.svelte`, `ListeView.svelte`, `SandboxView.svelte`, `lib/ficheViewModel.ts`. **Aucune
+  dépendance ajoutée** ; génétique/hérédité/simulation inchangées ; rien dans `AppState`/export (Principe VI).
+- Features livrées : 9 (`specs/009-ajout-4-styles/`) +4 styles (Éditorial/Terminal/Néo-brutaliste/Organique)
+  + 3 palettes (ambre/rose/bleu), 72 combinaisons, 6 polices OFL précachées ;
+  8 (`specs/008-refonte-ui/`) refonte UI 5 vues + chrome, système de thème 3 axes
   (`data-mode`/`data-palette`/`data-style` en `localStorage`), polices auto-hébergées woff2 précachées,
   pied de page version, bouton remonter, pagination (défaut 50), onglets sandbox, lentille, Fiche enrichie
   (enfants + type de trait), correctif BUG-001 (état actif visible en style A) ;

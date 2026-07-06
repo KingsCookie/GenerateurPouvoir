@@ -2,7 +2,13 @@
 // (FR-011b) ; NON exporté dans l'état applicatif (Principe VI). Le défaut « dernière génération »
 // (FR-011a) est appliqué côté ListeView tant que `generationTouched === false` (INV-G5).
 import { writable } from 'svelte/store';
-import type { FilterCriteria, PowerPresence, TraitScope, Statut } from '../../core/index.js';
+import type {
+  FilterCriteria,
+  PowerPresence,
+  TraitScope,
+  TraitPresence,
+  Statut,
+} from '../../core/index.js';
 
 type SetDimension = 'generations' | 'especeIds' | 'traitIds' | 'statuses';
 
@@ -13,6 +19,7 @@ function emptyCriteria(): FilterCriteria {
     especeIds: new Set<string>(),
     traitIds: new Set<string>(),
     traitScope: 'actifs',
+    traitPresence: null,
     powerPresence: null,
     statuses: new Set<Statut>(),
   };
@@ -48,6 +55,11 @@ export function setTraitScope(scope: TraitScope): void {
 /** Définit le filtre de présence de pouvoir (any / none / null = ignoré). */
 export function setPowerPresence(p: PowerPresence): void {
   criteria.update((c) => ({ ...c, powerPresence: p }));
+}
+
+/** Définit le filtre de présence de trait (mono-sélection ; `null` = ignoré) — Feature 010. */
+export function setTraitPresence(p: TraitPresence): void {
+  criteria.update((c) => ({ ...c, traitPresence: p }));
 }
 
 /** Réinitialise tous les filtres et rétablit le défaut « dernière génération » (FR-010). */

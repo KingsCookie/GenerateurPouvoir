@@ -39,6 +39,7 @@ describe('Performance du filtrage (SC-002)', () => {
       especeIds: new Set(['humain']),
       traitIds: new Set(['tr-feu']),
       traitScope: 'tous',
+      traitPresence: null,
       powerPresence: 'none',
       statuses: new Set(['vivant']),
     };

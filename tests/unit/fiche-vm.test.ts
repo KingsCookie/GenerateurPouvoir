@@ -99,6 +99,13 @@ describe('Modèle de vue fiche (US2)', () => {
     expect(row.dateNaissance).toMatch(/^\d{4}-\d{2}-\d{2}$/);
     expect(row.age).toBe(0);
     expect(row.pouvoirs.length).toBe(1);
+    // Étiquette enrichie (Feature 010) : libellé + puissance + maîtrise (= valeurs de la fiche).
+    const pw = row.pouvoirs[0];
+    expect(pw.label.length).toBeGreaterThan(0);
+    expect(pw.puissance).toBeGreaterThanOrEqual(1);
+    expect(pw.puissance).toBeLessThanOrEqual(10);
+    expect(pw.maitrise).toBeGreaterThanOrEqual(1);
+    expect(pw.maitrise).toBeLessThanOrEqual(10);
     expect(typeof row.especeId).toBe('string');
     expect(row.generation).toBe(0);
     expect(row.vivant).toBe(true);
