@@ -94,7 +94,12 @@ export {
 export type { AppState, ConfigState, DataState, ParsedImport, Result } from './state/serialize.js';
 
 // Généalogie & exploration (Feature 4 : arbre généalogique, filtres, dernière génération).
-export { buildGenealogyTree, filterPopulation, lastGeneration } from './genealogy/index.js';
+export {
+  buildGenealogyTree,
+  filterPopulation,
+  lastGeneration,
+  sortPopulation,
+} from './genealogy/index.js';
 export type {
   TreeNode,
   TreeNodeLite,
@@ -103,6 +108,9 @@ export type {
   FilterCriteria,
   FilterContext,
   TraitScope,
+  TraitPresence,
   PowerPresence,
   Statut,
+  SortKey,
+  SortDir,
 } from './genealogy/index.js';

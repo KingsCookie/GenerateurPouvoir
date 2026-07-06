@@ -2,6 +2,8 @@
 // Couvre : préférences d'apparence (persistées localStorage) + états de session
 // (pagination, onglet sandbox, vue d'arbre, scroll). Aucune logique métier ici.
 import { writable, type Writable } from 'svelte/store';
+// Types de tri définis dans le CŒUR (source unique) — on les IMPORTE, on ne les redéfinit pas (M1).
+import type { SortKey, SortDir } from '../../core/index.js';
 
 // ---------------------------------------------------------------------------
 // Accès sûrs (l'app doit fonctionner sans localStorage ; les tests purs aussi).
@@ -153,3 +155,37 @@ export const arbreDepth: Writable<number> = writable(3);
 // Chrome (session) — bouton « remonter en haut » (FR-010).
 // ===========================================================================
 export const showScrollTop: Writable<boolean> = writable(false);
+
+// ===========================================================================
+// Tri des listes (session, non persisté, PAR liste) — Feature 010.
+//   key: null ⇒ tri par défaut (ordre naturel de filterPopulation).
+//   Cycle au clic sur un en-tête : défaut → asc → desc → défaut.
+// ===========================================================================
+export type ListName = 'population' | 'sandbox';
+export interface ListSort {
+  key: SortKey | null;
+  dir: SortDir;
+}
+
+const defaultSort = (): ListSort => ({ key: null, dir: 'asc' });
+
+export const listeSort: Writable<ListSort> = writable(defaultSort()); // vue Population
+export const sbSort: Writable<ListSort> = writable(defaultSort()); // vue Sandbox
+
+function sortStore(list: ListName): Writable<ListSort> {
+  return list === 'population' ? listeSort : sbSort;
+}
+
+/** Fait tourner l'état de tri d'une liste au clic sur une colonne : défaut → asc → desc → défaut. */
+export function cycleSort(list: ListName, key: SortKey): void {
+  sortStore(list).update((s) => {
+    if (s.key !== key) return { key, dir: 'asc' }; // autre colonne ⇒ repart en croissant
+    if (s.dir === 'asc') return { key, dir: 'desc' };
+    return defaultSort(); // était desc ⇒ retour au tri par défaut
+  });
+}
+
+/** Réinitialise le tri d'une liste (utilisé par « Réinitialiser » — FR-018). */
+export function resetSort(list: ListName): void {
+  sortStore(list).set(defaultSort());
+}

@@ -3,8 +3,29 @@
   import { criteria, generationTouched } from '../stores/filters.js';
   import { buildListRow } from '../lib/ficheViewModel.js';
   import { paginate } from '../lib/pagination.js';
-  import { listePage, listePageSize, setListePageSize, type PageSize } from '../stores/ui.js';
-  import { filterPopulation, lastGeneration } from '../../core/index.js';
+  import {
+    listePage,
+    listePageSize,
+    setListePageSize,
+    listeSort,
+    cycleSort,
+    type PageSize,
+    type ListSort,
+  } from '../stores/ui.js';
+  import {
+    filterPopulation,
+    lastGeneration,
+    sortPopulation,
+    type SortKey,
+  } from '../../core/index.js';
+
+  // Indicateur/état de tri d'un en-tête (reçoit $listeSort en argument ⇒ réactif au changement).
+  function ariaSortOf(s: ListSort, key: SortKey): 'ascending' | 'descending' | 'none' {
+    return s.key !== key ? 'none' : s.dir === 'asc' ? 'ascending' : 'descending';
+  }
+  function sortIndic(s: ListSort, key: SortKey): string {
+    return s.key !== key ? '' : s.dir === 'asc' ? ' ▲' : ' ▼';
+  }
   import TimeBar from '../components/TimeBar.svelte';
   import FilterBar from '../components/FilterBar.svelte';
   import Paginator from '../components/Paginator.svelte';
@@ -17,7 +38,11 @@
   $: effectiveCriteria = { ...$criteria, generations: effectiveGenerations };
   // Année courante issue de la simulation (Feature 3) ; l'âge en découle.
   $: filtered = filterPopulation($population, effectiveCriteria, { currentYear: $currentYear });
-  $: rows = filtered.map((p) => buildListRow(p, $catalog, $currentYear));
+  // Tri appliqué à l'ENSEMBLE filtré, avant pagination (FR-011). key=null ⇒ ordre par défaut.
+  $: sorted = sortPopulation(filtered, $listeSort.key, $listeSort.dir, {
+    currentYear: $currentYear,
+  });
+  $: rows = sorted.map((p) => buildListRow(p, $catalog, $currentYear));
 
   // Pagination présentationnelle sur la liste filtrée (FR-016 ; INV-UI4).
   $: pageInfo = paginate(rows, $listePage, $listePageSize);
@@ -38,7 +63,7 @@
     <p class="empty">Aucune population générée. Rendez-vous dans les paramètres pour générer.</p>
   {:else}
     <TimeBar />
-    <FilterBar />
+    <FilterBar list="population" />
 
     <div class="results-head">
       <h2>Population</h2>
@@ -61,9 +86,24 @@
 
       <div class="table" role="table" aria-label="Population">
         <div class="thead" role="row">
-          <span role="columnheader">Nom</span>
-          <span role="columnheader">Date de naissance</span>
-          <span role="columnheader">Âge</span>
+          <span role="columnheader" aria-sort={ariaSortOf($listeSort, 'nom')}>
+            <button type="button" class="colhdr" on:click={() => cycleSort('population', 'nom')}
+              >Nom{sortIndic($listeSort, 'nom')}</button
+            >
+          </span>
+          <span role="columnheader" aria-sort={ariaSortOf($listeSort, 'naissance')}>
+            <button
+              type="button"
+              class="colhdr"
+              on:click={() => cycleSort('population', 'naissance')}
+              >Date de naissance{sortIndic($listeSort, 'naissance')}</button
+            >
+          </span>
+          <span role="columnheader" aria-sort={ariaSortOf($listeSort, 'age')}>
+            <button type="button" class="colhdr" on:click={() => cycleSort('population', 'age')}
+              >Âge{sortIndic($listeSort, 'age')}</button
+            >
+          </span>
           <span role="columnheader">Pouvoir(s)</span>
         </div>
         {#each pageInfo.pageItems as row (row.id)}
@@ -88,7 +128,11 @@
                 <span class="muted">—</span>
               {:else}
                 {#each row.pouvoirs as pouvoir}
-                  <span class="chip">{pouvoir}</span>
+                  <span class="chip"
+                    >{pouvoir.label}
+                    <span class="pm">P : {pouvoir.puissance}</span>
+                    <span class="pm">M : {pouvoir.maitrise}</span></span
+                  >
                 {/each}
               {/if}
             </span>
@@ -134,6 +178,28 @@
     text-transform: var(--label-transform);
     color: var(--fg-faint);
     border-bottom: 1px solid var(--border);
+  }
+  /* En-tête triable : bouton nu, aligné à gauche, même typo que .thead. */
+  .colhdr {
+    font: inherit;
+    text-transform: inherit;
+    letter-spacing: inherit;
+    color: inherit;
+    background: transparent;
+    border: none;
+    padding: 0;
+    text-align: left;
+    cursor: pointer;
+  }
+  .colhdr:hover {
+    color: var(--accent-text);
+  }
+  /* Mentions puissance/maîtrise dans une étiquette de pouvoir. */
+  .pm {
+    font-family: var(--mono);
+    font-size: 11px;
+    opacity: 0.85;
+    margin-left: 2px;
   }
   .trow {
     border-bottom: 1px solid var(--row-border);

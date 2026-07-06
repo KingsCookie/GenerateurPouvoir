@@ -69,7 +69,7 @@ export function traitLabelOf(idx: Map<string, string>, traitId: string): string 
   return human.length > 0 ? human : traitId;
 }
 
-/** Résumé pour une ligne de liste : nom, espèce/génération, date, âge, statut, libellés de pouvoir(s). */
+/** Résumé pour une ligne de liste : nom, espèce/génération, date, âge, statut, pouvoir(s) avec P/M. */
 export function buildListRow(person: Personne, catalog: Catalog, currentYear: number) {
   return {
     id: person.id,
@@ -79,7 +79,12 @@ export function buildListRow(person: Personne, catalog: Catalog, currentYear: nu
     dateNaissance: person.dateNaissance,
     age: computeAge(yearOf(person.dateNaissance), currentYear),
     vivant: person.vivant,
-    pouvoirs: person.pouvoirs.map((p) => powerLabel(p, catalog)),
+    // Étiquettes enrichies (Feature 010) : libellé + puissance + maîtrise (valeurs de la fiche).
+    pouvoirs: person.pouvoirs.map((p) => ({
+      label: powerLabel(p, catalog),
+      puissance: p.puissance,
+      maitrise: p.maitrise,
+    })),
   };
 }
 

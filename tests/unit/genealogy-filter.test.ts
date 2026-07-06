@@ -16,6 +16,7 @@ function emptyCriteria(over: Partial<FilterCriteria> = {}): FilterCriteria {
     especeIds: new Set(),
     traitIds: new Set(),
     traitScope: 'actifs',
+    traitPresence: null,
     powerPresence: null,
     statuses: new Set(),
     ...over,
@@ -138,6 +139,62 @@ describe('filterPopulation — recherche & filtres (US2)', () => {
     filterPopulation(population, emptyCriteria({ generations: new Set([1]) }), ctx);
     expect(JSON.stringify(population)).toBe(before);
     expect(ids(population).join(',')).toBe(order); // ordre d'origine préservé
+  });
+});
+
+describe('filterPopulation — présence de trait (Feature 010)', () => {
+  // Fixture : seuls b1 (tr-feu actif), b2 (tr-feu inactif) et d1 (tr-glace actif) ont des traits ;
+  // tous les autres ont un ADN vide.
+  it('some-active : ≥1 trait actif', () => {
+    const { population } = buildGenealogyFixture();
+    expect(
+      ids(filterPopulation(population, emptyCriteria({ traitPresence: 'some-active' }), ctx)),
+    ).toEqual(['b1', 'd1']);
+  });
+
+  it('some-inactive : ≥1 trait inactif', () => {
+    const { population } = buildGenealogyFixture();
+    expect(
+      ids(filterPopulation(population, emptyCriteria({ traitPresence: 'some-inactive' }), ctx)),
+    ).toEqual(['b2']);
+  });
+
+  it('some-any : ≥1 trait (actif ou inactif)', () => {
+    const { population } = buildGenealogyFixture();
+    expect(
+      ids(filterPopulation(population, emptyCriteria({ traitPresence: 'some-any' }), ctx)),
+    ).toEqual(['b1', 'b2', 'd1']);
+  });
+
+  it('none-active : aucun trait actif (inclut ADN vide et « tous inactifs »)', () => {
+    const { population } = buildGenealogyFixture();
+    const out = filterPopulation(population, emptyCriteria({ traitPresence: 'none-active' }), ctx);
+    const outIds = ids(out);
+    expect(out).toHaveLength(population.length - 2); // tous sauf b1 et d1 (traits actifs)
+    expect(outIds).not.toContain('b1');
+    expect(outIds).not.toContain('d1');
+    expect(outIds).toContain('b2'); // trait inactif ⇒ 0 trait actif ⇒ inclus
+  });
+
+  it('null ⇒ dimension ignorée (toute la population)', () => {
+    const { population } = buildGenealogyFixture();
+    expect(filterPopulation(population, emptyCriteria({ traitPresence: null }), ctx)).toHaveLength(
+      population.length,
+    );
+  });
+
+  it('ET avec une autre dimension ; indépendant de traitIds/traitScope', () => {
+    const { population } = buildGenealogyFixture();
+    // some-active ET espèce humain ⇒ b1, d1 (tous deux humains). Aucun traitId précisé.
+    expect(
+      ids(
+        filterPopulation(
+          population,
+          emptyCriteria({ traitPresence: 'some-active', especeIds: new Set(['humain']) }),
+          ctx,
+        ),
+      ),
+    ).toEqual(['b1', 'd1']);
   });
 });
 

@@ -7,8 +7,10 @@
     toggleInSet,
     setTraitScope,
     setPowerPresence,
+    setTraitPresence,
     resetFilters,
   } from '../stores/filters.js';
+  import { resetSort, type ListName } from '../stores/ui.js';
   import {
     computeGeneration,
     yearOf,
@@ -16,7 +18,11 @@
     TRAIT_TYPES,
     type PowerPresence,
     type TraitScope,
+    type TraitPresence,
   } from '../../core/index.js';
+
+  // Liste hôte : détermine quel état de tri « Réinitialiser » remet à zéro (FR-018).
+  export let list: ListName = 'population';
 
   const catalog = getCatalog();
 
@@ -44,8 +50,23 @@
     { value: 'tous', label: 'tous' },
   ];
 
+  // Présence de trait (mono-sélection ; re-clic ⇒ null) — Feature 010.
+  const PRESENCE_OPTIONS: { value: Exclude<TraitPresence, null>; label: string }[] = [
+    { value: 'none-active', label: 'aucun trait actif' },
+    { value: 'some-active', label: 'au moins un trait actif' },
+    { value: 'some-inactive', label: 'au moins un trait inactif' },
+    { value: 'some-any', label: 'au moins un trait' },
+  ];
+
   function onPower(v: Exclude<PowerPresence, null>) {
     setPowerPresence($criteria.powerPresence === v ? null : v);
+  }
+  function onPresence(v: Exclude<TraitPresence, null>) {
+    setTraitPresence($criteria.traitPresence === v ? null : v);
+  }
+  function onReset() {
+    resetFilters();
+    resetSort(list); // « Réinitialiser » remet aussi le tri de la liste concernée (FR-018).
   }
 </script>
 
@@ -60,7 +81,7 @@
         on:input={(e) => setNameQuery((e.target as HTMLInputElement).value)}
       />
     </label>
-    <button type="button" class="reset" on:click={resetFilters}>Réinitialiser</button>
+    <button type="button" class="reset" on:click={onReset}>Réinitialiser</button>
   </div>
 
   <div class="dims">
@@ -139,6 +160,18 @@
 
     <fieldset class="trait-fs">
       <legend>Trait</legend>
+      <div class="presence">
+        {#each PRESENCE_OPTIONS as o (o.value)}
+          <label class="chip">
+            <input
+              type="checkbox"
+              checked={$criteria.traitPresence === o.value}
+              on:change={() => onPresence(o.value)}
+            />
+            {o.label}
+          </label>
+        {/each}
+      </div>
       <div class="scope">
         <span>Portée :</span>
         {#each SCOPES as s (s.value)}
@@ -245,6 +278,12 @@
     border-color: var(--accent);
     color: var(--accent-text);
     font-weight: 600;
+  }
+  .presence {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem 0.6rem;
+    margin-bottom: 0.45rem;
   }
   .scope {
     display: flex;
