@@ -154,7 +154,7 @@ function treeTemplate(
             else return '{p} {et}';
           } else {
             if (e) return '{p} en {e}';
-            else return '{p} {Kaj}';
+            else return '{Kaj} sur {p}';
           }
         }
       }

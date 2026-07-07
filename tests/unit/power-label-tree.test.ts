@@ -13,8 +13,8 @@ describe('Arbre de libellé §6.4.2 (T011)', () => {
     expect(powerLabelFromSublist({ a: 'A' })).toBe('A {Ke}');
   });
 
-  it('p seul ⇒ feuille « {p} {Kaj} »', () => {
-    expect(powerLabelFromSublist({ p: 'P' })).toBe('P {Kaj}');
+  it('p seul ⇒ feuille « {Kaj} sur {p} »', () => {
+    expect(powerLabelFromSublist({ p: 'P' })).toBe('{Kaj} sur P');
   });
 
   it('et seul ⇒ feuille « {Kp} {et} »', () => {

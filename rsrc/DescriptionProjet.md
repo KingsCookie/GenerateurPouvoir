@@ -468,7 +468,7 @@ else:
 					if e:
 						pouvoir = "{p} en {e}"
 					else:
-						pouvoir = "{p} {Kaj}"
+						pouvoir = "{Kaj} sur {p}"
 	else:
 		if e:
 			if et:

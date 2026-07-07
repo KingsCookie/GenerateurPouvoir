@@ -5,3 +5,5 @@ Chaque trait est une couleurs specifique. Avec ça on peut générer un brin d'A
 générateur aléatoire de noms pronomçable en fonction des genres
 
 mettre les genres (retirer "tout" et mettre des options de genre en paramètres)
+
+courbe de bezier pour les % de reproductions
