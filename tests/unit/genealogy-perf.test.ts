@@ -47,7 +47,7 @@ describe('Performance du filtrage (SC-002)', () => {
     let total = 0;
     // Plusieurs passes pour une mesure stable ; chacune doit rester très en deçà du budget.
     for (let k = 0; k < 50; k++) {
-      total += filterPopulation(pop, criteria, { currentYear: 200 }).length;
+      total += filterPopulation(pop, criteria, { currentYear: 200, genesisYear: 0 }).length;
     }
     const elapsedPerCall = (performance.now() - start) / 50;
     expect(total).toBeGreaterThan(0);

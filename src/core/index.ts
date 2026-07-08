@@ -50,6 +50,7 @@ export type { DerivePowersResult } from './powers/traitsToPowers.js';
 export { powerLabelFromSublist } from './powers/powerLabelTree.js';
 export type { SublistGroups } from './powers/powerLabelTree.js';
 export { inheritStats } from './powers/inheritStats.js';
+export { regeneratePowers } from './powers/regenerate.js';
 export { reproduce } from './birth/reproduce.js';
 export type { BirthCase, ReproduceOptions } from './birth/reproduce.js';
 
@@ -57,7 +58,7 @@ export type { BirthCase, ReproduceOptions } from './birth/reproduce.js';
 export { reproProbability } from './repro/gaussian.js';
 export { litterSize } from './repro/litter.js';
 export { selectCandidates, hasCurrentSpouse } from './repro/candidates.js';
-export { formCouples, areConsanguine } from './repro/pairing.js';
+export { formCouples, areConsanguine, isDirectLineage } from './repro/pairing.js';
 export type { PairingResult } from './repro/pairing.js';
 export { tick, advanceYears } from './time/tick.js';
 export { kill } from './life/death.js';

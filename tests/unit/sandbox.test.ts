@@ -36,6 +36,7 @@ function baseState(seed: bigint, batchSize = 6): AppState {
     especes: defaultEspeces(),
     population,
     currentYear: parameters.birthYear,
+    genesisYear: parameters.birthYear,
     couples: [],
     rngState: createRng(seed).getState(),
     history: [],
@@ -174,6 +175,7 @@ describe('Sandbox — suppression (US2)', () => {
       especes: defaultEspeces(),
       population: [a, b, c, d],
       currentYear: 0,
+      genesisYear: 0,
       couples,
       rngState: createRng(1n).getState(),
       history: [
@@ -248,6 +250,7 @@ describe('Sandbox — édition du cycle de vie conjugal (US2, BUG-001 volet B)',
       especes: defaultEspeces(),
       population: [pers('p-x'), pers('p-y'), pers('p-z')],
       currentYear: 6,
+      genesisYear: 0,
       couples: [],
       rngState: createRng(1n).getState(),
       history: [

@@ -50,6 +50,7 @@ function makeState(opts: {
     especes: [opts.espece],
     population: opts.population,
     currentYear: opts.currentYear,
+    genesisYear: 0,
     couples: opts.couples ?? [],
     rngState: createRng(1n).getState(),
     history: [],

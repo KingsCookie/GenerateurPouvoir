@@ -41,6 +41,7 @@ describe('Performance du tick annuel (T032 / SC-009)', () => {
       especes: defaultEspeces(),
       population,
       currentYear: 25,
+      genesisYear: 0,
       couples: [],
       rngState: createRng(BigInt(params.seed)).getState(),
       history: [],

@@ -19,6 +19,7 @@
     sandboxError,
     sbClonePerson,
     sbDeletePerson,
+    sbRegeneratePowers,
     sbFormCouple,
     sbDivorceCouple,
     sbDissolveConjugalLink,
@@ -57,17 +58,25 @@
   import SandboxPersonForm from '../components/SandboxPersonForm.svelte';
 
   $: view = $sandboxView;
+  // Année de la genèse de la sandbox (§6.2, Feature 011) : origine du calcul de génération.
+  $: gy = view?.genesisYear ?? 0;
   // Filtrage (BUG-002) : mêmes filtres que la liste principale, appliqués à l'état RECONSTRUIT à l'année.
-  $: derniere = view ? lastGeneration(view.population) : null;
+  $: derniere = view ? lastGeneration(view.population, gy) : null;
   $: effectiveGenerations =
     $generationTouched || derniere === null ? $criteria.generations : new Set<number>([derniere]);
   $: effectiveCriteria = { ...$criteria, generations: effectiveGenerations };
   $: filtered = view
-    ? filterPopulation(view.population, effectiveCriteria, { currentYear: $sandboxYear })
+    ? filterPopulation(view.population, effectiveCriteria, {
+        currentYear: $sandboxYear,
+        genesisYear: gy,
+      })
     : [];
   // Tri de l'ensemble filtré (avant pagination) ; key=null ⇒ ordre par défaut (FR-011).
-  $: sorted = sortPopulation(filtered, $sbSort.key, $sbSort.dir, { currentYear: $sandboxYear });
-  $: rows = sorted.map((p) => buildListRow(p, $catalog, $sandboxYear));
+  $: sorted = sortPopulation(filtered, $sbSort.key, $sbSort.dir, {
+    currentYear: $sandboxYear,
+    genesisYear: gy,
+  });
+  $: rows = sorted.map((p) => buildListRow(p, $catalog, $sandboxYear, gy));
   $: minYear = $sandboxState ? $sandboxState.parameters.birthYear : 0;
   $: maxYear = $sandboxState ? $sandboxState.currentYear : 0;
   $: selectedCount = $reproSelected.size;
@@ -307,8 +316,8 @@
                 <td class="powers">
                   {#if row.pouvoirs.length === 0}<span class="muted">—</span
                     >{:else}{#each row.pouvoirs as pw}<span class="chip"
-                        >{pw.label} <span class="pm">P : {pw.puissance}</span>
-                        <span class="pm">M : {pw.maitrise}</span></span
+                        >{pw.label} <span class="pm">P {pw.puissance}</span>
+                        <span class="pm">M {pw.maitrise}</span></span
                       >{/each}{/if}
                 </td>
                 {#if !$reproMode}
@@ -318,6 +327,11 @@
                     >
                     <button type="button" on:click|stopPropagation={() => sbClonePerson(row.id)}
                       >Cloner</button
+                    >
+                    <button
+                      type="button"
+                      on:click|stopPropagation={() => sbRegeneratePowers(row.id)}
+                      title="Régénérer les pouvoirs depuis les traits actifs">Régénérer</button
                     >
                     <button
                       type="button"

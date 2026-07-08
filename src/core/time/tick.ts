@@ -110,11 +110,14 @@ export function tick(state: AppState, rng: Rng): AppState {
     const parents = couple.memberIds.map((id) => byId.get(id)).filter((p): p is Personne => !!p);
     if (parents.length === 0) return;
     const n = litterSize(espece, rng);
+    // US2 : jour de naissance tiré **une seule fois** par portée, partagé par toute la fratrie.
+    const birthDayOfYear = rng.nextInt(365);
     for (let i = 0; i < n; i++) {
       const childId = nextChildId();
       const child = reproduce(parents, parameters, catalog, rng, {
         childId,
         birthYear: currentYear,
+        birthDayOfYear,
       });
       for (const parent of parents) parent.enfants.push(childId);
       byId.set(childId, child);

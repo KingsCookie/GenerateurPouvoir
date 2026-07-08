@@ -70,12 +70,17 @@ export function traitLabelOf(idx: Map<string, string>, traitId: string): string 
 }
 
 /** Résumé pour une ligne de liste : nom, espèce/génération, date, âge, statut, pouvoir(s) avec P/M. */
-export function buildListRow(person: Personne, catalog: Catalog, currentYear: number) {
+export function buildListRow(
+  person: Personne,
+  catalog: Catalog,
+  currentYear: number,
+  genesisYear: number,
+) {
   return {
     id: person.id,
     nom: person.nom,
     especeId: person.especeId,
-    generation: computeGeneration(yearOf(person.dateNaissance)),
+    generation: computeGeneration(yearOf(person.dateNaissance), genesisYear),
     dateNaissance: person.dateNaissance,
     age: computeAge(yearOf(person.dateNaissance), currentYear),
     vivant: person.vivant,
@@ -96,6 +101,7 @@ export function buildFicheView(
   person: Personne,
   catalog: Catalog,
   currentYear: number,
+  genesisYear: number,
   population: readonly Personne[] = [],
 ): FicheView {
   const idx = labelIndex(catalog);
@@ -135,7 +141,7 @@ export function buildFicheView(
     genreId: person.genreId,
     dateNaissance: person.dateNaissance,
     age: computeAge(yearOf(person.dateNaissance), currentYear),
-    generation: computeGeneration(yearOf(person.dateNaissance)),
+    generation: computeGeneration(yearOf(person.dateNaissance), genesisYear),
     vivant: person.vivant,
     raisonDeces: person.raisonDeces,
     pouvoirs,

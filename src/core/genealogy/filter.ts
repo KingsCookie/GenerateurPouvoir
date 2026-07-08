@@ -37,6 +37,7 @@ export interface FilterCriteria {
 
 export interface FilterContext {
   currentYear: number;
+  genesisYear: number; // origine du calcul de génération (§6.2, Feature 011)
 }
 
 /** Clé de tri d'une liste d'individus (Feature 010). */
@@ -103,14 +104,14 @@ function byBirthThenId(a: Personne, b: Personne): number {
 export function filterPopulation(
   pop: Personne[],
   criteria: FilterCriteria,
-  _ctx: FilterContext,
+  ctx: FilterContext,
 ): Personne[] {
   const q = normalize(criteria.nameQuery.trim());
   const result = pop.filter((p) => {
     if (q && !normalize(p.nom).includes(q)) return false;
     if (
       criteria.generations.size > 0 &&
-      !criteria.generations.has(computeGeneration(yearOf(p.dateNaissance)))
+      !criteria.generations.has(computeGeneration(yearOf(p.dateNaissance), ctx.genesisYear))
     )
       return false;
     if (criteria.especeIds.size > 0 && !criteria.especeIds.has(p.especeId)) return false;
@@ -155,12 +156,12 @@ export function sortPopulation(
 
 /**
  * Plus grande génération présente dans `pop` (= max `computeGeneration`), ou `null` si vide.
- * Sert de défaut dynamique au filtre génération côté UI (FR-011a).
+ * Sert de défaut dynamique au filtre génération côté UI (FR-011a). `genesisYear` = origine (§6.2).
  */
-export function lastGeneration(pop: Personne[]): number | null {
+export function lastGeneration(pop: Personne[], genesisYear: number): number | null {
   let max: number | null = null;
   for (const p of pop) {
-    const g = computeGeneration(yearOf(p.dateNaissance));
+    const g = computeGeneration(yearOf(p.dateNaissance), genesisYear);
     if (max === null || g > max) max = g;
   }
   return max;

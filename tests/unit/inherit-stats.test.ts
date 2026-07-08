@@ -88,4 +88,12 @@ describe('§7.2 — tirage A/B/C et bornage (INV-4)', () => {
     const res = inheritStats(0, [a, b], MEAN, fakeRng({ ints: [4, 8] }));
     expect(res).toEqual({ puissance: 5, maitrise: 9 }); // nextInt+1 : 4→5, 8→9
   });
+
+  it('US10 : cas « moyenne » (C) non borné — moyenne parentale > 10 conservée', () => {
+    // statC = 100 ⇒ toujours cas C = moyenne ; aucune borne ⇒ P/M peuvent dépasser 10.
+    const a = parent([pow(5000, 5000)]);
+    const b = parent([pow(5000, 5000)]);
+    const res = inheritStats(0, [a, b], MEAN, meanRng());
+    expect(res).toEqual({ puissance: 5000, maitrise: 5000 });
+  });
 });

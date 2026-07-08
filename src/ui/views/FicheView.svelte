@@ -2,6 +2,7 @@
   import {
     selectedPerson,
     currentYear,
+    genesisYear,
     population,
     couples,
     catalog,
@@ -21,7 +22,7 @@
   // Réactif au catalogue éditable (Feature 5) : un trait renommé/supprimé se reflète aussitôt.
   // `population` résout les noms des enfants (FR-015).
   $: fiche = $selectedPerson
-    ? buildFicheView($selectedPerson, $catalog, $currentYear, $population)
+    ? buildFicheView($selectedPerson, $catalog, $currentYear, $genesisYear, $population)
     : null;
 
   // Arbre de la fiche : profondeur FIXE 2 (FR-002a), cases nom + pouvoirs (showAge masqué, FR-003b).

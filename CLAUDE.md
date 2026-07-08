@@ -1,25 +1,27 @@
 <!-- SPECKIT START -->
-## Feature active : 010-tri-filtres-etiquettes
+## Feature active : 011-corrections-bugs-ui
 
-- **Plan** : `specs/010-tri-filtres-etiquettes/plan.md` (contexte technique, décisions, Constitution Check)
-- **Spec** : `specs/010-tri-filtres-etiquettes/spec.md` (contrat **fonctionnel** : `rsrc/DefUi.md` —
-  gitignoré/local. `DescriptionProjet.md` inchangé.)
-- **Recherche / décisions** : `specs/010-tri-filtres-etiquettes/research.md` (présence, tri, P/M, reset)
-- **Modèle de données** : `specs/010-tri-filtres-etiquettes/data-model.md` (TraitPresence, état de tri, ligne)
-- **Contrats** : `specs/010-tri-filtres-etiquettes/contracts/ui-contract.md` (cœur filtre/tri, store, VM)
-- **Périmètre** : 3 améliorations des **listes** Population + Sandbox (barre de filtres et
-  `filterPopulation` partagés) : (1) **filtres de présence de trait** 4 options mono-sélection
-  (`none-active`/`some-active`/`some-inactive`/`some-any`) ; (2) **tri par clic** sur en-tête
-  (Nom/Date/Âge, cycle défaut→croissant→décroissant ; Pouvoir(s) non triable) ; (3) **étiquettes de
-  pouvoir** enrichies « P : x » / « M : y ». États filtre/tri = **interface** (session), hors export.
-- **Clarifications 2026-07-06** : présence = **mono-sélection** ; « au moins un trait » = actif **ou**
-  inactif ; « Réinitialiser » remet **filtres ET tri** ; **+4ᵉ** option « au moins un trait inactif ».
-- **Cœur TOUCHÉ (légitime, Principe IV/V)** : logique **pure/lecture seule** ajoutée à
-  `src/core/genealogy/filter.ts` (`TraitPresence` + `matchTraitPresence` ; `sortPopulation` +
-  `SortKey`/`SortDir`) → **tests Vitest obligatoires**. UI : `stores/filters.ts`, `stores/ui.ts`,
-  `FilterBar.svelte`, `ListeView.svelte`, `SandboxView.svelte`, `lib/ficheViewModel.ts`. **Aucune
-  dépendance ajoutée** ; génétique/hérédité/simulation inchangées ; rien dans `AppState`/export (Principe VI).
-- Features livrées : 9 (`specs/009-ajout-4-styles/`) +4 styles (Éditorial/Terminal/Néo-brutaliste/Organique)
+- **Plan** : `specs/011-corrections-bugs-ui/plan.md` (contexte technique, décisions, Constitution Check)
+- **Spec** : `specs/011-corrections-bugs-ui/spec.md` (10 user stories, clarifications 2026-07-08)
+- **Recherche / décisions** : `specs/011-corrections-bugs-ui/research.md` (R1→R10 + maj doc §IX)
+- **Modèle de données** : `specs/011-corrections-bugs-ui/data-model.md` (genesisYear, duplicationD, P/M)
+- **Contrats** : `specs/011-corrections-bugs-ui/contracts/ui-contract.md` (signatures cœur + points UI)
+- **Périmètre** : lot de 10 corrections indépendantes (issu de `rsrc/BugReport.txt` + 4 ajouts) :
+  US1 consanguinité **lignée directe** (2 niveaux, `pairing.ts`) ; US2 **date partagée de portée**
+  (`tick.ts`+`reproduce.ts`) ; US3 **génération 0 relative à la genèse** (`derived.ts`, `genesisYear`
+  persisté, `FORMAT_VERSION` 3→4) ; US4 étiquettes **« P x » / « M y »** (sans « : ») ; US5 filtres de
+  trait **à la ligne** ; US6 export **`PowerGenerator_{type}_…`** (underscore) ; US7 **aperçu de pouvoir
+  temps réel** (seed d'aperçu **stable**) sur le formulaire de création ; US8 duplication
+  **`min(100, résilience·D)`**, `D` multiplicateur défaut **0.25** (`traitsToPowers.ts`/`parameters.ts`) ;
+  US9 bouton **« Régénérer »** sandbox (§6.4 seul, P/M §7.2 ou cas A) ; US10 **P/M non bornées** en
+  saisie manuelle (cœur §7.2 déjà conforme).
+- **Actions Constitution** : Principe IX → **mettre à jour `rsrc/DescriptionProjet.md`** (§6.4.1, §6.6.1,
+  §6.6.2, génération) **avec autorisation auteur** avant le code, puis régénérer le `.adoc` ; Principe VI
+  → bump `FORMAT_VERSION` + migration/fallback (naissance la plus ancienne). **Aucune dépendance ajoutée** ;
+  déterminisme préservé (US2/US7/US8/US9) → **tests Vitest obligatoires** (US1/US2/US3/US8/US9).
+- Features livrées : 10 (`specs/010-tri-filtres-etiquettes/`) filtres de présence de trait (4 options
+  mono-sélection) + tri par clic sur en-tête (Nom/Date/Âge) + étiquettes P/M enrichies ;
+  9 (`specs/009-ajout-4-styles/`) +4 styles (Éditorial/Terminal/Néo-brutaliste/Organique)
   + 3 palettes (ambre/rose/bleu), 72 combinaisons, 6 polices OFL précachées ;
   8 (`specs/008-refonte-ui/`) refonte UI 5 vues + chrome, système de thème 3 axes
   (`data-mode`/`data-palette`/`data-style` en `localStorage`), polices auto-hébergées woff2 précachées,

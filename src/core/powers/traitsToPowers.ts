@@ -51,7 +51,7 @@ function buildTraitIndex(catalog: Catalog): Map<string, Trait> {
 /**
  * Construit les **sous-listes** de traits (§6.4.1) : principaux (Actions sinon Parties du corps
  * sinon liste unique), répartition cyclique des secondaires après mélange déterministe, avec
- * **duplication** (proba `résilience/D` %, ≤ 1 occurrence par sous-liste, **sans modifier l'ADN**).
+ * **duplication** (proba `min(100, résilience·D)` %, ≤ 1 occurrence par sous-liste, **sans modifier l'ADN**).
  *
  * Exporté pour les tests (T006) ; non ré-exposé par la façade.
  */
@@ -89,8 +89,9 @@ export function buildSublists(active: TraitRef[], params: Parameters, rng: Rng):
     if (attempts === n) return; // toutes les sous-listes le contiennent déjà
     sublists[counter % n].push(ref);
     counter++;
-    // Duplication : proba résilience/D %, tant qu'il reste une sous-liste libre.
-    if (occurrences(ref.traitId) < n && rng.chance(ref.resilience / params.duplicationD)) {
+    // Duplication : proba min(100, résilience·D) % (§6.4.1), tant qu'il reste une sous-liste libre.
+    const dupPct = Math.min(100, Math.max(0, ref.resilience * params.duplicationD));
+    if (occurrences(ref.traitId) < n && rng.chance(dupPct)) {
       place(ref);
     }
   };

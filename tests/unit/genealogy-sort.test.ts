@@ -3,7 +3,7 @@ import { sortPopulation, type FilterContext } from '../../src/core/genealogy/fil
 import type { Personne } from '../../src/core/model/personne.js';
 
 // Tri pur, déterministe (Feature 010). Population construite à la main pour contrôler noms/dates.
-const ctx: FilterContext = { currentYear: 100 };
+const ctx: FilterContext = { currentYear: 100, genesisYear: 0 };
 
 function mk(id: string, nom: string, dateNaissance: string): Personne {
   return {

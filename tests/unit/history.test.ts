@@ -19,6 +19,7 @@ function adultsState(seed: bigint): AppState {
     especes: defaultEspeces(),
     population,
     currentYear: 25, // adultes en âge de se reproduire (gaussienne 18-50)
+    genesisYear: 0,
     couples: [],
     rngState: createRng(seed).getState(),
     history: [],

@@ -4,18 +4,8 @@ Utiliser une courbe de bezier plutot qu'une gaussienne pour la reproduction (les
 
 Afficher le % de chance qu'une personne passe l'age de fin de reproduction de son espece sans se reproduire.
 
-Avoir un bandeau en bas de page avec le versionning du logiciel.
-
 Pouvoir report des bug, ça créer une issue github avec une importance [faible] [moyen] [critique], 
 un message rentré par la personne qui a report le bug et 
 un fichier contenant le détail de toutes les actions faites par l'utilisateur depuis la dernière génération initiale.
 
 bien séparer les groupes d'enfant pour les couples. Y a un pbm sinon, (mettre un niveau différent pour chaque trait décendant couple)
-
-afficher la liste des enfants d'une personne dans sa fiche perso
-
-Dans la fiche perso des gens, afficher le type de chacun des traits
-
-Cliquer sur l'intitulée des colones permet de switcher entre différents paramètres de tri : sans tri (par défaut) / croissant / décroissant
-
-BUG : un enfant peut avoir des enfants avec ses parents.

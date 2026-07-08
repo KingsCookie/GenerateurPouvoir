@@ -7,9 +7,13 @@ export function yearOf(dateIso: string): number {
   return m ? Number(m[1]) : 0;
 }
 
-/** Génération d'affichage = tranche de 20 ans de l'année de naissance (FR-020). */
-export function computeGeneration(birthYear: number): number {
-  return Math.floor(birthYear / 20);
+/**
+ * Génération d'affichage (§6.2) = tranche de 20 ans **relative à l'année de la genèse** :
+ * `⌊(année de naissance − année de genèse) / 20⌋`. La population initiale (naissance = genèse)
+ * est en génération 0 ; valeur négative possible pour une naissance antérieure à la genèse.
+ */
+export function computeGeneration(birthYear: number, genesisYear: number): number {
+  return Math.floor((birthYear - genesisYear) / 20);
 }
 
 /** Âge = année courante − année de naissance. En genèse, currentYear = birthYear ⇒ 0. */

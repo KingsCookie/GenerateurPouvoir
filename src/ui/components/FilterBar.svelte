@@ -1,5 +1,5 @@
 <script lang="ts">
-  import { population, getCatalog } from '../stores/appState.js';
+  import { population, genesisYear, getCatalog } from '../stores/appState.js';
   import {
     criteria,
     generationTouched,
@@ -28,12 +28,12 @@
 
   // Générations présentes dans la population (triées).
   $: generations = [
-    ...new Set($population.map((p) => computeGeneration(yearOf(p.dateNaissance)))),
+    ...new Set($population.map((p) => computeGeneration(yearOf(p.dateNaissance), $genesisYear))),
   ].sort((a, b) => a - b);
   // Espèces présentes (triées).
   $: especes = [...new Set($population.map((p) => p.especeId))].sort();
   // Dernière génération (pour l'indication du défaut dynamique).
-  $: derniere = lastGeneration($population);
+  $: derniere = lastGeneration($population, $genesisYear);
 
   // Catalogue de traits (ordre canonique des types) : {id, label}.
   const traits: { id: string; label: string }[] = TRAIT_TYPES.flatMap((t) =>
@@ -297,8 +297,9 @@
     font-size: 0.74rem;
     color: var(--fg-muted);
   }
+  /* US5 : la section des filtres de trait occupe sa **propre ligne** (saut de ligne dans le flex). */
   .trait-fs {
-    flex: 1;
+    flex: 1 0 100%;
     min-width: 14rem;
   }
   summary {

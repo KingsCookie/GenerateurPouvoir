@@ -8,11 +8,13 @@ import type { Parameters, ResilienceOverrides } from '../params/parameters.js';
 import { defaultParameters } from '../params/parameters.js';
 import { defaultCatalog, defaultEspeces } from '../catalog/defaultCatalog.js';
 import { createRng } from '../rng/rng.js';
+import { yearOf } from '../genesis/derived.js';
 
 // v1 (Features 1-2) → v2 (Feature 3 : currentYear, couples, état du RNG) → v3 (Feature 7 : journal
-// d'événements daté `history`). Compatibilité ascendante. Constante UNIQUE partagée par les trois
-// types de fichiers (config/data/full) — Feature 6.
-export const FORMAT_VERSION = 3;
+// d'événements daté `history`) → v4 (Feature 011 : `genesisYear`, année de la genèse, origine du
+// calcul de génération). Compatibilité ascendante. Constante UNIQUE partagée par les trois types
+// de fichiers (config/data/full) — Feature 6.
+export const FORMAT_VERSION = 4;
 
 export interface AppState {
   formatVersion: number;
@@ -22,6 +24,7 @@ export interface AppState {
   especes: Espece[]; // catalogue d'espèces (paramètres de reproduction, Feature 3 / §9.4)
   population: Personne[];
   currentYear: number; // année courante (1ᵉʳ janvier), progresse au tick (Feature 3)
+  genesisYear: number; // année de la genèse (§6.2) : origine du calcul de génération (Feature 011)
   couples: Couple[]; // couples actuels
   rngState: string[]; // état sérialisé du RNG (continuation déterministe, FR-021)
   history: PopulationEvent[]; // journal d'événements daté (Feature 7 : reconstruction historique)
@@ -44,6 +47,7 @@ export interface DataState {
   kind: 'data';
   population: Personne[];
   currentYear: number;
+  genesisYear: number; // année de la genèse (Feature 011) : donnée du monde généré
   couples: Couple[];
   rngState: string[]; // position exacte du RNG (reprise au tirage près)
   history: PopulationEvent[]; // journal d'événements daté (Feature 7)
@@ -70,6 +74,7 @@ export function createInitialState(params?: Partial<Parameters>): AppState {
     especes: defaultEspeces(),
     population: [],
     currentYear: parameters.birthYear,
+    genesisYear: parameters.birthYear, // origine du calcul de génération (§6.2)
     couples: [],
     rngState: createRng(BigInt(parameters.seed)).getState(),
     history: [],
@@ -114,6 +119,7 @@ export function extractData(state: AppState): DataState {
     kind: 'data',
     population: state.population,
     currentYear: state.currentYear,
+    genesisYear: state.genesisYear,
     couples: state.couples,
     rngState: state.rngState,
     history: state.history,
@@ -151,6 +157,12 @@ export function mergeData(state: AppState, data: DataState): AppState {
     ...state,
     population: data.population,
     currentYear: data.currentYear,
+    // Feature 011 : `genesisYear` du fichier ; absent (fichier < v4) ⇒ fallback naissance la plus
+    // ancienne (sinon année de naissance de la config courante).
+    genesisYear:
+      typeof data.genesisYear === 'number'
+        ? data.genesisYear
+        : fallbackGenesisYear(data.population, state.parameters),
     couples: data.couples,
     rngState,
     history: Array.isArray(data.history) ? data.history : [],
@@ -188,6 +200,19 @@ function defaultResilience(parameters: Parameters): void {
     if (!isObject(params.resilienceOverrides.byType)) params.resilienceOverrides.byType = {};
     if (!isObject(params.resilienceOverrides.byTrait)) params.resilienceOverrides.byTrait = {};
   }
+}
+
+/**
+ * Fallback de l'année de genèse (Feature 011, migration v3→v4) : **naissance la plus ancienne** de
+ * la population ; à défaut de population, `parameters.birthYear` ; à défaut, 0.
+ */
+export function fallbackGenesisYear(population: Personne[], parameters?: Parameters): number {
+  let min: number | null = null;
+  for (const p of population) {
+    const y = yearOf(p.dateNaissance);
+    if (min === null || y < min) min = y;
+  }
+  return min ?? parameters?.birthYear ?? 0;
 }
 
 /** Tolère un `Trait.weight` absent/undefined (⇒ `null` = hérite du poids du type, §9.1). */
@@ -262,6 +287,13 @@ export function deserializeState(json: string): Result<AppState> {
   if (typeof parsed.currentYear !== 'number') {
     parsed.currentYear = (parsed.parameters as Parameters).birthYear ?? 0;
   }
+  // Feature 011 (v3→v4) : `genesisYear` absent ⇒ fallback naissance la plus ancienne.
+  if (typeof parsed.genesisYear !== 'number') {
+    parsed.genesisYear = fallbackGenesisYear(
+      (parsed.population as Personne[]) ?? [],
+      parsed.parameters as Parameters,
+    );
+  }
   const dataErr = validateDataInto(parsed, seed);
   if (dataErr) return { ok: false, error: dataErr };
 
@@ -316,6 +348,11 @@ export function parseImport(json: string): Result<ParsedImport> {
     return { ok: false, error: 'Structure des données incomplète (population).' };
   }
   if (typeof data.currentYear !== 'number') data.currentYear = 0;
+  // Feature 011 : `genesisYear` absent (fichier < v4) ⇒ fallback naissance la plus ancienne
+  // (aucun `parameters` dans un fichier `data` ⇒ min birthYear sinon 0).
+  if (typeof data.genesisYear !== 'number') {
+    data.genesisYear = fallbackGenesisYear(data.population as Personne[]);
+  }
   if (!Array.isArray(data.couples)) data.couples = [];
   if (!Array.isArray(data.rngState) || data.rngState.length !== 4) data.rngState = [];
   if (!Array.isArray(data.history)) data.history = []; // Feature 7 : rétro-compat (INV-S8).

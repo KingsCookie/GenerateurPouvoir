@@ -39,6 +39,7 @@ function state(population: Personne[], couples: Couple[] = []): AppState {
     especes: defaultEspeces(),
     population,
     currentYear: 2010,
+    genesisYear: 0,
     couples,
     rngState: createRng(1n).getState(),
     history: [],
