@@ -6,7 +6,7 @@
 
 <footer class="app-footer">
   <span>Générateur de Pouvoir</span>
-  <span class="meta">v{version} · hors-ligne</span>
+  <span class="meta">v{version} · fonctionne hors-ligne</span>
 </footer>
 
 <style>
