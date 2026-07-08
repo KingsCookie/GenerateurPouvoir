@@ -7,7 +7,7 @@ import {
 } from '../../src/core/genealogy/filter.js';
 import { buildGenealogyFixture } from './_genealogyFixture.js';
 
-const ctx: FilterContext = { currentYear: 100 };
+const ctx: FilterContext = { currentYear: 100, genesisYear: 0 };
 
 function emptyCriteria(over: Partial<FilterCriteria> = {}): FilterCriteria {
   return {
@@ -201,10 +201,10 @@ describe('filterPopulation — présence de trait (Feature 010)', () => {
 describe('lastGeneration', () => {
   it('renvoie la plus grande génération présente', () => {
     const { population } = buildGenealogyFixture();
-    expect(lastGeneration(population)).toBe(3); // f1 né en 0062 ⇒ floor(62/20)=3
+    expect(lastGeneration(population, 0)).toBe(3); // f1 né en 0062 ⇒ floor(62/20)=3
   });
 
   it('population vide ⇒ null', () => {
-    expect(lastGeneration([])).toBeNull();
+    expect(lastGeneration([], 0)).toBeNull();
   });
 });

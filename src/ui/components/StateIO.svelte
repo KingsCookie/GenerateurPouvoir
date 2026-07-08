@@ -26,7 +26,7 @@
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `royalcookie-${kind}-${timestamp()}.json`;
+    a.download = `PowerGenerator_${kind}_${timestamp()}.json`;
     a.click();
     URL.revokeObjectURL(url);
   }

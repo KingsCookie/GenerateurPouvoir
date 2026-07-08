@@ -40,6 +40,7 @@ function stateWith(
     especes: defaultEspeces(),
     population,
     currentYear,
+    genesisYear: 0,
     couples: [{ id: 'c-1', memberIds: ['p-a', 'p-b'], reproPct: null }],
     rngState: createRng(1n).getState(),
     history,

@@ -12,6 +12,8 @@ import {
   dissolveConjugalLink as dissolveConjugalLinkCore,
   generateStrongMutationPower,
   derivePowersFromTraits,
+  inheritStats,
+  regeneratePowers,
   reconstructAtYear,
   type AppState,
   type Rng,
@@ -247,9 +249,67 @@ export function sbGenerateStrongPower(): Pouvoir[] {
   return p ? [p] : [];
 }
 
-/** Dérive les pouvoirs de **mutation normale** depuis les traits actifs de l'ADN (peut enrichir l'ADN). */
-export function sbDerivePowers(adn: ADN): { pouvoirs: Pouvoir[]; adn: ADN } {
+/**
+ * US7 — **seed d'aperçu stable** : dérivée de (seed de session + triplets `(traitId, active,
+ * resilience)` triés). Le même ADN redonne toujours la même seed ⇒ aperçu **déterministe et
+ * stable** (retirer puis réactiver un trait redonne le même aperçu). Ne dépend d'aucune entropie
+ * (Principe I).
+ */
+function previewSeed(sessionSeed: string, adn: ADN): bigint {
+  // FNV-1a 64 bits sur la représentation canonique (triée) de l'ADN.
+  const MASK = (1n << 64n) - 1n;
+  let h = 1469598103934665603n; // offset basis
+  const triplets = adn.traits
+    .map((t) => `${t.traitId}:${t.active ? 1 : 0}:${t.resilience}`)
+    .sort()
+    .join('|');
+  for (let i = 0; i < triplets.length; i++) {
+    h = (h ^ BigInt(triplets.charCodeAt(i))) & MASK;
+    h = (h * 1099511628211n) & MASK; // prime
+  }
+  let base: bigint;
+  try {
+    base = BigInt(sessionSeed);
+  } catch {
+    base = 0n;
+  }
+  return (base ^ h) & MASK;
+}
+
+/**
+ * US7 — **Aperçu** des pouvoirs dérivés des traits actifs, **en temps réel** sur le formulaire de
+ * création : construit un `Rng` à partir d'une **seed d'aperçu stable** (ne consomme donc PAS
+ * `sbRng`) et applique §6.4 + P/M (§7.2 cas A, sans parents ⇒ [1,10]). Déterministe pour un ADN
+ * donné : le même état de traits redonne exactement le même aperçu.
+ */
+export function sbDerivePreview(adn: ADN): { pouvoirs: Pouvoir[]; adn: ADN } {
   const s = get(sandboxState);
   if (!s) return { pouvoirs: [], adn };
-  return derivePowersFromTraits(adn, s.catalog, s.parameters, sbRng);
+  const rng = createRng(previewSeed(s.parameters.seed, adn));
+  const derived = derivePowersFromTraits(adn, s.catalog, s.parameters, rng);
+  const pouvoirs = derived.pouvoirs.map((pw, i) => ({
+    ...pw,
+    ...inheritStats(i, [], s.parameters, rng), // aucun parent ⇒ cas A [1,10]
+  }));
+  return { pouvoirs, adn: derived.adn };
+}
+
+/**
+ * US9 — **Régénère** les pouvoirs d'un individu depuis ses traits actifs (§6.4 + P/M §7.2). Simple
+ * appel de la fonction **cœur pure** `regeneratePowers` : récupère l'individu et ses parents dans
+ * l'état sandbox, consomme le RNG forké, puis réécrit `adn` + `pouvoirs` sur l'individu.
+ */
+export function sbRegeneratePowers(id: string): void {
+  const s = get(sandboxState);
+  if (!s) return;
+  const person = s.population.find((p) => p.id === id);
+  if (!person) return;
+  const parents = person.parents
+    .map((pid) => s.population.find((p) => p.id === pid))
+    .filter((p): p is NonNullable<typeof p> => !!p);
+  const { adn, pouvoirs } = regeneratePowers(person, parents, s.catalog, s.parameters, sbRng);
+  sandboxState.set({
+    ...s,
+    population: s.population.map((p) => (p.id === id ? { ...p, adn, pouvoirs } : p)),
+  });
 }

@@ -39,6 +39,7 @@ function sampleState(seed: bigint): AppState {
     especes: defaultEspeces(),
     population,
     currentYear: parameters.birthYear,
+    genesisYear: parameters.birthYear,
     couples: [],
     rngState: createRng(seed).getState(),
     history: [],
@@ -70,6 +71,7 @@ describe('Sérialisation de l’état (US3)', () => {
       catalog: state.catalog,
       kind: state.kind,
       currentYear: state.currentYear,
+      genesisYear: state.genesisYear,
       parameters: state.parameters,
       formatVersion: state.formatVersion,
       history: state.history,
@@ -384,11 +386,77 @@ describe('US3 — Complet, détection automatique & versionnage (Feature 6)', ()
   });
 });
 
+// --- Feature 011 : année de la genèse (genesisYear), format v4 ---
+
+describe('US3 — genesisYear & migration v3→v4 (Feature 011)', () => {
+  it('round-trip v4 : genesisYear survit à serializeFull → parseImport', () => {
+    const state: AppState = { ...sampleState(0x501n), genesisYear: 1900 };
+    const res = parseImport(serializeFull(state));
+    expect(res.ok).toBe(true);
+    if (res.ok && res.value.kind === 'full') {
+      expect(res.value.state.genesisYear).toBe(1900);
+    }
+  });
+
+  it('round-trip v4 : genesisYear inclus dans serializeData', () => {
+    const state: AppState = { ...sampleState(0x502n), genesisYear: 1900 };
+    expect(JSON.parse(serializeData(state)).genesisYear).toBe(1900);
+    const res = parseImport(serializeData(state));
+    expect(res.ok).toBe(true);
+    if (res.ok && res.value.kind === 'data') {
+      expect(res.value.data.genesisYear).toBe(1900);
+    }
+  });
+
+  it('import v3 (full sans genesisYear) ⇒ fallback = naissance la plus ancienne', () => {
+    const parameters = { ...defaultParameters(), seed: '7', batchSize: 4, birthYear: 1850 };
+    const catalog = defaultCatalog();
+    const population = generateInitialPopulation(parameters, catalog, createRng(7n));
+    // Un individu plus ancien (2 individus de naissances différentes).
+    population[0] = { ...population[0], dateNaissance: '1830-01-01' };
+    const json = JSON.stringify({
+      formatVersion: 3,
+      kind: 'full',
+      parameters,
+      catalog,
+      population,
+      currentYear: 1850,
+      couples: [],
+      rngState: createRng(7n).getState(),
+      history: [],
+    });
+    const res = deserializeState(json);
+    expect(res.ok).toBe(true);
+    if (res.ok) expect(res.value.genesisYear).toBe(1830); // plus ancienne naissance
+  });
+
+  it('import v3 (data sans genesisYear) ⇒ fallback naissance la plus ancienne à la fusion', () => {
+    const parameters = { ...defaultParameters(), seed: '7', batchSize: 3, birthYear: 1900 };
+    const catalog = defaultCatalog();
+    const population = generateInitialPopulation(parameters, catalog, createRng(7n));
+    population[0] = { ...population[0], dateNaissance: '1888-06-01' };
+    const json = JSON.stringify({
+      formatVersion: 3,
+      kind: 'data',
+      population,
+      currentYear: 1900,
+      couples: [],
+      rngState: createRng(7n).getState(),
+      history: [],
+    });
+    const res = parseImport(json);
+    expect(res.ok).toBe(true);
+    if (res.ok && res.value.kind === 'data') {
+      expect(res.value.data.genesisYear).toBe(1888);
+    }
+  });
+});
+
 // --- Feature 7 : journal d'événements daté (history) ---
 
 describe('Journal d’événements (Feature 7)', () => {
-  it('FORMAT_VERSION vaut 3', () => {
-    expect(FORMAT_VERSION).toBe(3);
+  it('FORMAT_VERSION vaut 4', () => {
+    expect(FORMAT_VERSION).toBe(4);
   });
 
   it('history survit au round-trip serializeFull → parseImport', () => {

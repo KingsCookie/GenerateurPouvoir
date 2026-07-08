@@ -19,6 +19,13 @@ export type BirthCase = 'forte' | 'sansPouvoir' | 'normale';
 export interface ReproduceOptions {
   childId: string;
   birthYear: number;
+  /**
+   * Jour de l'année (0–364) **partagé** par toute une portée (US2). Fourni par l'appelant
+   * (`tick.reproduceCouple`) qui le tire **une seule fois** par portée ⇒ tous les enfants d'une
+   * même reproduction ont la **même** date de naissance. Absent ⇒ tirage interne via `rng`
+   * (comportement conservé pour une reproduction d'un seul enfant, ex. sandbox).
+   */
+  birthDayOfYear?: number;
 }
 
 /**
@@ -45,7 +52,9 @@ export function reproduce(
   // 2. Identité de l'enfant.
   const genreId = rng.pick(parents.map((p) => p.genreId));
   const nom = generateName(rng, genreId);
-  const dateNaissance = isoDate(options.birthYear, rng.nextInt(365));
+  // US2 : jour partagé de portée si fourni ; sinon tirage interne (portée d'un seul enfant).
+  const dayOfYear = options.birthDayOfYear ?? rng.nextInt(365);
+  const dateNaissance = isoDate(options.birthYear, dayOfYear);
   const especeId = parents[0].especeId;
 
   let adn: ADN;

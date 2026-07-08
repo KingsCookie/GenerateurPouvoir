@@ -29,6 +29,17 @@ export function areConsanguine(a: string, b: string, byId: Map<string, Personne>
 }
 
 /**
+ * Lien de **lignée directe** (§6.6.1) : `a` est un **ascendant ou descendant direct** de `b` sur
+ * **deux niveaux** — c.-à-d. une relation parent ↔ enfant ou grand-parent ↔ petit-enfant.
+ * Symétrique (`isDirectLineage(a,b) === isDirectLineage(b,a)`).
+ */
+export function isDirectLineage(a: string, b: string, byId: Map<string, Personne>): boolean {
+  const ancestors2 = (id: string): Set<string> =>
+    new Set([...parentsOf(id, byId), ...grandparentsOf(id, byId)]);
+  return ancestors2(a).has(b) || ancestors2(b).has(a);
+}
+
+/**
  * Forme des **couples** (§6.6, R5) à partir des candidats volontaires. Mélange déterministe, puis
  * parcours glouton : pour chaque candidat libre, on complète un groupe de `groupSize` avec des
  * partenaires **de la même espèce** et **non consanguins** (si interdit). Le **genre n'intervient
@@ -68,8 +79,11 @@ export function formCouples(
         if (other === id || !available.has(other)) continue;
         const op = byId.get(other);
         if (!op || op.especeId !== person.especeId) continue; // même espèce uniquement
-        if (!params.consanguinityAllowed && group.some((gid) => areConsanguine(gid, other, byId))) {
-          continue; // anti-consanguinité (avec tous les membres déjà retenus)
+        if (
+          !params.consanguinityAllowed &&
+          group.some((gid) => areConsanguine(gid, other, byId) || isDirectLineage(gid, other, byId))
+        ) {
+          continue; // anti-consanguinité + lignée directe (avec tous les membres déjà retenus)
         }
         group.push(other);
       }

@@ -29,7 +29,7 @@ export interface Parameters {
   templateWeights: Record<PowerTemplate, number>;
 
   // --- Moteur génétique (Feature 2). Cf. specs/002-reproduction-heredite/data-model.md. ---
-  duplicationD: number; // diviseur D (§6.4.1) : proba duplication = résilience/D % (> 0)
+  duplicationD: number; // multiplicateur D (§6.4.1) : proba duplication = min(100, résilience·D) % (≥ 0 ; 0 ⇒ aucune)
   generationK: number; // K % (§6.4.2) : proba de génération d'un trait K… [0..100]
   resilienceMax: number; // plafond de résilience [0..100] (bonus inopérant au-dessus)
   bonusPoints: number; // bonus additif (points) si trait tiré actif
@@ -75,7 +75,7 @@ export function defaultParameters(): Parameters {
     templateWeights: { AE: 3, PE: 1, PA: 1, PR: 1 },
 
     // Moteur génétique : défauts prévisibles (taux à 0 ⇒ naissance normale pure ; cf. plan.md).
-    duplicationD: 20,
+    duplicationD: 0.25,
     generationK: 10,
     resilienceMax: 95,
     bonusPoints: 5,

@@ -75,6 +75,10 @@ export const treeDepth = writable<number>(2);
 export const currentYear = writable<number>(0);
 export const couples = writable<Couple[]>([]);
 
+// Année de la genèse (Feature 011, §6.2) : origine du calcul de génération. Fixée à la génération
+// du batch initial (= birthYear) ; persistée/restaurée via export/import (data/full).
+export const genesisYear = writable<number>(0);
+
 // Journal d'événements daté (Feature 7) : alimente la reconstruction historique de la sandbox.
 export const history = writable<PopulationEvent[]>([]);
 
@@ -173,6 +177,7 @@ export function generate(): void {
   const pop = generateInitialPopulation(p, get(catalog), engineRng);
   population.set(pop);
   currentYear.set(p.birthYear);
+  genesisYear.set(p.birthYear); // origine du calcul de génération (§6.2)
   couples.set([]);
   // Journal d'événements (Feature 7) : une naissance datée par individu du batch initial.
   history.set(pop.map((person) => birthEvent(person.id, p.birthYear)));
@@ -190,6 +195,7 @@ function snapshot(): AppState {
     especes: get(especes),
     population: get(population),
     currentYear: get(currentYear),
+    genesisYear: get(genesisYear),
     couples: get(couples),
     rngState: engineRng.getState(),
     history: get(history),
@@ -344,6 +350,7 @@ export function applyData(data: DataState): void {
   population.set(merged.population);
   couples.set(merged.couples);
   currentYear.set(merged.currentYear);
+  genesisYear.set(merged.genesisYear);
   history.set(merged.history);
   selectedPersonId.set(null);
   selectedIds.set(new Set());
@@ -357,6 +364,7 @@ function applyFull(state: AppState): void {
   especes.set(state.especes);
   population.set(state.population);
   currentYear.set(state.currentYear);
+  genesisYear.set(state.genesisYear);
   couples.set(state.couples);
   history.set(state.history);
   selectedPersonId.set(null);

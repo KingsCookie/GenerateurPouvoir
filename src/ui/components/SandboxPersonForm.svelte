@@ -16,7 +16,7 @@
     sbCreatePerson,
     sbEditPerson,
     sbGenerateStrongPower,
-    sbDerivePowers,
+    sbDerivePreview,
   } from '../stores/sandboxStore.js';
 
   export let mode: 'create' | 'edit' = 'create';
@@ -38,6 +38,9 @@
   let fRaisonDeces = '';
   let fAdn: ResilientTrait[] = [];
   let fPouvoirs: Pouvoir[] = [];
+  // Profil de pouvoir (US7) : `auto` = aperçu temps réel dérivé des traits actifs (défaut création) ;
+  // `manual` = pouvoirs édités à la main (défaut édition) ; `forte` = gabarit ; `sans` = aucun.
+  let powerMode: 'auto' | 'manual' | 'forte' | 'sans' = 'auto';
 
   // Initialisation (réactive au changement de mode/personne).
   function init() {
@@ -50,6 +53,7 @@
       fRaisonDeces = person.raisonDeces ?? '';
       fAdn = person.adn.traits.map((t) => ({ ...t }));
       fPouvoirs = person.pouvoirs.map((p) => ({ ...p, traitIds: [...p.traitIds] }));
+      powerMode = 'manual'; // en édition, on conserve les pouvoirs existants
     } else {
       fNom = 'Nouvel individu';
       fEspeceId = $especes[0]?.id ?? 'humain';
@@ -59,6 +63,7 @@
       fRaisonDeces = '';
       fAdn = [];
       fPouvoirs = [];
+      powerMode = 'auto'; // en création, aperçu temps réel par défaut (US7)
     }
   }
   // Réinitialise quand on (ré)ouvre le formulaire pour une autre cible (dépend de person & mode).
@@ -66,6 +71,15 @@
     init();
   }
   $: reinit(person, mode);
+
+  // US7 — Aperçu temps réel : recalculé à chaque changement de `fAdn` via une seed d'aperçu STABLE
+  // (ne consomme pas le RNG de session). Même état de traits ⇒ aperçu identique.
+  $: preview = sbDerivePreview({ traits: fAdn });
+  // Pouvoirs effectivement affichés/enregistrés selon le profil choisi.
+  $: shownPouvoirs =
+    powerMode === 'auto' ? preview.pouvoirs : powerMode === 'sans' ? [] : fPouvoirs;
+  // En profil auto, les P/M viennent de l'aperçu (déterministes) ⇒ édition manuelle désactivée.
+  $: pmEditable = powerMode === 'manual' || powerMode === 'forte';
 
   $: genresForEspece = $especes.find((e) => e.id === fEspeceId)?.genres ?? [];
   $: idx = (() => {
@@ -90,43 +104,44 @@
     const r = Math.min(100, Math.max(0, Math.floor(Number.isFinite(resilience) ? resilience : 0)));
     fAdn = fAdn.map((t) => (t.traitId === traitId ? { ...t, resilience: r } : t));
   }
-  function traitEntry(traitId: string): ResilientTrait | undefined {
-    return fAdn.find((t) => t.traitId === traitId);
-  }
 
-  // --- Profil de pouvoir ---
-  function setSansPouvoir(): void {
-    fPouvoirs = [];
+  // --- Profil de pouvoir (US7) ---
+  function setAutoApercu(): void {
+    powerMode = 'auto'; // aperçu temps réel dérivé des traits actifs (§6.4)
   }
-  function genMutationNormale(): void {
-    const r = sbDerivePowers({ traits: fAdn });
-    fAdn = r.adn.traits.map((t) => ({ ...t })); // la génération « K » peut enrichir l'ADN
-    fPouvoirs = r.pouvoirs;
+  function setSansPouvoir(): void {
+    powerMode = 'sans';
   }
   function genMutationForte(): void {
+    powerMode = 'forte';
     fPouvoirs = sbGenerateStrongPower();
   }
+  // US10 — P/M **non bornées** en saisie manuelle : entier libre (négatif / 0 / > 10 autorisés).
   function setPuissance(i: number, v: number): void {
-    const n = Math.min(10, Math.max(1, Math.floor(Number.isFinite(v) ? v : 1)));
+    const n = Math.floor(Number.isFinite(v) ? v : 0);
     fPouvoirs = fPouvoirs.map((p, j) => (j === i ? { ...p, puissance: n } : p));
   }
   function setMaitrise(i: number, v: number): void {
-    const n = Math.min(10, Math.max(1, Math.floor(Number.isFinite(v) ? v : 1)));
+    const n = Math.floor(Number.isFinite(v) ? v : 0);
     fPouvoirs = fPouvoirs.map((p, j) => (j === i ? { ...p, maitrise: n } : p));
   }
   function removePouvoir(i: number): void {
-    fPouvoirs = fPouvoirs.filter((_, j) => j !== i);
+    powerMode = 'manual';
+    fPouvoirs = shownPouvoirs.filter((_, j) => j !== i);
   }
 
   function submit(): void {
+    // US7 : en profil auto, l'état persisté correspond exactement à l'aperçu affiché (pouvoirs +
+    // ADN éventuellement enrichi par la génération K). Sinon, ADN saisi + pouvoirs du profil.
+    const adn = powerMode === 'auto' ? { traits: preview.adn.traits } : { traits: fAdn };
     const common = {
       nom: fNom,
       especeId: fEspeceId,
       genreId: fGenreId,
       vivant: fVivant,
       raisonDeces: fVivant ? null : fRaisonDeces.trim() || 'inconnue',
-      adn: { traits: fAdn },
-      pouvoirs: fPouvoirs,
+      adn,
+      pouvoirs: shownPouvoirs,
       notes: fNotes.trim() || null,
     };
     if (mode === 'edit' && person) {
@@ -198,42 +213,53 @@
 
     <label>Notes <input type="text" bind:value={fNotes} /></label>
 
-    <!-- Profil de pouvoir -->
+    <!-- Profil de pouvoir (US7 : aperçu temps réel dérivé des traits actifs) -->
     <fieldset>
       <legend>Profil de pouvoir</legend>
       <div class="actions">
-        <button type="button" on:click={setSansPouvoir}>Sans pouvoir</button>
-        <button type="button" on:click={genMutationNormale}
-          >Mutation normale (traits → pouvoirs)</button
+        <button type="button" class:is-active={powerMode === 'auto'} on:click={setAutoApercu}
+          >Aperçu (traits actifs)</button
         >
-        <button type="button" on:click={genMutationForte}>Mutation forte</button>
+        <button type="button" class:is-active={powerMode === 'forte'} on:click={genMutationForte}
+          >Mutation forte</button
+        >
+        <button type="button" class:is-active={powerMode === 'sans'} on:click={setSansPouvoir}
+          >Sans pouvoir</button
+        >
       </div>
-      {#if fPouvoirs.length === 0}
+      {#if powerMode === 'auto'}
+        <p class="hint">
+          Aperçu mis à jour en temps réel selon les traits actifs (déterministe). Les valeurs P/M
+          seront celles affichées ci-dessous à l'enregistrement.
+        </p>
+      {/if}
+      {#if shownPouvoirs.length === 0}
         <p class="muted">Aucun pouvoir.</p>
       {:else}
         <ul class="powers">
-          {#each fPouvoirs as p, i (p.id + i)}
+          {#each shownPouvoirs as p, i (p.id + i)}
             <li>
               <span class="pw-label">{p.label}</span>
-              <label class="stat"
-                >P <input
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={p.puissance}
-                  on:input={(e) => setPuissance(i, Number((e.target as HTMLInputElement).value))}
-                /></label
-              >
-              <label class="stat"
-                >M <input
-                  type="number"
-                  min="1"
-                  max="10"
-                  value={p.maitrise}
-                  on:input={(e) => setMaitrise(i, Number((e.target as HTMLInputElement).value))}
-                /></label
-              >
-              <button type="button" class="danger" on:click={() => removePouvoir(i)}>✕</button>
+              {#if pmEditable}
+                <label class="stat"
+                  >P <input
+                    type="number"
+                    value={p.puissance}
+                    on:input={(e) => setPuissance(i, Number((e.target as HTMLInputElement).value))}
+                  /></label
+                >
+                <label class="stat"
+                  >M <input
+                    type="number"
+                    value={p.maitrise}
+                    on:input={(e) => setMaitrise(i, Number((e.target as HTMLInputElement).value))}
+                  /></label
+                >
+                <button type="button" class="danger" on:click={() => removePouvoir(i)}>✕</button>
+              {:else}
+                <span class="pm">P {p.puissance}</span>
+                <span class="pm">M {p.maitrise}</span>
+              {/if}
             </li>
           {/each}
         </ul>
@@ -248,12 +274,14 @@
           <summary>{type}</summary>
           <div class="traits">
             {#each $catalog.byType[type] as t (t.id)}
-              {@const entry = traitEntry(t.id)}
+              <!-- `entry` dérivé directement de `fAdn` ⇒ dépendance réactive : les contrôles
+                   actif/résilience s'affichent/s'actualisent aussi en création (BUG-001). -->
+              {@const entry = fAdn.find((x) => x.traitId === t.id)}
               <div class="trait-row">
                 <label class="chip">
                   <input
                     type="checkbox"
-                    checked={hasTrait(t.id)}
+                    checked={fAdn.some((x) => x.traitId === t.id)}
                     on:change={() => toggleTrait(t.id)}
                   />
                   {traitLabelOf(idx, t.id)}
@@ -363,6 +391,22 @@
     flex-wrap: wrap;
     gap: 0.4rem;
     margin-bottom: 0.4rem;
+  }
+  .actions button.is-active {
+    background: color-mix(in srgb, var(--accent) 24%, var(--bg-elev));
+    border-color: var(--accent);
+    color: var(--accent-text);
+    font-weight: 600;
+  }
+  .hint {
+    margin: 0 0 0.4rem;
+    font-size: 0.74rem;
+    color: var(--fg-muted);
+  }
+  .pm {
+    font-family: var(--mono);
+    font-size: 11px;
+    opacity: 0.85;
   }
   .powers {
     list-style: none;

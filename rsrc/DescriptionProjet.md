@@ -194,7 +194,7 @@ Gabarit de génération du pouvoir de mutation forte (c'est le **seul** endroit 
 
 La notion de **génération** (champ de personne, numérotation, `max(parents)+1`) **disparaît**. Le temps est désormais géré par des **dates** et l'**avancement par années** (§6.5).
 
-Subsiste uniquement une **génération d'affichage** = tranche de **20 ans** de l'année de naissance (par ex. génération 0 = années [0, 19], génération 1 = [20, 39], etc.). Elle est **calculée à partir de l'année de naissance**, **affichée sur la fiche de l'individu** (cf. §8.2) et sert aux **tris et filtres** (cf. §8.1).
+Subsiste uniquement une **génération d'affichage** = tranche de **20 ans** comptée **à partir de l'année de la genèse** (l'année de naissance du batch initial). La **population initiale est en génération 0** quelle que soit l'année de départ ; ensuite, chaque tranche de 20 ans après la genèse incrémente la génération (génération 1 = genèse + [20, 39] ans, etc.). Formellement : `génération = ⌊(année de naissance − année de la genèse) / 20⌋` (valeur **négative** possible pour une naissance antérieure à la genèse). L'**année de la genèse** est **mémorisée et exportée** avec l'état ; pour un fichier antérieur qui ne la contient pas, on retient par défaut la **naissance la plus ancienne** de la population. Cette génération est **affichée sur la fiche de l'individu** (cf. §8.2) et sert aux **tris et filtres** (cf. §8.1).
 
 ### 6.3. Mutation faible
 
@@ -230,7 +230,7 @@ On crée **autant de sous-listes que de traits principaux**, chacune initialisé
    - S'il y a **plus de principaux que de secondaires**, certains principaux restent sans secondaire.
    - S'il y a **plus de secondaires que de principaux**, on **recommence le parcours des principaux** depuis le début, dans le même ordre.
 
-**Duplication** : au moment où l'on assigne un trait secondaire, il y a `(résilience du trait secondaire / D) %` de chance que ce trait **se duplique**, c'est-à-dire qu'une **copie** soit aussi placée dans **une autre** sous-liste. (`D` = constante de duplication, distincte de la constante de génération `K` du §6.4.2.)
+**Duplication** : au moment où l'on assigne un trait secondaire, il y a `min(100, résilience du trait secondaire × D) %` de chance que ce trait **se duplique**, c'est-à-dire qu'une **copie** soit aussi placée dans **une autre** sous-liste. (`D` = constante de duplication, **multiplicateur ≥ 0** de valeur par défaut **0,25**, distincte de la constante de génération `K` du §6.4.2 ; `D = 0` ⇒ aucune duplication, et la probabilité est **plafonnée à 100 %**.)
 - Un trait dupliqué ne peut **pas apparaître deux fois dans une même sous-liste** ; il peut donc être dupliqué au maximum autant de fois qu'il y a de sous-listes.
 - La duplication **ne modifie pas l'ADN** : elle n'existe que pour la construction des pouvoirs.
 
@@ -546,7 +546,9 @@ Chaque année avancée applique, dans l'ordre :
 
 Un **paramètre** autorise ou non la **consanguinité** (par défaut : **non autorisée**).
 
-Si la consanguinité est **interdite** : deux personnes qui partagent **les mêmes parents OU les mêmes grands-parents** ne peuvent **pas former de couple** (et donc ne peuvent pas se reproduire ensemble).
+Si la consanguinité est **interdite**, deux personnes ne peuvent **pas former de couple** (et donc ne peuvent pas se reproduire ensemble) dans l'un ou l'autre de ces cas :
+- elles partagent **les mêmes parents OU les mêmes grands-parents** (fratrie, cousinage) ;
+- l'une est un **ascendant ou descendant direct** de l'autre sur **deux niveaux**, c'est-à-dire une relation **parent ↔ enfant** ou **grand-parent ↔ petit-enfant**.
 
 #### 6.6.2. Portée (nombre d'enfants)
 
@@ -556,6 +558,8 @@ Le nombre d'enfants d'une reproduction dépend de l'espèce, via trois paramètr
 - **X %** : chance de tirer **un enfant supplémentaire**.
 
 Procédure : on part de **M** enfants garantis ; puis, **à partir du plancher**, on tire à **X %** « y a-t-il un autre enfant ? ». On **refait le tirage** tant que la réponse est « oui », **jusqu'à** un échec **ou jusqu'à atteindre N**.
+
+Tous les enfants d'une **même portée naissent le même jour** : le jour de naissance est tiré **une seule fois** par portée, puis partagé par toute la fratrie issue de cette reproduction (ils ont donc une **date de naissance identique**).
 
 ### 6.7. Mort
 

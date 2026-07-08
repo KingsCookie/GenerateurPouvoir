@@ -81,10 +81,10 @@ describe('Genèse — invariants (data-model INV-1..7)', () => {
   });
 
   it('génération d’affichage = tranche de 20 ans', () => {
-    expect(computeGeneration(0)).toBe(0);
-    expect(computeGeneration(19)).toBe(0);
-    expect(computeGeneration(20)).toBe(1);
-    expect(computeGeneration(45)).toBe(2);
+    expect(computeGeneration(0, 0)).toBe(0);
+    expect(computeGeneration(19, 0)).toBe(0);
+    expect(computeGeneration(20, 0)).toBe(1);
+    expect(computeGeneration(45, 0)).toBe(2);
   });
 
   it('SC-003 : sur ≥ 1000, proportion de pouvoirs à moins de 5 points du % configuré', () => {

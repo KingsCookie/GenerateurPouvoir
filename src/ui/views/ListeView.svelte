@@ -1,5 +1,11 @@
 <script lang="ts">
-  import { population, currentYear, catalog, selectPerson } from '../stores/appState.js';
+  import {
+    population,
+    currentYear,
+    genesisYear,
+    catalog,
+    selectPerson,
+  } from '../stores/appState.js';
   import { criteria, generationTouched } from '../stores/filters.js';
   import { buildListRow } from '../lib/ficheViewModel.js';
   import { paginate } from '../lib/pagination.js';
@@ -32,17 +38,21 @@
 
   // Défaut dynamique : tant que le filtre génération n'a pas été touché, on affiche la dernière
   // génération recalculée à chaque avancée du temps (FR-011a / INV-G5).
-  $: derniere = lastGeneration($population);
+  $: derniere = lastGeneration($population, $genesisYear);
   $: effectiveGenerations =
     $generationTouched || derniere === null ? $criteria.generations : new Set<number>([derniere]);
   $: effectiveCriteria = { ...$criteria, generations: effectiveGenerations };
   // Année courante issue de la simulation (Feature 3) ; l'âge en découle.
-  $: filtered = filterPopulation($population, effectiveCriteria, { currentYear: $currentYear });
+  $: filtered = filterPopulation($population, effectiveCriteria, {
+    currentYear: $currentYear,
+    genesisYear: $genesisYear,
+  });
   // Tri appliqué à l'ENSEMBLE filtré, avant pagination (FR-011). key=null ⇒ ordre par défaut.
   $: sorted = sortPopulation(filtered, $listeSort.key, $listeSort.dir, {
     currentYear: $currentYear,
+    genesisYear: $genesisYear,
   });
-  $: rows = sorted.map((p) => buildListRow(p, $catalog, $currentYear));
+  $: rows = sorted.map((p) => buildListRow(p, $catalog, $currentYear, $genesisYear));
 
   // Pagination présentationnelle sur la liste filtrée (FR-016 ; INV-UI4).
   $: pageInfo = paginate(rows, $listePage, $listePageSize);
@@ -130,8 +140,8 @@
                 {#each row.pouvoirs as pouvoir}
                   <span class="chip"
                     >{pouvoir.label}
-                    <span class="pm">P : {pouvoir.puissance}</span>
-                    <span class="pm">M : {pouvoir.maitrise}</span></span
+                    <span class="pm">P {pouvoir.puissance}</span>
+                    <span class="pm">M {pouvoir.maitrise}</span></span
                   >
                 {/each}
               {/if}
