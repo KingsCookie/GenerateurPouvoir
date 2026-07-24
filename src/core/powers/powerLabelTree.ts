@@ -184,7 +184,7 @@ function treeTemplate(
             else return '{aj} {et} sur {Kp}';
           } else {
             if (r) return '{aj} sur {r} à la place de {Kp}';
-            else return '{aj} à la place de {Kp}';
+            else return '{aj} sur {Kp}';
           }
         } else {
           if (r) {

@@ -25,6 +25,10 @@ describe('Arbre de libellé §6.4.2 (T011)', () => {
     expect(powerLabelFromSublist({ aj: 'AJ', et: 'ET' })).toBe('AJ ET sur {Kp}');
   });
 
+  it('aj seul ⇒ « {aj} sur {Kp} » (ajout SUR une partie générée, pas « à la place de »)', () => {
+    expect(powerLabelFromSublist({ aj: 'AJ' })).toBe('AJ sur {Kp}');
+  });
+
   it('tous les types présents ⇒ feuille la plus riche', () => {
     expect(powerLabelFromSublist({ a: 'A', e: 'E', p: 'P', aj: 'AJ', r: 'R', et: 'ET' })).toBe(
       'A E avec AJ, ET sur R à la place de P',

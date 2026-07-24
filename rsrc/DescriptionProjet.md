@@ -504,7 +504,7 @@ else:
 					if r:
 						pouvoir = "{aj} sur {r} à la place de {Kp}"
 					else:
-						pouvoir = "{aj} à la place de {Kp}"
+						pouvoir = "{aj} sur {Kp}"
 			else:
 				if r:
 					if et:
